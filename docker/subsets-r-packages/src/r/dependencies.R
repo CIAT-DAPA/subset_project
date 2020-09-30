@@ -1,0 +1,1 @@
+install.packages(c("pacman", "raster", "rgdal", "rgeos", "stringr", "lubridate", "foreach", "doSNOW", "doParallel", "GSIF"))
