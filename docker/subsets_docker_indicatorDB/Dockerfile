@@ -14,5 +14,4 @@ VOLUME [ ${FOLDER_APP}, "/mnt", "/src/logs/" ]
 VOLUME [ ${FOLDER_APP}, "/mnt", "/src/configuration/" ]
 VOLUME [ ${FOLDER_APP}, "/mnt", "/src/backup/" ]
 
-# docker build -t juangarcia/subsets_indicator_database:latest .
-# docker run --name indicator_db -d subsets_indicators_database:latest
+# docker pull juancode528/subsets_indicators_database:latest
