@@ -13,40 +13,31 @@ login_genesys <- function(){
 #' Get accession passport data by crop
 #' @param crop a vector of crop names
 #'
-#' @return JSON data
+#' @return dataframe
 
 get_passport_data <- function(crop){
+  
+  require(dplyr)
   
   #fields to get from Genesys
   fields <- c("accessionName",
               "accessionNumber",
-              "acquisitionDate",
-              "id",
-              "aegis",
               "available",
               "coll.collDate",
-              "coll.collSite",
               "countryOfOrigin.code3",
               "countryOfOrigin.name",
               "countryOfOrigin.region.name",
               "crop.name",
               "doi",
-              "donorCode",
-              "donorName",
               "geo.elevation",
               "geo.latitude",
               "geo.longitude",
-              "geo.tileIndex",
-              "historic",
+              "id",
               "institute.acronym",
               "institute.code",
               "institute.fullName",
+              "mlsStatus",
               "sampStat",
-              "mlsStatus", 
-              "storage1",
-              "storage2",
-              "storage3",
-              "storage4",
               "taxonomy.genus",
               "taxonomy.spAuthor",
               "taxonomy.species",
@@ -55,12 +46,43 @@ get_passport_data <- function(crop){
               "taxonomy.taxonName"
   )
   
-  #get passport data
+  #standardize names
+  std_names <- c("accession_name",
+                 "accession_number",
+                 "available",
+                 "coll_date",
+                 "country_of_origin_code3",
+                 "country_of_origin_name",
+                 "country_of_origin_region_name",
+                 "crop_name",
+                 "doi",
+                 "elevation",
+                 "latitude",
+                 "longitude",
+                 "id",
+                 "institute_acronym",
+                 "institute_code",
+                 "institute_full_name",
+                 "mls_status",
+                 "samp_stat",
+                 "taxonomy_genus",
+                 "taxonomy_sp_author",
+                 "taxonomy_species",
+                 "taxonomy_subt_author",
+                 "taxonomy_subtaxa",
+                 "taxonomy_taxon_name"
+  )
+  
   accessions <- genesysr::get_accessions(list(crop = crop), fields = fields)
   
-  #convert to JSON
-  accessions_json <- jsonlite::toJSON(accessions)
+  #keep just columns included in fields
+  accessions <- accessions %>% dplyr::select(any_of(fields))
   
-  accessions_json
+  #modify accessions column names
+  for (i in 1:length(fields)) { 
+    colnames(accessions)[which(names(accessions) == fields[i])] <- std_names[i]
+  }
+  
+  accessions
   
 }
