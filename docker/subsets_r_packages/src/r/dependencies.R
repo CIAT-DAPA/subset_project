@@ -1,1 +1,2 @@
-install.packages(c("pacman", "raster", "rgdal", "rgeos", "stringr", "lubridate", "foreach", "doSNOW", "doParallel", "GSIF"))
+install.packages(c("pacman","raster","rgdal","rgeos","stringr","lubridate","foreach","doSNOW","doParallel","GSIF","jsonlite","futile.logger", "devtools"))
+#devtools::install_git('https://gitlab.croptrust.org/genesys-pgr/genesysr', ref = '2-welcome')

@@ -21,6 +21,7 @@ RUN apt-get update \
 	&& apt-get install -y r-base \
 	&& apt-get install -y r-base-dev \
     && apt-get install -y gdal-bin proj-bin libgdal-dev libproj-dev \
+	&& apt-get install -y libcurl4-gnutls-dev \
     && chmod +x /entrypoint.sh \
     && /entrypoint.sh \
     && rm /entrypoint.sh 
