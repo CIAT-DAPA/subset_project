@@ -1,3 +1,34 @@
+library(futile.logger)
+
+# Setting logging logger and appender
+flog.threshold(INFO, name = 'passport')
+
+# Writing log messages in console and file
+flog.appender(appender.tee('passport_data.log'), name = 'passport')
+
+#'Log Info
+#'
+
+log_info <- function(message, ...){
+  futile.logger::flog.info(message, name = 'passport', ...)
+}
+
+#' Log warnings
+#'
+#'
+
+log_warning <- function(message){
+  futile.logger::flog.warn(message, name = 'passport')
+}
+
+#' Log errors
+#'
+#'
+
+log_error <- function(message){
+  futile.logger::flog.error(message, name = 'passport')
+}
+
 #' Get the authorization code to login to Genesys
 #'
 
@@ -6,6 +37,7 @@ login_genesys <- function(){
   genesysr::setup_production()
   
   #login to get the authorization code
+  log_info(message = "Authorizing to Genesys")
   genesysr::user_login()
 }
 
@@ -73,15 +105,43 @@ get_passport_data <- function(crop){
                  "taxonomy_taxon_name"
   )
   
-  accessions <- genesysr::get_accessions(list(crop = crop), fields = fields)
+  tryCatch({
+    
+    #get passport data
+    log_info(message = "Getting accessions passport data for crop(s): %s", crop)
+    
+    accessions <- genesysr::get_accessions(list(crop = crop), fields = fields)
+    
+    if(nrow(accessions) == 0){
+      err <- simpleError("No records extracted. Please check the validity of crop(s) name(s) passed as argument!")
+      stop(err)
+    }
+    
+    else log_info("%s accessions are extracted.", nrow(accessions))
   
-  #keep just columns included in fields
-  accessions <- accessions %>% dplyr::select(any_of(fields))
+    #keep just columns included in fields
+    accessions <- accessions %>% dplyr::select(any_of(fields))
   
-  #modify accessions column names
-  for (i in 1:length(fields)) { 
-    colnames(accessions)[which(names(accessions) == fields[i])] <- std_names[i]
-  }
+    #modify accessions column names
+    for (i in 1:length(fields)) { 
+      colnames(accessions)[which(names(accessions) == fields[i])] <- std_names[i]
+    }
+  },
+  
+  custom_error = function(e) {
+    err <- conditionMessage(e)
+    log_error(err)
+  },
+  
+  error = function(error) {
+    log_error(error)
+    stop(error)
+  },
+  
+  warning = function(warning) {
+    log_warning(warning)
+    stop()
+  })
   
   accessions
   
