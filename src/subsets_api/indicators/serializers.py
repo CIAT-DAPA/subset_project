@@ -3,20 +3,32 @@ from rest_framework import serializers
 #Local models
 from .models import *
 
+class IndicatorTypesSerializer(serializers.ModelSerializer):
+    """ Serializers for indicators type"""
+    class Meta:
+        model = IndicatorType
+        fields = '__all__'
+
+class IndicatorsSerializer(serializers.ModelSerializer):
+    """ Serializers for indicators """
+    class Meta:
+        model = Indicator
+        fields = '__all__'
+
 class AccessionsSerializer(serializers.ModelSerializer):
     """ Serializers for accessions """
     class Meta:
         model = Accession
         fields = '__all__'
 
-class CropsSerializer(serializers.ModelSerializer):
-    """ Serializers for crops """
+class IndicatorPeriodsSerializer(serializers.ModelSerializer):
+    """ Serializers for indicators """
     class Meta:
-        model = Crop
+        model = Indicator
         fields = '__all__'
 
-class BiologicalStatusSerializer(serializers.ModelSerializer):
-    """ Serializers for biological status """
+class IndicatorValuesSerializer(serializers.ModelSerializer):
+    """ Serializers for indicators """
     class Meta:
-        model = BiologicalStatus
+        model = Indicator
         fields = '__all__'
