@@ -1,0 +1,128 @@
+db.createCollection('indicator_period', {
+  validator: {
+    $jsonSchema: {
+      bsonType: 'object',
+      required: [],
+      properties: {
+        indicator: {
+          bsonType: 'objectId'
+        },
+        period: {
+          bsonType: 'string'
+        }
+      }
+    }
+  }
+});
+db.createCollection('indicator', {
+  validator: {
+    $jsonSchema: {
+      bsonType: 'object',
+      required: [],
+      properties: {
+        name: {
+          bsonType: 'string'
+        },
+        prefix: {
+          bsonType: 'string'
+        },
+        type: {
+          bsonType: 'string'
+        },
+        crops: {
+          bsonType: 'array'
+        }
+      }
+    }
+  }
+});
+db.createCollection('indicator_value', {
+  validator: {
+    $jsonSchema: {
+      bsonType: 'object',
+      required: [],
+      properties: {
+        cellid: {
+          bsonType: 'int'
+        },
+        indicator_period: {
+          bsonType: 'objectId'
+        },
+        month: {
+          bsonType: 'int'
+        },
+        value: {
+          bsonType: 'double'
+        }
+      }
+    }
+  }
+});
+db.createCollection('accession', {
+  validator: {
+    $jsonSchema: {
+      bsonType: 'object',
+      required: [],
+      properties: {
+        name: {
+          bsonType: 'string'
+        },
+        number: {
+          bsonType: 'string'
+        },
+        acq_date: {
+          bsonType: 'int'
+        },
+        aegis: {
+          bsonType: 'int'
+        },
+        available: {
+          bsonType: 'int'
+        },
+        coll_date: {
+          bsonType: 'date'
+        },
+        country: {
+          bsonType: 'array'
+        },
+        samp_stat: {
+          bsonType: 'int'
+        },
+        crop_name: {
+          bsonType: 'string'
+        },
+        doi: {
+          bsonType: 'string'
+        },
+        historic: {
+          bsonType: 'int'
+        },
+        id: {
+          bsonType: 'int'
+        },
+        institute: {
+          bsonType: 'array'
+        },
+        geo: {
+          bsonType: 'array'
+        },
+        cellid: {
+          bsonType: 'int'
+        }
+      }
+    }
+  }
+});
+db.createCollection('indicator_type', {
+  validator: {
+    $jsonSchema: {
+      bsonType: 'object',
+      required: ['name'],
+      properties: {
+        name: {
+          bsonType: 'string'
+        }
+      }
+    }
+  }
+});
