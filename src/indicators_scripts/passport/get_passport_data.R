@@ -49,7 +49,8 @@ login_genesys <- function(){
 
 get_passport_data <- function(crop){
   
-  require(dplyr)
+  library(dplyr)
+  library(raster)
   
   #fields to get from Genesys
   fields <- c("accessionName",
@@ -126,6 +127,15 @@ get_passport_data <- function(crop){
     for (i in 1:length(fields)) { 
       colnames(accessions)[which(names(accessions) == fields[i])] <- std_names[i]
     }
+    
+    #get raster base file
+    tmp_directory = tempdir()
+    unzip(file.path("../../../data/builder_indicators/raster_base.zip"), exdir = tmp_directory)
+    base <- raster(file.path(tmp_directory,"raster_base.asc"))
+    
+    #get cellID from coordinates
+    cellid <- cellFromXY(base, accessions[,c("longitude","latitude")])
+    accessions <- cbind(cellid, accessions)
   },
   
   custom_error = function(e) {
@@ -137,7 +147,7 @@ get_passport_data <- function(crop){
     log_error(error)
     stop(error)
   },
-  
+
   warning = function(warning) {
     log_warning(warning)
     stop()
