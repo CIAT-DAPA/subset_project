@@ -27,10 +27,10 @@ RUN apt-get update \
     && rm /entrypoint.sh 
 
 #Script shared dictory
-VOLUME [ ${FOLDER_APP}, "/mnt", "/var/Script/" ]
-VOLUME [ ${FOLDER_APP}, "/mnt", "/var/Input/" ]
-VOLUME [ ${FOLDER_APP}, "/mnt", "/var/Output/" ]
-VOLUME [ ${FOLDER_APP}, "/mnt", "/var/Logs/" ]
+VOLUME ./var/script/
+VOLUME ./var/input/
+VOLUME ./var/output/
+VOLUME ./var/logs/
 
 
 
