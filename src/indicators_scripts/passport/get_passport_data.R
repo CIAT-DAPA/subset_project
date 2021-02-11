@@ -51,6 +51,7 @@ get_passport_data <- function(crop){
   
   library(dplyr)
   library(raster)
+  library(here)
   
   #fields to get from Genesys
   fields <- c("accessionName",
@@ -131,8 +132,10 @@ get_passport_data <- function(crop){
     }
     
     #get raster base file
+    #the working directory should be any folder inside the project folder
+    root_folder = here()
     tmp_directory = tempdir()
-    unzip(file.path("../../../data/builder_indicators/raster_base.zip"), exdir = tmp_directory)
+    unzip(paste0(root_folder, "/data/builder_indicators/raster_base.zip"), exdir = tmp_directory)
     base <- raster(file.path(tmp_directory,"raster_base.asc"))
     
     #get cellID from coordinates
