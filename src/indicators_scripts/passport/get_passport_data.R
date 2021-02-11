@@ -49,11 +49,15 @@ login_genesys <- function(){
 
 get_passport_data <- function(crop){
   
-  require(dplyr)
+  library(dplyr)
+  library(raster)
+  library(here)
   
   #fields to get from Genesys
   fields <- c("accessionName",
               "accessionNumber",
+              "acquisitionDate",
+              "aegis",
               "available",
               "coll.collDate",
               "countryOfOrigin.code3",
@@ -64,11 +68,10 @@ get_passport_data <- function(crop){
               "geo.elevation",
               "geo.latitude",
               "geo.longitude",
+              "historic",
               "id",
               "institute.acronym",
-              "institute.code",
               "institute.fullName",
-              "mlsStatus",
               "sampStat",
               "taxonomy.genus",
               "taxonomy.spAuthor",
@@ -79,23 +82,24 @@ get_passport_data <- function(crop){
   )
   
   #standardize names
-  std_names <- c("accession_name",
-                 "accession_number",
+  std_names <- c("name",
+                 "number",
+                 "acq_date",
+                 "aegis",
                  "available",
                  "coll_date",
-                 "country_of_origin_code3",
-                 "country_of_origin_name",
-                 "country_of_origin_region_name",
+                 "country_code",
+                 "country_name",
+                 "country_region_name",
                  "crop_name",
                  "doi",
-                 "elevation",
-                 "latitude",
-                 "longitude",
+                 "geo_ele",
+                 "geo_lat",
+                 "geo_lon",
+                 "historic",
                  "id",
                  "institute_acronym",
-                 "institute_code",
-                 "institute_full_name",
-                 "mls_status",
+                 "institute_fullname",
                  "samp_stat",
                  "taxonomy_genus",
                  "taxonomy_sp_author",
@@ -126,6 +130,17 @@ get_passport_data <- function(crop){
     for (i in 1:length(fields)) { 
       colnames(accessions)[which(names(accessions) == fields[i])] <- std_names[i]
     }
+    
+    #get raster base file
+    #the working directory should be any folder inside the project folder
+    root_folder = here()
+    tmp_directory = tempdir()
+    unzip(paste0(root_folder, "/data/builder_indicators/raster_base.zip"), exdir = tmp_directory)
+    base <- raster(file.path(tmp_directory,"raster_base.asc"))
+    
+    #get cellID from coordinates
+    cellid <- cellFromXY(base, accessions[,c("geo_lon","geo_lat")])
+    accessions <- cbind(cellid, accessions)
   },
   
   custom_error = function(e) {
@@ -137,7 +152,7 @@ get_passport_data <- function(crop){
     log_error(error)
     stop(error)
   },
-  
+
   warning = function(warning) {
     log_warning(warning)
     stop()
