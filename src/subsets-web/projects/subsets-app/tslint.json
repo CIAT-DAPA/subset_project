@@ -1,0 +1,17 @@
+{
+  "extends": "../../tslint.json",
+  "rules": {
+    "directive-selector": [
+      true,
+      "attribute",
+      "allianceCgiarOrg",
+      "camelCase"
+    ],
+    "component-selector": [
+      true,
+      "element",
+      "alliance-cgiar-org",
+      "kebab-case"
+    ]
+  }
+}
