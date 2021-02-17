@@ -34,5 +34,5 @@ VOLUME ./var/logs/
 
 
 
-# docker build -t juangarcia/r-dependencies:latest .
+# docker build -t juancode528/r-dependencies:latest .
 # docker run -it --rm juangarcia/r-dependencies:latest bash
