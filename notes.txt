@@ -1,0 +1,16 @@
+https://medium.com/@tomastrajan/how-to-build-epic-angular-app-with-clean-architecture-91640ed1656
+
+ng new subsets-web --create-application false --strict
+cd subsets-web
+ng g application subsets-app --prefix alliance-cgiar-org --style scss --routing
+ng add @angular/material
+npm i -D prettier
+
+#crear archivo .prettierrc
+{
+    "singleQuote": true
+}
+
+npm i -D tslint-config-prettier
+
+npm i -D webpack-bundle-analyzer
