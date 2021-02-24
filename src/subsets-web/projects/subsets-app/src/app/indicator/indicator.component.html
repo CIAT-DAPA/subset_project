@@ -1,0 +1,28 @@
+<h2><span>FILTER SUBSETS</span> </h2>
+<hr>
+
+<div class="mb-3">
+    <label for="type" class="form-label">Indicator type</label>
+    <select name="type" id="type" class="form-control">
+        <option value="less">Generic</option>
+        <option value="greater">Specific by crop</option>
+        <option value="equal">Extracted</option>
+    </select>
+  </div>
+<div class="mb-3">
+    <label for="month" class="form-label">Month</label>
+    <input type="number" class="form-control" [(ngModel)]="parameters.month"  placeholder="1, 2, 3, ..., 12">
+  </div>
+<div class="mb-3">
+    <label for="value" class="form-label">Value</label>
+    <input type="number" [(ngModel)]="parameters.value" class="form-control">
+  </div>
+<div class="mb-3">
+    <label for="operation" class="form-label">Operation</label>
+    <select name="operation" id="operation" class="form-control" [(ngModel)]="parameters.operation">
+        <option value="less">Less</option>
+        <option value="greater">Greater</option>
+        <option value="equal">Equal</option>
+    </select>
+  </div>
+  <button class="btn btn-green" (click)="getSubsetsOfAccession()">Get Subsets</button>
