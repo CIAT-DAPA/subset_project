@@ -1,6 +1,4 @@
 import { NgModule } from '@angular/core';
-import { BrowserModule } from '@angular/platform-browser';
-
 import { AppRoutingModule } from './app-routing.module';
 import { FormsModule } from '@angular/forms'
 import { AppComponent } from './app.component';
@@ -11,6 +9,9 @@ import { FooterComponent } from './shared/footer/footer.component';
 import { IndicatorComponent } from './indicator/indicator.component';
 import { TabsComponent } from './shared/tabs/tabs.component';
 
+import { CoreModule } from './core/core.module';
+import { CommonModule } from '@angular/common';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -20,11 +21,12 @@ import { TabsComponent } from './shared/tabs/tabs.component';
     TabsComponent
   ],
   imports: [
-    BrowserModule,
+    CoreModule,
     AppRoutingModule,
     BrowserAnimationsModule,
     HttpClientModule,
-    FormsModule
+    FormsModule,
+    CommonModule
   ],
   providers: [],
   bootstrap: [AppComponent]
