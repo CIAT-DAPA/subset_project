@@ -1,34 +1,3 @@
-library(futile.logger)
-
-# Setting logging logger and appender
-flog.threshold(INFO, name = 'passport')
-
-# Writing log messages in console and file
-flog.appender(appender.tee('passport_data.log'), name = 'passport')
-
-#'Log Info
-#'
-
-log_info <- function(message, ...){
-  futile.logger::flog.info(message, name = 'passport', ...)
-}
-
-#' Log warnings
-#'
-#'
-
-log_warning <- function(message){
-  futile.logger::flog.warn(message, name = 'passport')
-}
-
-#' Log errors
-#'
-#'
-
-log_error <- function(message){
-  futile.logger::flog.error(message, name = 'passport')
-}
-
 #' Get the authorization code to login to Genesys
 #'
 
@@ -36,8 +5,6 @@ login_genesys <- function(){
   #setup production environment
   genesysr::setup_production()
   
-  #login to get the authorization code
-  log_info(message = "Authorizing to Genesys")
   genesysr::user_login()
 }
 
@@ -49,9 +16,18 @@ login_genesys <- function(){
 
 get_passport_data <- function(crop){
   
+  library(futile.logger)
   library(dplyr)
   library(raster)
   library(here)
+  
+  #the working directory should be any folder inside the project folder
+  root_folder = here()
+  
+  source(file = paste0(root_folder, "/src/indicators_scripts/tools/logging.R"), local = TRUE)
+  
+  # set up the logging context
+  set_logger_appender('passport', 'passport.log')
   
   #fields to get from Genesys
   fields <- c("accessionName",
@@ -112,7 +88,7 @@ get_passport_data <- function(crop){
   tryCatch({
     
     #get passport data
-    log_info(message = "Getting accessions passport data for crop(s): %s", crop)
+    log_info('passport', message = "Getting accessions passport data for crop(s): %s", crop)
     
     accessions <- genesysr::get_accessions(list(crop = crop), fields = fields)
     
@@ -121,7 +97,7 @@ get_passport_data <- function(crop){
       stop(err)
     }
     
-    else log_info("%s accessions are extracted.", nrow(accessions))
+    else log_info('passport', "%s accessions are extracted.", nrow(accessions))
   
     #keep just columns included in fields
     accessions <- accessions %>% dplyr::select(any_of(fields))
@@ -132,8 +108,6 @@ get_passport_data <- function(crop){
     }
     
     #get raster base file
-    #the working directory should be any folder inside the project folder
-    root_folder = here()
     tmp_directory = tempdir()
     unzip(paste0(root_folder, "/data/builder_indicators/raster_base.zip"), exdir = tmp_directory)
     base <- raster(file.path(tmp_directory,"raster_base.asc"))
@@ -149,13 +123,12 @@ get_passport_data <- function(crop){
   },
   
   error = function(error) {
-    log_error(error)
+    log_error('passport', error)
     stop(error)
   },
 
-  warning = function(warning) {
-    log_warning(warning)
-    stop()
+  warning = function( warning) {
+    log_warning('passport', warning)
   })
   
   accessions
