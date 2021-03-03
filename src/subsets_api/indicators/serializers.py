@@ -30,5 +30,11 @@ class IndicatorPeriodsSerializer(serializers.ModelSerializer):
 class IndicatorValuesSerializer(serializers.ModelSerializer):
     """ Serializers for indicators """
     class Meta:
-        model = Indicator
+        model = IndicatorValue
+        fields = '__all__'
+
+class CropsSerializer(serializers.ModelSerializer):
+    """ Serializers for crops """
+    class Meta:
+        model = Crops
         fields = '__all__'

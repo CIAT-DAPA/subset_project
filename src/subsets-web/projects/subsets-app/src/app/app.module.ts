@@ -11,6 +11,13 @@ import { TabsComponent } from './shared/tabs/tabs.component';
 
 import { CoreModule } from './core/core.module';
 import { CommonModule } from '@angular/common';
+import {NgxPaginationModule} from 'ngx-pagination';
+import { NgxSliderModule } from '@angular-slider/ngx-slider';
+
+import { FilterModule } from './filter/filter.module';
+import { AuthModule } from './auth/auth.module';
+import { SharedModule } from './shared/shared.module';
+import { MaterialModule } from './material/material.module';
 
 @NgModule({
   declarations: [
@@ -26,7 +33,13 @@ import { CommonModule } from '@angular/common';
     BrowserAnimationsModule,
     HttpClientModule,
     FormsModule,
-    CommonModule
+    CommonModule,
+    FilterModule,
+    AuthModule,
+    SharedModule,
+    NgxPaginationModule,
+    MaterialModule,
+    NgxSliderModule
   ],
   providers: [],
   bootstrap: [AppComponent]

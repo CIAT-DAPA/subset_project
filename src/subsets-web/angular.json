@@ -22,12 +22,13 @@
             "main": "projects/subsets-app/src/main.ts",
             "polyfills": "projects/subsets-app/src/polyfills.ts",
             "tsConfig": "projects/subsets-app/tsconfig.app.json",
-            "aot": true,
+            "aot": false,
             "assets": [
               "projects/subsets-app/src/favicon.ico",
               "projects/subsets-app/src/assets"
             ],
             "styles": [
+              "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
               "projects/subsets-app/src/styles.scss",
               "node_modules/bootstrap/dist/css/bootstrap.min.css"
             ],
@@ -94,6 +95,7 @@
               "projects/subsets-app/src/assets"
             ],
             "styles": [
+              "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
               "projects/subsets-app/src/styles.scss"
             ],
             "scripts": []

@@ -1,88 +1,29 @@
-<!-- Tabs navs -->
-<ul class="nav nav-tabs mb-3" id="ex1" role="tablist">
-    <li class="nav-item" role="presentation">
-      <a
-        class="nav-link active"
-        id="ex1-tab-1"
-        data-mdb-toggle="tab"
-        href="#ex1-tabs-1"
-        role="tab"
-        aria-controls="ex1-tabs-1"
-        aria-selected="true"
-        >Table</a
-      >
-    </li>
-    <li class="nav-item" role="presentation">
-      <a
-        class="nav-link"
-        id="ex1-tab-2"
-        data-mdb-toggle="tab"
-        href="#ex1-tabs-2"
-        role="tab"
-        aria-controls="ex1-tabs-2"
-        aria-selected="false"
-        >Map</a
-      >
-    </li>
-    <li class="nav-item" role="presentation">
-      <a
-        class="nav-link"
-        id="ex1-tab-3"
-        data-mdb-toggle="tab"
-        href="#ex1-tabs-3"
-        role="tab"
-        aria-controls="ex1-tabs-3"
-        aria-selected="false"
-        >Plot</a
-      >
-    </li>
-  </ul>
-  <!-- Tabs navs -->
-  
-  <!-- Tabs content -->
-  <div class="tab-content" id="ex1-content">
-    <div
-      class="tab-pane fade show active"
-      id="ex1-tabs-1"
-      role="tabpanel"
-      aria-labelledby="ex1-tab-1"
-    >
+<mat-tab-group mat-align-tabs="start">
+  <mat-tab label="Table">
     <table class="table table-striped">
-        <thead>
-          <tr>
-            <th scope="col">#</th>
-            <th scope="col">First</th>
-            <th scope="col">Last</th>
-            <th scope="col">Handle</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <th scope="row">1</th>
-            <td>Mark</td>
-            <td>Otto</td>
-            <td>@mdo</td>
-          </tr>
-          <tr>
-            <th scope="row">2</th>
-            <td>Jacob</td>
-            <td>Thornton</td>
-            <td>@fat</td>
-          </tr>
-          <tr>
-            <th scope="row">3</th>
-            <td>Larry</td>
-            <td>the Bird</td>
-            <td>@twitter</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="tab-pane fade" id="ex1-tabs-2" role="tabpanel" aria-labelledby="ex1-tab-2">
-      Tab 2 content
-    </div>
-    <div class="tab-pane fade" id="ex1-tabs-3" role="tabpanel" aria-labelledby="ex1-tab-3">
-      Tab 3 content
-    </div>
-  </div>
-  <!-- Tabs content -->
+      <thead>
+        <tr>
+          <th scope="col" *ngFor="let header of headers" class="item-table" style="text-align: center;">{{header}}</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let value of accessions$ | paginate: { itemsPerPage: 10, currentPage: ActualPage}"
+          style="text-align: center;">
+          <td>{{value.id}}</td>
+          <td>{{value.number}}</td>
+          <td>{{value.name}}</td>
+          <td>{{value.crop_name}}</td>
+          <td>{{value.country_name}}</td>
+          <td>{{value.doi}}</td>
+          <td>{{value.institute_fullname}}</td>
+          <td>{{value.samp_stat}}</td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination-controls (pageChange)="ActualPage = $event">
+
+    </pagination-controls>
+  </mat-tab>
+  <mat-tab label="Map">Content 2</mat-tab>
+  <mat-tab label="Plot">Content 3</mat-tab>
+</mat-tab-group>
