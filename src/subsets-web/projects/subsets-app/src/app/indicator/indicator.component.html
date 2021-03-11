@@ -1,0 +1,100 @@
+<div class="flex-container">
+
+  <div class="filter-space container mt-3">
+    <h2><span>FILTER SUBSETS</span> </h2>
+    <hr>
+    <mat-tab-group mat-align-tabs="center">
+      <mat-tab label="Accessions">
+        <hr>
+        <div class="mb-3">
+          <label for="crop" class="form-label">Select a crop name</label>
+          <select class="form-control" name="crop" id="crop" [(ngModel)]="params.crop_name">
+            <option *ngFor="let x of crops$" value="{{x.name}}">{{x.name}}</option>
+          </select>
+        </div>
+        <hr>
+        <div class="mb-3">
+          <label for="name" class="form-label">Accession name</label>
+          <input type="text" class="form-control" [(ngModel)]="params.name" >
+        </div>
+        <div class="mb-3">
+          <label for="country" class="form-label">Country</label>
+          <input type="text" class="form-control" [(ngModel)]="params.country_name" placeholder="i.e. Slovakia">
+        </div>
+<!--         <div class="mb-3">
+
+          <mat-form-field class="example-chip-list">
+            <mat-label>Select country(ies)</mat-label>
+            <mat-chip-list #chipList aria-label="Fruit selection">
+              <mat-chip *ngFor="let fruit of countries" [selectable]="selectable"
+                       [removable]="removable" (removed)="remove(fruit)">
+                {{fruit.name}}
+                <mat-icon matChipRemove *ngIf="removable">x</mat-icon>
+              </mat-chip>
+              <input placeholder="New fruit..."
+                     [matChipInputFor]="chipList"
+                     [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                     [matChipInputAddOnBlur]="addOnBlur"
+                     (matChipInputTokenEnd)="add($event)">
+            </mat-chip-list>
+
+          </mat-form-field>
+        </div> -->
+        <div class="mb-3">
+          <label for="institute-name" class="form-label">Institute Name</label>
+          <input type="text" class="form-control" [(ngModel)]="params.institute_acronym">
+        </div>
+        <div class="mb-3">
+          <label for="biological-status" class="form-label">Select a biological status</label>
+          <select name="biological-status" id="biological-status" class="form-control" [(ngModel)]="params.samp_stat">
+            <option *ngFor="let x of mcpd" value="{{x.id}}">{{x.name}}</option>
+          </select>
+        </div>
+        <button class="btn btn-green" (click)="getAccessions()">Get Accessions</button>
+      </mat-tab>
+      <mat-tab label="Indicators">
+        <div class="mb-3 mt-3">
+          <label for="indicator" class="form-label">Select an indicator</label>
+          <select name="indicator" id="indicator" class="form-control" [(ngModel)]="parameters.indicator">
+            <option *ngFor="let x of indicators" value="{{x.pref}}">{{x.name}}</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label for="period" class="form-label">Add a year</label>
+          <input type="text" class="form-control" [(ngModel)]="parameters.period" placeholder="i.e. 1983, 1984, ..., 2016">
+        </div>
+        <div class="mb-3">
+        <label for="month" class="form-label">Select a month</label>
+          <select name="month" id="month" class="form-control" [(ngModel)]="parameters.month">
+            <option value="1">January</option>
+            <option value="2">Febrary</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+          </select>
+        </div>
+          <div class="mb-4">
+            <label for="value" class="form-label">Select an range of values</label>
+            <ngx-slider [(value)]="minValue" [(highValue)]="maxValue" [options]="options" [(ngModel)]="parameters.value"></ngx-slider>
+          </div>
+          <button class="btn btn-green mt-3" (click)="getSubsetsOfAccession()">Get Filter</button>
+      </mat-tab>
+     <!--  <mat-tab label="Third">Content 3</mat-tab> -->
+    </mat-tab-group>
+  </div>
+  <div class="outcome-space">
+    <div class="band-green">
+      <h1 class="ml-2">Subsets of accessions overview</h1>
+      <h3 class="ml-2 m-0 font-medium">Summary information about the parameters selected</h3>
+    </div>
+    <!-- <app-tabs [accessions]="accessions$"></app-tabs> -->
+    <app-tabs></app-tabs>
+  </div>
+</div>
