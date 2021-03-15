@@ -1,5 +1,6 @@
 # Load libraries
 import pandas as pd 
+from ..indicators.scripts import *
 
 # Read data 
 """ data = pd.read_csv("6_summary_genetic.csv")  """
@@ -26,5 +27,16 @@ def filter_by_var(data, data_summary, var, metric, operator):
         condition = data[var] < data_summary.loc[var, metric]
 
     return data[condition]
+
+""" id_custom_data: column name in custom data having id data
+    id_accessions: column name in accessions data having id data
+"""
+def merge_data(custom_data, id_custom_data, id_accessions):
+    id_list = custom_data[id_custom_data].tolist()
+    """ get accessions data that match id_list """
+    accessions_data = getAccessionsById(id_list)
+
+    merged_data = custom_data.merge(accessions_data, how='inner', left_on=id_custom_data, right_on=id_accessions)
+
 
 
