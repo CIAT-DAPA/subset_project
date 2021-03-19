@@ -4,12 +4,15 @@ FROM python:3.8
 WORKDIR /var/www/app
 
 # Install app dependencies
-COPY ../../src/subsets_api/requirements.txt ./
+COPY ./src/subsets_api/requirements.txt ./
 
 RUN pip install -r requirements.txt
 
 # Bundle app source
-COPY ../../src/subsets_api/ /var/www/app
+COPY ./src/subsets_api/ /var/www/app
 
 EXPOSE 8080
 #CMD [ "python", "server.py" ]
+
+# cd ..\..\
+# docker build -t juancode528/subsets_api_python -f docker/subsets_webapi/Dockerfile .

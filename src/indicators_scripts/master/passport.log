@@ -1,0 +1,33 @@
+INFO [2021-03-17 14:25:32] Getting accessions passport data for crop(s): beans
+WARN [2021-03-17 14:25:32] simpleWarning in .check_auth(): You must first authorize with Genesys with user_login() or client_login(...).
+
+INFO [2021-03-17 14:26:11] Getting accessions passport data for crop(s): Beans
+WARN [2021-03-17 14:26:11] simpleWarning in .check_auth(): You must first authorize with Genesys with user_login() or client_login(...).
+
+INFO [2021-03-17 14:26:46] Getting accessions passport data for crop(s): Beans
+ERROR [2021-03-18 09:52:22] Error in curl::curl_fetch_memory(url, handle = handle): Operation was aborted by an application callback
+
+INFO [2021-03-18 09:52:35] Getting accessions passport data for crop(s): Beans
+ERROR [2021-03-18 09:52:37] Error: Genesys responded with HTTP status code 406. Expected 200. See response content:
+
+
+INFO [2021-03-18 09:53:09] Getting accessions passport data for crop(s): Beans
+WARN [2021-03-18 10:58:38] simpleWarning in scan(file = file, what = what, sep = sep, quote = quote, dec = dec, : EOF within quoted string
+
+INFO [2021-03-18 12:17:36] Getting accessions passport data for crop(s): Cassava
+INFO [2021-03-18 12:41:11] 13113 accessions are extracted.
+INFO [2021-03-18 14:01:55] Getting accessions passport data for crop(s): Forages
+INFO [2021-03-18 19:10:11] 175924 accessions are extracted.
+INFO [2021-03-18 19:42:51] Getting accessions passport data for crop(s): Wheat
+WARN [2021-03-18 21:22:24] simpleWarning in scan(file = file, what = what, sep = sep, quote = quote, dec = dec, : EOF within quoted string
+
+INFO [2021-03-18 22:21:51] Getting accessions passport data for crop(s): Maize
+ERROR [2021-03-18 22:21:52] Error: Genesys responded with HTTP status code 406. Expected 200. See response content:
+
+
+INFO [2021-03-18 22:22:40] Getting accessions passport data for crop(s): Maize
+WARN [2021-03-18 22:51:55] simpleWarning in scan(file = file, what = what, sep = sep, quote = quote, dec = dec, : EOF within quoted string
+
+INFO [2021-03-18 23:13:41] Getting accessions passport data for crop(s): Maize
+WARN [2021-03-18 23:43:30] simpleWarning in scan(file = file, what = what, sep = sep, quote = quote, dec = dec, : EOF within quoted string
+
