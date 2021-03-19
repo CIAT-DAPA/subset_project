@@ -20,11 +20,15 @@ mng_conn_indicatorValue<-mongo(collection = 'indicators_indicatorvalue', db = 'i
 #Inserting indicators values
 mng_conn_indicatorValue$insert(data)
 
+#install.packages("raster", dependencies = TRUE)
+#install.packages("Rcpp")
+remove.packages("raster")
+install.packages(c("Rcpp", "rgdal", "sp", "raster"))
 #' Get accession passport data by crop
 #' @param crop a vector of crop names
-accession_data<-get_passport_data("cassava")
+accession_data<-get_passport_data("Maize")
 
 #inserting json data extracted before  
-mng_conn$insert(jsonlite::fromJSON(accession_data))
+passport_indicators$insert(accession_data)
 
 
