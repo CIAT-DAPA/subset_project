@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, mixins, filters
 from rest_framework.response import Response
+from rest_framework import status
 from rest_framework import generics
 from rest_framework.views import APIView
 from django_filters import rest_framework as filters
@@ -111,11 +112,11 @@ class IndicatorPostViewSet(mixins.CreateModelMixin,
             lst_cellid = []
             for value in lst_accessions:
                 # accessions queryset
-                lst_cellid.append(value.cellid)
+                if value.cellid not in lst_cellid:
+                    lst_cellid.append(value.cellid)
             # accessions serializer
-            print(lst_cellid)
             accessiones = self.queryset.filter(
-                cellid__in=lst_cellid).annotate(dcount=Count('cellid'))
+                cellid__in=lst_cellid)
             serializer = self.serializer_class(accessiones, many=True)
             serializer_indicator_value = IndicatorValuesSerializer(
                 lst_accessions, many=True)

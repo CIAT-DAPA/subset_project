@@ -27,8 +27,34 @@ SECRET_KEY = '393l9sa@qun_81cbur)+vzjwg@u#-$+(ej1u)!xq-g=30w*3v9'
 DEBUG = True
 
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
+CORS_ORIGIN_ALLOW_ALL = True
+
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:4200",
+    "http://localhost:8080",
+]
+
+CORS_ALLOW_METHODS = [
+    'GET',
+    'OPTION',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-crsftoken',
+    'x-requested-with',
+]
 
 # Application definition
 
@@ -40,6 +66,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
+    'django_filters',
 
     #local apps
     'indicators'
@@ -49,6 +77,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
@@ -89,7 +118,10 @@ WSGI_APPLICATION = 'subsets_WebApi.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'djongo',
-        'NAME': 'indicator',
+        'NAME': os.environ.get('DB_NAME'),
+        'CLIENT': {
+        'host': os.environ.get('DB_HOST'),
+        'port': int(os.environ.get('DB_PORT'))}
     }
 }
 

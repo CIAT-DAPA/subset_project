@@ -31,7 +31,7 @@ class IndicatorValuesSerializer(serializers.ModelSerializer):
     """ Serializers for indicators """
     class Meta:
         model = IndicatorValue
-        fields = '__all__'
+        fields = ('month', 'value', 'cellid')
 
 class CropsSerializer(serializers.ModelSerializer):
     """ Serializers for crops """

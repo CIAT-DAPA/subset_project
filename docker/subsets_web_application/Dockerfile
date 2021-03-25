@@ -12,5 +12,7 @@ COPY ./docker/subsets_web_application/src/nginx.conf /etc/nginx/nginx.conf
 COPY --from=build /usr/src/app/dist/subsets-app /usr/share/nginx/html
 
 # cd ..\..\
-# docker build -t juancode528/subsets_web_app .
-# docker run --name subsets_web_app -d -p 8080:80 juancode528/subsets_web_app:latest
+# docker build -t juancode528/subsets_web_angular .
+# or
+# docker pull juancode528/subsets_web_angular
+# docker run --name subsets_web_app -d -p 8080:80 --link subsets_api:api juancode528/subsets_web_angular:latest
