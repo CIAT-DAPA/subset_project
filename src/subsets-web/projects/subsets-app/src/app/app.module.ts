@@ -7,7 +7,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NavbarComponent } from './shared/navbar/navbar.component';
 import { FooterComponent } from './shared/footer/footer.component';
 import { IndicatorComponent } from './indicator/indicator.component';
-import { TabsComponent } from './shared/tabs/tabs.component';
+//import { TabsComponent } from './shared/tabs/tabs.component';
 
 import { CoreModule } from './core/core.module';
 import { CommonModule } from '@angular/common';
@@ -18,6 +18,7 @@ import { FilterModule } from './filter/filter.module';
 import { AuthModule } from './auth/auth.module';
 import { SharedModule } from './shared/shared.module';
 import { MaterialModule } from './material/material.module';
+import { LayoutComponent } from './layout/layout.component';
 
 @NgModule({
   declarations: [
@@ -25,7 +26,8 @@ import { MaterialModule } from './material/material.module';
     NavbarComponent,
     FooterComponent,
     IndicatorComponent,
-    TabsComponent
+    //TabsComponent,
+    LayoutComponent
   ],
   imports: [
     CoreModule,

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, mixins, filters
 from rest_framework.response import Response
+from rest_framework import status
 from rest_framework import generics
 from rest_framework.views import APIView
 from django_filters import rest_framework as filters
@@ -13,49 +14,6 @@ from .models import *
 from .serializers import *
 from .scripts import *
 
-
-""" class IndicatorViewSet(generics.ListAPIView):
-    def get_queryset(self):
-        query_params = self.request.query_params
-        indicators = query_params.get('indicators', None)
-
-        indicatorParams = []
-        if indicators is not None:
-            for indicators in indicators.split['|']:
-                indicatorParams.append(str(indicators))
-        if indicators is not None:
-            queryset_list = Indicator.object.all()
-            queryset_list = queryset_list.filter(pref__in=indicatorParams)
-            return queryset_list
-
-class IndicatorValueViewSet(mixins.CreateModelMixin,
-                        mixins.ListModelMixin,
-                        mixins.RetrieveModelMixin,
-                        mixins.UpdateModelMixin,
-                        viewsets.GenericViewSet):
-    queryset = IndicatorValue.objects.all()
-    serializer_class = IndicatorValuesSerializer
-    def list(self, request, *args, **kwargs):
-        value = self.kwargs['value']
-        indicator_value = IndicatorValue.objects.filter(value = value)
-        serialier = IndicatorValuesSerializer(indicator_value, many=True)
-        return Response(serialier.data) """
-
-""" class AccessionByIdViewSet(mixins.CreateModelMixin,
-                           mixins.ListModelMixin,
-                           mixins.RetrieveModelMixin,
-                           mixins.UpdateModelMixin,
-                           viewsets.GenericViewSet):
-    queryset = Accession.objects.all()
-    serializer_class = AccessionsSerializer
-
-    def list(self, request, *args, **kwargs):
-        id = self.kwargs['id']
-        accessions = self.queryset.filter(id = id)
-        serializer = self.serializer_class(accessions, many=True)
-        print(id)
-        return Response(serializer.data) """
-
 class AccessionsList(mixins.CreateModelMixin,
                        mixins.ListModelMixin,
                        mixins.RetrieveModelMixin,
@@ -64,7 +22,7 @@ class AccessionsList(mixins.CreateModelMixin,
     queryset = Accession.objects.all()
     serializer_class = AccessionsSerializer
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['crop_name', 'name', 'country_name', 'samp_stat', 'institute_fullname', 'institute_acronym']
+    filterset_fields = ['crop_name', 'name', 'country_name', 'samp_stat', 'institute_fullname', 'institute_acronym', 'country_name']
 
 class CropList(mixins.CreateModelMixin,
                        mixins.ListModelMixin,
@@ -102,12 +60,17 @@ class IndicatorPostViewSet(mixins.CreateModelMixin,
 
     def create(self, request, *args, **kwargs):
 
-        #request indicator data
+        # request indicator data
         month = self.request.data['month']
         value = self.request.data['value']
         indicator = self.request.data['indicator']
         period = self.request.data['period']
         lst = []
+        lst_accessions = []
+        lst_indicator_period = []
+        lst_indicator = []
+        indicator_qs = ''
+        indicator_period_qs = ''
 
         if (month == ""):
             queryIndicator = IndicatorValue.objects.filter(
@@ -118,27 +81,50 @@ class IndicatorPostViewSet(mixins.CreateModelMixin,
                     lst.append(acces)
             serializer = self.serializer_class(lst, many=True)
             return Response(serializer.data)
-        #indicator = Indicator.objects.filter()
-        if (month != "") and (period != ""):
-            #indicator queryset 
-            print(indicator)
-            indicator_qs = Indicator.objects.filter(pref=indicator).first()
-            #indicator_period queryset
-            indicator_period_qs = IndicatorPeriod.objects.filter(indicator=indicator_qs._id, period=period).first()
-            print(indicator_period_qs._id)
-            #indicator_value queryset
+        # indicator = Indicator.objects.filter()
+        if (month != ""):
+            # indicator queryset
+            indicator_qs = Indicator.objects.filter(name__in=indicator)
+            # indicator_period queryset
+            if "," in period:
+                periods = period.split(",")
+                for lst_ind in indicator_qs:
+                    indicator_period_qs = IndicatorPeriod.objects.filter(
+                            indicator=lst_ind._id, period__in=periods)
+            elif "-" in period:
+                for lst_ind in indicator_qs:
+                    periods = period.split("-")
+                    min_period = periods[0]
+                    max_period = periods[1]
+                    lst_indicator_period = IndicatorPeriod.objects.filter(
+                        indicator=lst_ind._id, period__range=(min_period, max_period))
+
+            # indicator_value queryset
             min_value = float(value[0])
             max_value = float(value[1])
-            print(min_value)
-            queryIndicator = IndicatorValue.objects.filter(
-                value__range=(min_value, max_value), month=month, indicator_period=indicator_period_qs._id)
-            #iterating indicator_value queryset
-            for value in queryIndicator:
-                #accessions queryset
-                accessions = self.queryset.filter(cellid=value.cellid)
-                for acs in accessions:
-                    #adding accessions records to list
-                    lst.append(acs)
-            #accessions serializer
-            serializer = self.serializer_class(lst, many=True)
-            return Response(serializer.data)
+
+            for pe in indicator_period_qs:
+                queryIndicator = IndicatorValue.objects.filter(
+                    value__range=(min_value, max_value), month__in=month, indicator_period=pe._id)
+                for values in queryIndicator:
+                    lst_accessions.append(values)
+            # iterating indicator_value queryset
+            lst_cellid = []
+            for value in lst_accessions:
+                # accessions queryset
+                if value.cellid not in lst_cellid:
+                    lst_cellid.append(value.cellid)
+            # accessions serializer
+            accessiones = self.queryset.filter(
+                cellid__in=lst_cellid)
+            serializer = self.serializer_class(accessiones, many=True)
+            serializer_indicator_value = IndicatorValuesSerializer(
+                lst_accessions, many=True)
+            serializer_list = [serializer.data,
+                               serializer_indicator_value.data]
+            content = {
+                'status': 1,
+                'responseCode': status.HTTP_200_OK,
+                'data': serializer_list,
+            }
+            return Response(content)

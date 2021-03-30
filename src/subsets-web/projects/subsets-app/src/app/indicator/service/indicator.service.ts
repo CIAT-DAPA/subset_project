@@ -28,11 +28,11 @@ export class IndicatorService {
 
   getAccessions(parameter:any): Observable<any> {
     let params = new HttpParams().set('crop_name', parameter.crop_name)
-      .set('name', parameter.name)
-      .set('country_name', parameter.country_name)
-      .set('samp_stat', parameter.samp_stat)
-      .set('institute_fullname', parameter.institute_fullname)
-      .set('institute_acronym', parameter.institute_acronym)
+    .set('name', parameter.name)
+    .set('country_name', parameter.country_name)
+    .set('samp_stat', parameter.samp_stat)
+    .set('institute_fullname', parameter.institute_fullname)
+    .set('institute_acronym', parameter.institute_acronym)
 
     return this.http.get(this.URL + `accessions/`, { params: params, headers: this.headers })
   }

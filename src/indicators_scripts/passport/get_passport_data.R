@@ -85,37 +85,43 @@ get_passport_data <- function(crop){
                  "taxonomy_taxon_name"
   )
   
-  tryCatch({
+  tryCatch(
     
-    #get passport data
-    log_info('passport', message = "Getting accessions passport data for crop(s): %s", crop)
+    withCallingHandlers({
+      #get passport data
+      log_info('passport', message = "Getting accessions passport data for crop(s): %s", crop)
     
-    accessions <- genesysr::get_accessions(list(crop = crop), fields = fields)
+      accessions <- genesysr::get_accessions(list(crop = crop), fields = fields)
     
-    if(nrow(accessions) == 0){
-      err <- simpleError("No records extracted. Please check the validity of crop(s) name(s) passed as argument!")
-      stop(err)
-    }
+      if(nrow(accessions) == 0){
+        err <- simpleError("No records extracted. Please check the validity of crop(s) name(s) passed as argument!")
+        stop(err)
+      }
     
-    else log_info('passport', "%s accessions are extracted.", nrow(accessions))
+      else log_info('passport', "%s accessions are extracted.", nrow(accessions))
   
-    #keep just columns included in fields
-    accessions <- accessions %>% dplyr::select(any_of(fields))
+      #keep just columns included in fields
+      accessions <- accessions %>% dplyr::select(any_of(fields))
   
-    #modify accessions column names
-    for (i in 1:length(fields)) { 
-      colnames(accessions)[which(names(accessions) == fields[i])] <- std_names[i]
+      #modify accessions column names
+      for (i in 1:length(fields)) { 
+        colnames(accessions)[which(names(accessions) == fields[i])] <- std_names[i]
+      }
+    
+      #get raster base file
+      tmp_directory = tempdir()
+      unzip(paste0(root_folder, "/data/builder_indicators/raster_base_complete.zip"), exdir = tmp_directory)
+      base <- raster(file.path(tmp_directory,"raster_base_complete.asc"))
+    
+      #get cellID from coordinates
+      cellid <- cellFromXY(base, accessions[,c("geo_lon","geo_lat")])
+      accessions <- cbind(cellid, accessions)
+     
+    },
+    warning = function(w) {
+      log_warning('passport', w$message)
     }
-    
-    #get raster base file
-    tmp_directory = tempdir()
-    unzip(paste0(root_folder, "/data/builder_indicators/raster_base.zip"), exdir = tmp_directory)
-    base <- raster(file.path(tmp_directory,"raster_base.asc"))
-    
-    #get cellID from coordinates
-    cellid <- cellFromXY(base, accessions[,c("geo_lon","geo_lat")])
-    accessions <- cbind(cellid, accessions)
-  },
+  ),
   
   custom_error = function(e) {
     err <- conditionMessage(e)
@@ -125,10 +131,6 @@ get_passport_data <- function(crop){
   error = function(error) {
     log_error('passport', error)
     stop(error)
-  },
-
-  warning = function( warning) {
-    log_warning('passport', warning)
   })
   
   accessions

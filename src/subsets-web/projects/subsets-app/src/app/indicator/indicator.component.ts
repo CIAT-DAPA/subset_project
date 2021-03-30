@@ -3,10 +3,19 @@ import { IndicatorService } from './service/indicator.service';
 import { Options } from '@angular-slider/ngx-slider';
 import { Observable } from 'rxjs';
 import { SharedService } from '../core/service/shared.service';
+import { ThemePalette } from '@angular/material/core';
 
 //chips
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
+
+export interface Month {
+  id: number;
+  name: string;
+  completed: boolean;
+  color: ThemePalette;
+  subtasks?: Month[];
+}
 
 @Component({
   selector: 'app-indicator',
@@ -32,6 +41,33 @@ export class IndicatorComponent implements OnInit {
     { name: 'Slovakia' },
     { name: 'Ghana' },
   ];
+
+  //checkbox month
+
+  months: Month = {
+    id: 0,
+    name: 'All',
+    completed: false,
+    color: 'primary',
+    subtasks: [
+      { id: 1, name: 'January', completed: false, color: 'primary' },
+      { id: 2, name: 'Febrary', completed: false, color: 'primary' },
+      { id: 3, name: 'March', completed: false, color: 'primary' },
+      { id: 4, name: 'April', completed: false, color: 'primary' },
+      { id: 5, name: 'May', completed: false, color: 'primary' },
+      { id: 6, name: 'June', completed: false, color: 'primary' },
+      { id: 7, name: 'July', completed: false, color: 'primary' },
+      { id: 8, name: 'August', completed: false, color: 'primary' },
+      { id: 9, name: 'September', completed: false, color: 'primary' },
+      { id: 10, name: 'October', completed: false, color: 'primary' },
+      { id: 11, name: 'November', completed: false, color: 'primary' },
+      { id: 12, name: 'December', completed: false, color: 'primary' },
+    ]
+  };
+
+  allComplete: boolean = false;
+
+  //end checkbox month
 
 
   mcpd = [
@@ -80,6 +116,7 @@ export class IndicatorComponent implements OnInit {
   }
 
   getSubsetsOfAccession = () => {
+    this.parameters.month = this.getAllSelected()
     this.api.getSubsetsOfAccession(this.parameters).subscribe(
       (data) => {
         this.subsets$ = data
@@ -127,8 +164,6 @@ export class IndicatorComponent implements OnInit {
   }
 
   filterAccessionsByIndicator() {
-    console.log(this.subsets$);
-
     this.subsets$.forEach((value: any) => {
       let accesionsfind = this.accessions$.filter((acces: any) => acces.cellid == value.cellid)
       for (let vat of accesionsfind) {
@@ -137,7 +172,6 @@ export class IndicatorComponent implements OnInit {
     });
     this.accessions$ = this.accessionsFiltered$
     this.drawTable(this.accessions$)
-    console.log(this.accessions$);
   }
 
   //Chips
@@ -163,6 +197,43 @@ export class IndicatorComponent implements OnInit {
     if (index >= 0) {
       this.countries.splice(index, 1);
     }
+  }
+
+  //end chips
+
+  //checkbox filter
+
+  updateAllComplete() {
+    this.allComplete = this.months.subtasks != null && this.months.subtasks.every(t => t.completed);
+  }
+
+  someComplete(): boolean {
+    if (this.months.subtasks == null) {
+      return false;
+    }
+    return this.months.subtasks.filter(t => t.completed).length > 0 && !this.allComplete;
+  }
+
+  setAll(completed: boolean) {
+    this.allComplete = completed;
+    if (this.months.subtasks == null) {
+      return;
+    }
+    this.months.subtasks.forEach(t => t.completed = completed);
+  }
+
+  getAllSelected():any {
+    if (this.months.subtasks != null) {
+      let lst: Month[] = []
+      let lst_final: any = []
+      lst = this.months.subtasks.filter((value: any) => value.completed == true)
+      lst.forEach(element => {
+        lst_final.push(element.id)
+      });
+      return lst_final
+      
+    }
+    
   }
 
 }

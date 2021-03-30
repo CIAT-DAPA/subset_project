@@ -7,7 +7,7 @@ import { FormFilterComponent } from './components/form-filter/form-filter.compon
 
 const routes: Routes = [
   {
-    path: 'filter',
+    path: '',
     component: FormFilterComponent
   },
 ];
