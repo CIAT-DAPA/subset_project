@@ -19,12 +19,12 @@ get_passport_data <- function(crop){
   library(futile.logger)
   library(dplyr)
   library(raster)
-  library(here)
+  #library(here)
   
   #the working directory should be any folder inside the project folder
-  root_folder = here()
+  #root_folder = here()
   
-  source(file = paste0(root_folder, "/src/indicators_scripts/tools/logging.R"), local = TRUE)
+  source(file = "../../../src/indicators_scripts/tools/logging.R", local = TRUE)
   
   # set up the logging context
   set_logger_appender('passport', 'passport.log')
@@ -85,8 +85,8 @@ get_passport_data <- function(crop){
                  "taxonomy_taxon_name"
   )
   
-  tryCatch(
-    
+  tryCatch({
+    options(warning.expression=quote(function(){}))
     withCallingHandlers({
       #get passport data
       log_info('passport', message = "Getting accessions passport data for crop(s): %s", crop)
@@ -99,7 +99,11 @@ get_passport_data <- function(crop){
       }
     
       else log_info('passport', "%s accessions are extracted.", nrow(accessions))
-  
+      
+      # add longitude and latitude columns if not existing
+      coord <- c("geo.latitude", "geo.longitude")
+      accessions[coord[!(coord %in% names(accessions))]] <- NA
+      
       #keep just columns included in fields
       accessions <- accessions %>% dplyr::select(any_of(fields))
   
@@ -110,7 +114,7 @@ get_passport_data <- function(crop){
     
       #get raster base file
       tmp_directory = tempdir()
-      unzip(paste0(root_folder, "/data/builder_indicators/raster_base_complete.zip"), exdir = tmp_directory)
+      unzip("../../../data/builder_indicators/raster_base_complete.zip", exdir = tmp_directory)
       base <- raster(file.path(tmp_directory,"raster_base_complete.asc"))
     
       #get cellID from coordinates
@@ -121,7 +125,7 @@ get_passport_data <- function(crop){
     warning = function(w) {
       log_warning('passport', w$message)
     }
-  ),
+  )},
   
   custom_error = function(e) {
     err <- conditionMessage(e)
