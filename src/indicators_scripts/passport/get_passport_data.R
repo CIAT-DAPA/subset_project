@@ -11,7 +11,7 @@ login_genesys <- function(){
 #' Flag longitude/latitude coordinates to indicate their validity or invalidity. There are four flags:
 #' "NA": for NA coordinates
 #' "invalid": for lat > 90, lat < -90, lon > 180 and lon < -180
-#' "point in sea": for coordinates outside the land. The shapefile used is downloaded from \url{https://osmdata.openstreetmap.de/data/land-polygons.html}.
+#' "point in sea": for coordinates outside the land. The shapefile used is downloaded from \url{https://osmdata.openstreetmap.de/download/land-polygons-complete-4326.zip}.
 #' "valid": for good coordinates values
 #'
 #' @param data dataframe containing coordinates data
