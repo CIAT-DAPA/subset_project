@@ -36,16 +36,6 @@ def data_to_slope_sd_mean(data, n_months, n_years):
     return data_list_result
 
 
-def scale(data):
-    std_scaler = StandardScaler()
-
-    num_data = data.iloc[: , 1:]  
-    df_scaled = pd.DataFrame(std_scaler.fit_transform(num_data), columns=num_data.columns)    
-    df_scaled = pd.concat([data[data.columns[0:1]], df_scaled], axis=1)
-
-    return df_scaled
-
-
 def crop_str_to_arr(elt):
     elt['indicator_period']['indicator']['crop'] = json.loads(elt['indicator_period']['indicator']['crop'])
     return elt
@@ -88,6 +78,7 @@ def transform_data(data, n_months, n_years):
 
     return trnsformed_res
 
+
 def dbscan_analysis(data, n_months, n_years, eps = 20, minPts = 10):
     #flatten data to indicators dataframe
     indicators = [crop_str_to_arr(x) for x in data['data']]
@@ -103,11 +94,15 @@ def dbscan_analysis(data, n_months, n_years, eps = 20, minPts = 10):
     #gr = (df.groupby(['indicator_period_indicator_crop_0_name'])).get_group(crop)
     df.drop(labels=['indicator_period_indicator_crop_0_name'], axis="columns", inplace=True)
     transformed_gr = transform_data(df, n_months, n_years)
-    scaled_data = scale(transformed_gr)
+    #indicators data without cellid
+    ind_data = transformed_gr.iloc[: , 1:] 
+    #scale indicators data
+    scaled_data = pd.DataFrame(StandardScaler().fit_transform(ind_data), columns=ind_data.columns)
+    #apply DBSCAN clustering
     db = DBSCAN(eps = eps, min_samples = minPts).fit(scaled_data)
     labels = db.labels_
-    #scaled_data["crop_name"] = crop
+    
     scaled_data["cluster"] = labels
-    #result = result.append(result)
+    analysis_res = pd.concat([transformed_gr['cellid'], scaled_data], axis=1)
 
-    return scaled_data
+    return analysis_res
