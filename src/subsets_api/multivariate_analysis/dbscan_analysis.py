@@ -87,22 +87,26 @@ def dbscan_analysis(data, n_months, n_years, eps = 20, minPts = 10):
     'indicator_period__id','indicator_period_indicator__id',
     'indicator_period_indicator_name','indicator_period_indicator_crop_0__id'
     ], axis="columns", inplace=True)
-    #result = pd.DataFrame([])
+    analysis_res = pd.DataFrame([])
     #group df by crop name
-    #crops = df['indicator_period_indicator_crop_0_name'].unique()
-    #for crop in crops:
-    #gr = (df.groupby(['indicator_period_indicator_crop_0_name'])).get_group(crop)
-    df.drop(labels=['indicator_period_indicator_crop_0_name'], axis="columns", inplace=True)
-    transformed_gr = transform_data(df, n_months, n_years)
-    #indicators data without cellid
-    ind_data = transformed_gr.iloc[: , 1:] 
-    #scale indicators data
-    scaled_data = pd.DataFrame(StandardScaler().fit_transform(ind_data), columns=ind_data.columns)
-    #apply DBSCAN clustering
-    db = DBSCAN(eps = eps, min_samples = minPts).fit(scaled_data)
-    labels = db.labels_
+    crops = df['indicator_period_indicator_crop_0_name'].unique()
+    for crop in crops:
+        gr = (df.groupby(['indicator_period_indicator_crop_0_name'])).get_group(crop)
+        gr.drop(labels=['indicator_period_indicator_crop_0_name'], axis="columns", inplace=True)
+        
+        transformed_gr = transform_data(gr, n_months, n_years)
+        #indicators data without cellid
+        ind_data = transformed_gr.iloc[: , 1:] 
+        #scale indicators data
+        scaled_data = pd.DataFrame(StandardScaler().fit_transform(ind_data), columns=ind_data.columns)
+        #apply DBSCAN clustering
+        db = DBSCAN(eps = eps, min_samples = minPts).fit(scaled_data)
+        labels = db.labels_
     
-    scaled_data["cluster"] = labels
-    analysis_res = pd.concat([transformed_gr['cellid'], scaled_data], axis=1)
+        scaled_data["cluster"] = labels
+        scaled_data["crop_name"] = crop
+        result = pd.concat([transformed_gr['cellid'], scaled_data], axis=1)
+        analysis_res = analysis_res.append(result)
+        analysis_res.reindex(columns=sorted(analysis_res.columns))
 
     return analysis_res
