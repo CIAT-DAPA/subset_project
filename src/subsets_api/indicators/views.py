@@ -34,6 +34,8 @@ from .scripts import *
 from .custom_indicators.custom_ind import *
 from .multivariate_analysis.dbscan_analysis import *
 
+import time
+from django.db import connection
 
 class ListFilter(Filter):
     def filter(self, qs, value):
@@ -111,6 +113,7 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
     serializer_class = IndicatorValuesSerializer
 
     def create(self, request, *args, **kwargs):
+        start = time.time()
         data = request.data['data']
         #minp = request.data['minp']
         #eps = request.data['eps']
@@ -118,28 +121,45 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
         lst_t = []
         lst_final = []
         lst_cellids = []
-        queryset = IndicatorValue.objects.all()
+        #queryset = IndicatorValue.objects.all()
+        query_indicators = Indicator.objects.all()
+        # Loop to search indicators selected
         for prop in data:
-            filter_clauses = [Q(**{filter:prop[filter]})
-                      for filter in prop
-                      if filter]
+            #query_period = Indicator.objects.all(periodo (el ultimo parametro))
+            filter_clauses = [Q(**{filter:prop[filter]}) for filter in prop if filter]
             if filter_clauses:
-                queryset = queryset.filter(reduce(operator.and_, filter_clauses))
+                #queryset = queryset.filter(reduce(operator.and_, filter_clauses))
+                # Searching indicators values 
+                print(filter_clauses)
+                print(IndicatorValue.objects.filter(reduce(operator.and_, filter_clauses)).query)
+                queryset = IndicatorValue.objects.filter(reduce(operator.and_, filter_clauses))
                 for values in queryset:
                     lst.append(values)
                     if values.cellid not in lst_cellids:
                         lst_cellids.append(values.cellid)
                 lst_t.append(lst_cellids)
                 lst_cellids = []
+        end = time.time()
+        print("Checking parameters: ", str(end - start))
+        start = time.time()
         a = set(lst_t[0]).intersection(*lst_t[1:])
         for i in lst:
             if i.cellid in a:
                 lst_final.append(i) 
+        end = time.time()
+        print("Searching cell ids: ", str(end - start))
+        start = time.time()
         serializer = self.serializer_class(lst_final, many=True)
         serializer_list = {
             'data': serializer.data, 'cellids': lst_cellids}
-        analysis = dbscan_analysis(serializer_list,24,1)
-        print(analysis)
+        end = time.time()
+        print("Preparing data for dbscan: ", str(end - start))
+        start = time.time()
+        analysis = dbscan_analysis(serializer_list,12,1)
+        end = time.time()
+        print("DBscan: ", str(end - start))
+        start = time.time()
+        #print(analysis)
         result = analysis.to_json(orient = "records")
         parsed = json.loads(result)
         #multivariety = json.dumps(parsed, indent=1)
@@ -150,6 +170,9 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
             'responseCode': status.HTTP_200_OK,
             'data': serializer_list,
         }
+        end = time.time()
+        print("Serialize output: ", str(end - start))
+        start = time.time()
         return Response(content) 
         """ queryset = Test.objects.all()
         filter_clauses = [Q(**{filter:request.GET[filter]})
