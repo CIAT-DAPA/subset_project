@@ -17,7 +17,10 @@ from django.conf.urls import url
 from django.urls import include, path 
 from django.contrib import admin
 
+from indicators import views as indicator
+
 urlpatterns = [
     path('', include(('indicators.urls', 'indicators'), namespace='indicators')),
     url(r'^admin/', admin.site.urls),
+    path('custom-indicator', indicator.get_custom_indicator),
 ]
