@@ -87,10 +87,10 @@ class Accession(models.Model):
 
     class Meta:
         indexes = [
-            mode.Index(fields=['crop_name', 'name', 'country_name',
+            mode.Index(fields=['crop', 'name', 'country_name',
                                'institute_acronym', 'samp_stat', ]),
-            mode.Index(fields=['crop_name', 'name', ]),
-            mode.Index(fields=['crop_name', 'country_name', ]),
+            mode.Index(fields=['crop', 'name', ]),
+            mode.Index(fields=['crop', 'country_name', ]),
             mode.Index(fields=['geo_lon', 'geo_lat', ]),
         ]
 

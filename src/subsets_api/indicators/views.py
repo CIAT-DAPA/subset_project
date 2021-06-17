@@ -49,7 +49,7 @@ class ListFilter(Filter):
 
 class AccommodationFilter(FilterSet):
     ids = ListFilter(field_name='id')
-    crop_name = ListFilter(field_name='crop_name')
+    crop_name = ListFilter(field_name='crop')
     country_name = ListFilter(field_name='country_name')
     name = ListFilter(field_name='name')
     samp_stat = ListFilter(field_name='samp_stat')
@@ -73,7 +73,7 @@ class AccessionsList(mixins.CreateModelMixin,
     serializer_class = AccessionsSerializer
     filter_backends = [DjangoFilterBackend]
     filter_class = AccommodationFilter
-    """ filterset_fields = ['crop_name', 'name', 'country_name',
+    """ filterset_fields = ['crop', 'name', 'country_name',
                         'samp_stat', 'institute_fullname', 'institute_acronym', 'geo_lon', 'geo_lat', 'taxonomy_taxon_name'] """
 
 

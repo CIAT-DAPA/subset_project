@@ -20,7 +20,7 @@ class IndicatorsSerializer(serializers.ModelSerializer):
 
 class AccessionsSerializer(serializers.ModelSerializer):
     """ Serializers for accessions """
-    crop = Crops(read_only=True)
+    #crop = Crops(read_only=True)
     class Meta:
         model = Accession
         fields = '__all__'
