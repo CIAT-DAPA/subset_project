@@ -93,6 +93,7 @@ class Accession(models.Model):
             mode.Index(fields=['crop', 'country_name', ]),
             mode.Index(fields=['geo_lon', 'geo_lat', ]),
         ]
+        db_table='accessions'
 
 
 class IndicatorPeriod(models.Model):
@@ -106,7 +107,7 @@ class IndicatorValue(models.Model):
     _id = models.ObjectIdField()
     cellid = models.IntegerField(null=True, db_index=True)
     indicator_period = models.ForeignKey(
-        'IndicatorPeriod', on_delete=models.PROTECT, db_column='indicator_period', db_index=True)
+        'IndicatorPeriod', on_delete=models.PROTECT, db_column='indicator_period', related_name='indsper', db_index=True)
     month1 = models.FloatField(db_index=True)
     month2 = models.FloatField(db_index=True)
     month3 = models.FloatField(db_index=True)
@@ -136,3 +137,5 @@ class IndicatorValue(models.Model):
             mode.Index(fields=['indicator_period', 'month9',
                                'month10', 'month11', 'month12', 'month1', 'month2', 'month3' ]),
         ]
+
+        
