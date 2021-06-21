@@ -153,9 +153,8 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
                 finished = id_indicator_period + filter_clauses
                 if finished:
                     # Queryset with the indicator values response
-                    queryset =  IndicatorValue.objects.prefetch_related('indsper').filter(reduce(operator.and_, finished)).count()
-                    print(queryset)
-                    """ paginator = Paginator(queryset,500)
+                    queryset =  IndicatorValue.objects.prefetch_related('indsper').filter(reduce(operator.and_, finished)).count()                    
+                    paginator = Paginator(queryset,500)
                     page = paginator.page(1)
                     #serializer = IndicatorValuesSerializer(page, many=True)
                     #print(serializer.data
@@ -172,7 +171,7 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
         serializer = self.serializer_class(lst_final, many=True)
         serializer_list = {
             'data': serializer.data, 'cellids': lst_cellids}
-        analysis = dbscan_analysis(serializer_list,int(months),1)
+        analysis = dbscan_analysis(serializer_list,12,1)
         result = analysis.to_json(orient = "records")
         parsed = json.loads(result)
         serializer_list = {
@@ -181,7 +180,8 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
             'status': 1,
             'responseCode': status.HTTP_200_OK,
             'data': serializer_list,
-        } """
+        }
+        return Response(content) 
         """ serializer = self.serializer_class(lst, many=True)
         serializer_list = {
             'data': serializer.data, 'cellids': lst_cellids}
@@ -234,7 +234,6 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
         end = time.time()
         print("Serialize output: ", str(end - start))
         start = time.time() """
-        return Response("Hello world!") 
 
 
 @csrf_exempt
