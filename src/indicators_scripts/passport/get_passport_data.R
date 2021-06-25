@@ -84,6 +84,24 @@ flag_coordinates <- function(data, lon = "geo_lon", lat = "geo_lat"){
   
 }
 
+#'convert coordinates to country using rworldmap package
+#'need to install rworldmap and rworldxtra
+#'
+
+coords2country <- function(points)
+{  
+  countriesSP <- rworldmap::getMap(resolution='high')
+  
+  pointsSP = sp::SpatialPoints(points, proj4string=CRS(proj4string(countriesSP)))  
+  
+  indices = sp::over(pointsSP, countriesSP)
+  
+  # get country name
+  country <- indices$ADMIN
+  
+  return(country)
+}
+
 
 #' Get accession passport data by crop
 #' @param crop a vector of crop names
@@ -95,10 +113,7 @@ get_passport_data <- function(crop){
   library(futile.logger)
   library(dplyr)
   library(raster)
-  #library(here)
   
-  #the working directory should be any folder inside the project folder
-  #root_folder = here()
   
   source(file = "../../../src/indicators_scripts/tools/logging.R", local = TRUE)
   
@@ -115,7 +130,7 @@ get_passport_data <- function(crop){
               "countryOfOrigin.code3",
               "countryOfOrigin.name",
               "countryOfOrigin.region.name",
-              "crop.name",
+              "cropName",
               "doi",
               "geo.elevation",
               "geo.latitude",
@@ -187,7 +202,14 @@ get_passport_data <- function(crop){
       for (i in 1:length(fields)) { 
         colnames(accessions)[which(names(accessions) == fields[i])] <- std_names[i]
       }
-    
+      
+      #add country names based on coordinates
+      acc.with.rowname <- accessions %>% add_rownames
+      accessions = acc.with.rowname %>% filter(!is.na(geo_lon) & !is.na(geo_lat)) %>%
+        mutate(country_name = ((.) %>% select(geo_lon, geo_lat)) %>% coords2country()) %>%
+        bind_rows(., anti_join(acc.with.rowname, ., by = "rowname"))%>% arrange(as.numeric(rowname))
+      accessions <- as.data.frame(accessions[,-1])
+      
       #get raster base file
       tmp_directory = tempdir()
       unzip("../../../data/builder_indicators/raster_base_complete.zip", exdir = tmp_directory)
