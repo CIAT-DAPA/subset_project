@@ -205,9 +205,9 @@ get_passport_data <- function(crop){
       
       #add country names based on coordinates
       acc.with.rowname <- accessions %>% add_rownames
-      accessions = acc.with.rowname %>% filter(!is.na(geo_lon) & !is.na(geo_lat)) %>%
-        mutate(country_name = ((.) %>% select(geo_lon, geo_lat)) %>% coords2country()) %>%
-        bind_rows(., anti_join(acc.with.rowname, ., by = "rowname"))%>% arrange(as.numeric(rowname))
+      accessions = acc.with.rowname %>% dplyr::filter(!is.na(geo_lon) & !is.na(geo_lat)) %>%
+        dplyr::mutate(country_name = ((.) %>% dplyr::select(geo_lon, geo_lat)) %>% coords2country()) %>%
+        dplyr::bind_rows(., anti_join(acc.with.rowname, ., by = "rowname"))%>% dplyr::arrange(as.numeric(rowname))
       accessions <- as.data.frame(accessions[,-1])
       
       #get raster base file
