@@ -94,12 +94,9 @@ class MyPagination(PageNumberPagination):
     last_page_strings = ('the_end',)
 
 
-class AccessionsView(mixins.CreateModelMixin,
-                     mixins.ListModelMixin,
-                     mixins.RetrieveModelMixin,
-                     mixins.UpdateModelMixin,
-                     viewsets.GenericViewSet):
-    queryset = Accession.objects.all()
+class AccessionsView(mixins.CreateModelMixin,mixins.ListModelMixin,mixins.RetrieveModelMixin,mixins.UpdateModelMixin,viewsets.GenericViewSet):
+    
+    #queryset = Accession.objects.all()
     serializer_class = AccessionsSerializer
     pagination_class = MyPagination
     permission_classes = []
@@ -107,6 +104,7 @@ class AccessionsView(mixins.CreateModelMixin,
     renderer_classes = [JSONRenderer]
 
     def create(self, request, *args, **kwargs):
+        print(Accession.objects.all())
         passport_params = request.data['passport']
         crop_params = request.data['crop']
         passport = passport_params[0]
@@ -117,16 +115,17 @@ class AccessionsView(mixins.CreateModelMixin,
         passport_clauses = [Q(**{filter: passport[filter]})
                             for filter in passport if len(passport[filter]) > 0]
         passport_clauses = crop_par + passport_clauses
-        queryset = self.queryset.filter(
-            reduce(operator.and_, passport_clauses)).select_related("crop")
-        print(queryset)
+        #queryset = self.queryset.filter(reduce(operator.and_, passport_clauses)).select_related("crop")
+        queryset = Accession.objects.filter(reduce(operator.and_, passport_clauses)).select_related("crop")
+        #print(queryset)
         #paginator = Paginator(queryset, 500)
         #page = paginator.page(1)
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.serializer_class(page, many=True)
-            return self.get_paginated_response(serializer.data)
+        #page = self.paginate_queryset(queryset)
+        #if page is not None:
+        #    serializer = self.serializer_class(page, many=True)
+        #    return self.get_paginated_response(serializer.data)
         # return Response(que)
+        return Response(self.serializer_class(queryset))
 
 
 class CropList(mixins.CreateModelMixin,
