@@ -5,6 +5,9 @@ from scipy import stats
 import statistics
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import DBSCAN
+from sklearn.cluster import AgglomerativeClustering
+import hdbscan
+import inspect
 
 
 # transform time series data to slope, sd and mean
@@ -56,8 +59,8 @@ def transform_data(data, n_months, n_years):
 
             for cell_id in cell_ids:
                 grp_cell = (grp_year.groupby(['cellid'])).get_group(cell_id)
-                grp_cell.drop(labels=['cellid'], axis="columns", inplace=True)
-                out = grp_cell.set_index(['indicator_period_period','indicator_period_indicator_pref']).stack()
+                grp_cell.drop(labels=['cellid'], axis="columns", inplace=True)                
+                out = grp_cell.set_index(['indicator_period_period','indicator_period_indicator_pref']).stack()                
                 out.index = out.index.map('_'.join)
                 result = out.to_frame().T
                 result.insert(loc=0, column='cellid', value=cell_id)
@@ -78,15 +81,32 @@ def transform_data(data, n_months, n_years):
 
     return trnsformed_res
 
+def dbscan_func(scaled_data, eps = 20, minPts = 10):
+    db = DBSCAN(eps = eps, min_samples = minPts).fit(scaled_data)
+    labels = db.labels_
+    return labels
 
-def dbscan_analysis(data, n_months, n_years, eps = 20, minPts = 10):
+def agglomerative_func(scaled_data, n_clusters):
+    model = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean', linkage='ward')
+    model.fit(scaled_data)
+    labels = model.labels_
+    return labels
+
+def hdbscan_func(scaled_data):
+    clusterer = hdbscan.HDBSCAN(min_cluster_size = 10)
+    clusterer.fit(scaled_data)
+    labels = clusterer.labels_
+    return labels
+
+
+def clustering_analysis(algorithms, data, n_months, n_years, **kwargs):
     #flatten data to indicators dataframe
-    indicators = [crop_str_to_arr(x) for x in data['data']]
+    indicators = [crop_str_to_arr(x) for x in data]
     df = pd.DataFrame([flatten(x) for x in indicators])
     df.drop(labels=['_id','indicator_period_indicator_indicator_type',
     'indicator_period__id','indicator_period_indicator__id',
     'indicator_period_indicator_name','indicator_period_indicator_crop_0__id'
-    ], axis="columns", inplace=True)
+    ], axis="columns", inplace=True) 
     analysis_res = pd.DataFrame([])
     #group df by crop name
     crops = df['indicator_period_indicator_crop_0_name'].unique()
@@ -99,11 +119,23 @@ def dbscan_analysis(data, n_months, n_years, eps = 20, minPts = 10):
         ind_data = transformed_gr.iloc[: , 1:] 
         #scale indicators data
         scaled_data = pd.DataFrame(StandardScaler().fit_transform(ind_data), columns=ind_data.columns)
-        #apply DBSCAN clustering
-        db = DBSCAN(eps = eps, min_samples = minPts).fit(scaled_data)
-        labels = db.labels_
-    
-        scaled_data["cluster"] = labels
+        
+        if "dbscan" in algorithms:
+            dbscan_args = [k for k, v in inspect.signature(dbscan_func).parameters.items()]
+            dbscan_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in dbscan_args}
+            dbscan_labels = dbscan_func(scaled_data, **dbscan_dict)
+            scaled_data["cluster_dbscan"] = dbscan_labels
+        
+        if "hdbscan" in algorithms:
+            hdbscan_labels = hdbscan_func(scaled_data)
+            scaled_data["cluster_hdbscan"] = hdbscan_labels
+        
+        if "agglomerative" in algorithms:
+            agglo_args = [k for k, v in inspect.signature(agglomerative_func).parameters.items()]
+            agglo_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in agglo_args}
+            agglo_labels = agglomerative_func(scaled_data, **agglo_dict)
+            scaled_data["cluster_aggolmerative"] = agglo_labels     
+
         scaled_data["crop_name"] = crop
         result = pd.concat([transformed_gr['cellid'], scaled_data], axis=1)
         analysis_res = analysis_res.append(result)
