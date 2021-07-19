@@ -20,8 +20,9 @@ def accessions_list():
 
     start = time.time()
     accesions = Accession.objects(Q(crop__in = data["crop"]))
+    rows = len(accesions)
     end = time.time()
-    print("Accessions: " + str(len(accesions)) + " time: " + str((end-start)*1000.0))
+    print("Accessions: " + str(rows) + " time: " + str((end-start)*1000.0))
 
     start = time.time()
     result = [{"name":x.name, 
@@ -40,8 +41,9 @@ def accessions_list():
                 "taxonomy_species":x.taxonomy_species, 
                 "taxonomy_taxon_name":x.taxonomy_taxon_name} 
                 for x in accesions]
+    rows = len(result)
     end = time.time()
-    print("Result time: " + str((end-start)*1000.0))
+    print("Result " + str(rows)+ " time: " + str((end-start)*1000.0))
 
     return jsonify(result)
 
@@ -55,8 +57,8 @@ def subsets():
     indicators_params = data['data']    
     analysis_params = data['analysis']
 
-    period = indicators_params[0]
-    nYears = (period['period'][1]+1) - period['period'][0]
+    period = indicators_params[0]['period']
+    nYears = (period[1]+1) - period[0]
     nMonths = nYears * 12
     
     # Filtering accessions according to passport data    
@@ -70,46 +72,95 @@ def subsets():
     print("Accessions: " + str(rows) + " time: " + str(end-start))
 
     # Filtering periods
+    cluster_values = []
+    algorithms = [x["algorithm"] for x in analysis_params]
+    """
+    for indicator in indicators_params:
+        print("Indicator: " + indicator["indicator"])
+        start = time.time()
+        period_range = [str(p) for p in range(period[0],period[1]+1)]
+        periods = IndicatorPeriod.objects(Q(indicator = indicator["indicator"]) & Q(period__in = period_range))
+        periods_ids = [str(x.id) for x in periods]
+        rows = len(periods)
+        end = time.time()
+        print("Periods: " + str(rows) + " time: " + str(end-start))
+
+        # Filtering values of indicators
+        start = time.time()
+        ind_values = IndicatorValue.objects(Q(indicator_period__in = periods_ids) 
+                                        & Q(month1__gte = indicator["month1"][0]) &  Q(month1__lte = indicator["month1"][1])
+                                        & Q(month2__gte = indicator["month2"][0]) &  Q(month2__lte = indicator["month2"][1])
+                                        & Q(month3__gte = indicator["month3"][0]) &  Q(month3__lte = indicator["month3"][1])
+                                        & Q(month4__gte = indicator["month4"][0]) &  Q(month4__lte = indicator["month4"][1])
+                                        & Q(month5__gte = indicator["month5"][0]) &  Q(month5__lte = indicator["month5"][1])
+                                        & Q(month6__gte = indicator["month6"][0]) &  Q(month6__lte = indicator["month6"][1])
+                                        & Q(month7__gte = indicator["month7"][0]) &  Q(month7__lte = indicator["month7"][1])
+                                        & Q(month8__gte = indicator["month8"][0]) &  Q(month8__lte = indicator["month8"][1])
+                                        & Q(month9__gte = indicator["month9"][0]) &  Q(month9__lte = indicator["month9"][1])
+                                        & Q(month10__gte = indicator["month10"][0]) &  Q(month10__lte = indicator["month10"][1])
+                                        & Q(month11__gte = indicator["month11"][0]) &  Q(month11__lte = indicator["month11"][1])
+                                        & Q(month12__gte = indicator["month12"][0]) &  Q(month12__lte = indicator["month12"][1])
+                                        & Q(cellid__in = cell_ids) )    
+        rows = len(ind_values)        
+        cluster_values.extend([{ "algorithms":[algorithms], 
+                            "crop_name": crop_params, 
+                            "pref_indicator": "cdd", 
+                            #"period": x.indicator_period.period, 
+                            "cellid": x.cellid,
+                            "month1":x.month1,
+                            "month2":x.month2,
+                            "month3":x.month3}
+                            for x in ind_values])        
+        end = time.time()
+        print("Indicator values: " + str(rows) + " time: " + str(end-start))
+    """
     start = time.time()
-    indicator = indicators_params[0]
-    #periods = IndicatorPeriod.objects(Q(indicator = indicator["indicator"]) & Q(period__gte = indicator["period"][0]) & Q(period__lte = indicator["period"][1]))
-    period_range = [str(p) for p in range(indicator["period"][0],indicator["period"][1]+1)]
-    periods = IndicatorPeriod.objects(Q(indicator = indicator["indicator"]) & Q(period__in = period_range))
+    period_range = [str(p) for p in range(period[0],period[1]+1)]
+    indicators_ids = [x["indicator"] for x in indicators_params]
+    periods = IndicatorPeriod.objects(Q(indicator__in = indicators_ids) & Q(period__in = period_range))
     periods_ids = [str(x.id) for x in periods]
     rows = len(periods)
     end = time.time()
-    print("Periods: " + str(len(periods)) + " time: " + str(end-start))
+    print("Periods: " + str(rows) + " time: " + str(end-start))
 
     # Filtering values of indicators
     start = time.time()
+    indicator = indicators_params[0]
     ind_values = IndicatorValue.objects(Q(indicator_period__in = periods_ids) 
-                                    & Q(month1__gte = indicator["month1"][0]) &  Q(month1__lte = indicator["month1"][1])
-                                    & Q(month2__gte = indicator["month2"][0]) &  Q(month2__lte = indicator["month2"][1])
-                                    & Q(month3__gte = indicator["month3"][0]) &  Q(month3__lte = indicator["month3"][1])
-                                    & Q(cellid__in = cell_ids) )    
-    algorithms = [x["algorithm"] for x in analysis_params]
-    cluster_values = [{ "algorithms":[algorithms], 
-                        "crop_name": crop_params, 
-                        "pref_indicator": "cdd", 
-                        #"period": x.indicator_period.period, 
-                        "cellid": x.cellid,
-                        "month1":x.month1,
-                        "month2":x.month2,
-                        "month3":x.month3}
-                        for x in ind_values]
-    rows = len(ind_values)
-    rows2 = len(cluster_values)
+                                        & Q(month1__gte = indicator["month1"][0]) &  Q(month1__lte = indicator["month1"][1])
+                                        & Q(month2__gte = indicator["month2"][0]) &  Q(month2__lte = indicator["month2"][1])
+                                        & Q(month3__gte = indicator["month3"][0]) &  Q(month3__lte = indicator["month3"][1])
+                                        & Q(month4__gte = indicator["month4"][0]) &  Q(month4__lte = indicator["month4"][1])
+                                        & Q(month5__gte = indicator["month5"][0]) &  Q(month5__lte = indicator["month5"][1])
+                                        & Q(month6__gte = indicator["month6"][0]) &  Q(month6__lte = indicator["month6"][1])
+                                        & Q(month7__gte = indicator["month7"][0]) &  Q(month7__lte = indicator["month7"][1])
+                                        & Q(month8__gte = indicator["month8"][0]) &  Q(month8__lte = indicator["month8"][1])
+                                        & Q(month9__gte = indicator["month9"][0]) &  Q(month9__lte = indicator["month9"][1])
+                                        & Q(month10__gte = indicator["month10"][0]) &  Q(month10__lte = indicator["month10"][1])
+                                        & Q(month11__gte = indicator["month11"][0]) &  Q(month11__lte = indicator["month11"][1])
+                                        & Q(month12__gte = indicator["month12"][0]) &  Q(month12__lte = indicator["month12"][1])
+                                        & Q(cellid__in = cell_ids) )    
+    rows = len(ind_values)        
+    cluster_values.extend([{ "algorithms":[algorithms], 
+                            "crop_name": crop_params, 
+                            "pref_indicator": "cdd", 
+                            #"period": x.indicator_period.period, 
+                            "cellid": x.cellid,
+                            "month1":x.month1,
+                            "month2":x.month2,
+                            "month3":x.month3}
+                            for x in ind_values])        
     end = time.time()
-    print("Indicator values: " + str(rows) + " cluster values: " + str(rows2) + " time: " + str(end-start))
-    
+    print("Indicator values: " + str(rows) + " time: " + str(end-start))
+    print("Cluster data " + str(len(cluster_values)))
+
     # Runing multivariable analysis
     #start = time.time()
     #analysis = clustering_analysis(algorithms, "crop_name": crop_name, "pref_indicator": pref_indicator, "period":period, "cellid": cellid)
     #end = time.time()
     #print("Multivariable analysis. time: " + str(end-start))
 
-    result = "Hola"
-    return jsonify(result)
+    return jsonify(cluster_values)
 
 
 if __name__ == "__main__":
