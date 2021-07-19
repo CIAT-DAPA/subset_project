@@ -69,8 +69,7 @@ class Accession(models.Model):
     country_name = models.TextField(null=True, db_index=True)
     country_region_name = models.TextField(null=True)
     samp_stat = models.TextField(null=True, db_index=True)
-    crop = models.ForeignKey(
-        'Crops', on_delete=models.PROTECT, db_column='crop', db_index=True)
+    crop = models.ForeignKey('Crops', on_delete=models.DO_NOTHING, db_column='crop', db_index=True)
     doi = models.TextField(null=True)
     historic = models.IntegerField(null=True)
     id = models.IntegerField(null=True, db_index=True)
@@ -93,7 +92,7 @@ class Accession(models.Model):
             mode.Index(fields=['crop', 'country_name', ]),
             mode.Index(fields=['geo_lon', 'geo_lat', ]),
         ]
-        db_table='accessions'
+        db_table = 'accessions'
 
 
 class IndicatorPeriod(models.Model):

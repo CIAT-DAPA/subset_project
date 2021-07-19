@@ -14,7 +14,7 @@ import numpy as np
 from itertools import chain
 from django.http import HttpResponse
 from django.core import serializers
-from django.db.models import Count
+from django.db.models import Count, query
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view, renderer_classes
 from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer
@@ -28,6 +28,10 @@ from django.db.models import Q
 from functools import reduce
 from django_pandas.io import read_frame
 from django.core.paginator import Paginator
+from django.db.models import Prefetch
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.views import APIView
+from rest_framework.settings import api_settings
 
 # local models
 from .models import *
@@ -35,9 +39,11 @@ from .serializers import *
 from .scripts import *
 from .custom_indicators.custom_ind import *
 from .multivariate_analysis.dbscan_analysis import *
+from .mixins import MyPaginationMixin
 
 import time
 from django.db import connection
+
 
 class ListFilter(Filter):
     def filter(self, qs, value):
@@ -81,6 +87,48 @@ class AccessionsList(mixins.CreateModelMixin,
                         'samp_stat', 'institute_fullname', 'institute_acronym', 'geo_lon', 'geo_lat', 'taxonomy_taxon_name'] """
 
 
+class MyPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 250000
+    last_page_strings = ('the_end',)
+
+
+class AccessionsView(mixins.CreateModelMixin,
+                     mixins.ListModelMixin,
+                     mixins.RetrieveModelMixin,
+                     mixins.UpdateModelMixin,
+                     viewsets.GenericViewSet):
+    queryset = Accession.objects.all()
+    serializer_class = AccessionsSerializer
+    pagination_class = MyPagination
+    permission_classes = []
+    authentication_classes = []
+    renderer_classes = [JSONRenderer]
+
+    def create(self, request, *args, **kwargs):
+        passport_params = request.data['passport']
+        crop_params = request.data['crop']
+        passport = passport_params[0]
+        crop = crop_params[0]
+        queryset_crop = Crops.objects.filter(
+            name__in=crop['names']).values_list("_id", flat=True)
+        crop_par = [Q(**{'crop__in': list(queryset_crop)})]
+        passport_clauses = [Q(**{filter: passport[filter]})
+                            for filter in passport if len(passport[filter]) > 0]
+        passport_clauses = crop_par + passport_clauses
+        queryset = self.queryset.filter(
+            reduce(operator.and_, passport_clauses)).select_related("crop")
+        print(queryset)
+        #paginator = Paginator(queryset, 500)
+        #page = paginator.page(1)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.serializer_class(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        # return Response(que)
+
+
 class CropList(mixins.CreateModelMixin,
                mixins.ListModelMixin,
                mixins.RetrieveModelMixin,
@@ -104,11 +152,6 @@ class IndicatorViewSet(mixins.CreateModelMixin,
         serializer = self.serializer_class(indicator, many=True)
         return Response(serializer.data)
 
-def chunked_iterator(queryset, chunk_size=10000):
-    paginator = Paginator(queryset, chunk_size)
-    for page in range(1, paginator.num_pages + 1):
-        for obj in paginator.page(page).object_list:
-            yield obj
 
 class IndicatorValViewSet(mixins.CreateModelMixin,
                           mixins.ListModelMixin,
@@ -120,41 +163,84 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
     serializer_class = IndicatorValuesSerializer
 
     def create(self, request, *args, **kwargs):
-        start = time.time()
-        data = request.data['data']
+        #start = time.time()
+        passport_params = request.data['passport']
+        crop_params = request.data['crop']
+        indicators_params = request.data['data']
         #minp = request.data['minp']
         #eps = request.data['eps']
         lst = []
-        lst_t = []
-        lst_final = []
-        lst_cellids = []
-        #months = 12
-        #periods = data[0]['period']
-        #print(periods[0])
-        #print(periods[1])
-        #for i in range(periods[0], periods[1]):
-            #months = months+12
-
-        #print(months)
-        #queryset = IndicatorValue.objects.all()
-        #query_indicators = Indicator.objects.all()
-        # Loop to search indicators selected
-        for prop in data:
-            print(prop['indicator_name'])
-            query_indicator = Indicator.objects.filter(name=prop['indicator_name']).first()
+        period = indicators_params[0]
+        nMonths = 0
+        nYears = 0
+        for x in range(period['period'][0], period['period'][1] + 1):
+            nMonths = nMonths + 12
+            nYears = nYears + 1
+        passport = passport_params[0]
+        crop = crop_params[0]
+        queryset_crop = Crops.objects.filter(
+            name__in=crop['names']).values_list("_id", flat=True)
+        crop_par = [Q(**{'crop__in': list(queryset_crop)})]
+        passport_clauses = [Q(**{filter: passport[filter]})
+                            for filter in passport if len(passport[filter]) > 0]
+        passport_clauses = passport_clauses + \
+            crop_par + [Q(**{'cellid__gt': 0})]
+        queryset_cellids = Accession.objects.filter(
+            reduce(operator.and_, passport_clauses)).select_related("crop").values_list('cellid', flat=True).distinct()
+        print(queryset_cellids)
+        cellid = [Q(**{'cellid__in': sorted(list(queryset_cellids))})]
+        print(cellid)
+        for prop in indicators_params:
+            query_indicator = Indicator.objects.filter(
+                name=prop['indicator_name']).first()
+            print(query_indicator.name)
             # queryset to get indicators period selected
-            query_period = IndicatorPeriod.objects.filter(period__range=prop['period'], indicator=query_indicator._id)
-            #Loop to search the values for each indicator and period
+            query_period = IndicatorPeriod.objects.filter(
+                period__range=prop['period'], indicator=query_indicator._id)
             for qp in query_period:
-                print("period:",qp.period)
-                id_indicator_period = [Q(**{'indicator_period':qp._id})]
+                # Loop to search the values for each indicator and period
+                id_indicator_period = [Q(**{'indicator_period': qp._id})]
+                print(id_indicator_period)
                 # Build the query from parameters in the request
-                filter_clauses = [Q(**{filter:prop[filter]}) for filter in prop if "month" in str(filter)]
-                finished = id_indicator_period + filter_clauses
+                filter_clauses = [Q(**{filter: prop[filter]})
+                                  for filter in prop if "month" in str(filter)]
+                finished = id_indicator_period + filter_clauses + cellid
                 if finished:
-                    # Queryset with the indicator values response
-                    queryset =  IndicatorValue.objects.prefetch_related('indsper').filter(reduce(operator.and_, finished)).count()                    
-                    paginator = Paginator(queryset,500)
+                    queryset = IndicatorValue.objects.filter(
+                        reduce(operator.and_, finished)).select_related('indicator_period').values('cellid', 'month1', 'month2', 'month3', 'month4', 'month5', 'month6', 'month7',
+                                                                                                   'month8', 'month9', 'month10', 'month11', 'month12',  'indicator_period__period', 'indicator_period__indicator__name', 'indicator_period__indicator__pref')
+                    print(queryset.count())
+                    if (queryset.count() > 0):
+                        for x in queryset.iterator():
+                            lst.append(x)
+        #serializer = IndicatorValuesSerializer(lst, many=True)
+        serializer_list = {
+            'data': lst}
+       #analysis = dbscan_analysis(serializer_list,int(nMonths),1)
+        #result = analysis.to_json(orient = "records")
+        #parsed = json.loads(result)
+        content = {
+            'status': 1,
+            'responseCode': status.HTTP_200_OK,
+            'data': serializer_list,
+        }
+        """paginator = Paginator(queryset,500)
+                    page = paginator.page(1)
+                    for x in page:
+                        lst.append(x)
+        if len(lst) > 0:
+            analysis = dbscan_analysis(serializer_list,12, nYears)
+            result = analysis.to_json(orient="records")
+            parsed = json.loads(result)
+            serializer_list = {
+                'data': serializer.data, 'multivariety': parsed} 
+        content = {
+            'status': 1,
+            'responseCode': status.HTTP_200_OK,
+            'data': serializer_list,
+        }"""
+
+        """ paginator = Paginator(queryset,500)
                     page = paginator.page(1)
                     #serializer = IndicatorValuesSerializer(page, many=True)
                     #print(serializer.data
@@ -171,7 +257,7 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
         serializer = self.serializer_class(lst_final, many=True)
         serializer_list = {
             'data': serializer.data, 'cellids': lst_cellids}
-        analysis = dbscan_analysis(serializer_list,12,1)
+        analysis = dbscan_analysis(serializer_list,int(months),1)
         result = analysis.to_json(orient = "records")
         parsed = json.loads(result)
         serializer_list = {
@@ -180,8 +266,7 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
             'status': 1,
             'responseCode': status.HTTP_200_OK,
             'data': serializer_list,
-        }
-        return Response(content) 
+        } """
         """ serializer = self.serializer_class(lst, many=True)
         serializer_list = {
             'data': serializer.data, 'cellids': lst_cellids}
@@ -190,9 +275,9 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
             'responseCode': status.HTTP_200_OK,
             'data': serializer_list,
         } """
-            #if filter_clauses:
-                #queryset = queryset.filter(reduce(operator.and_, filter_clauses))
-                # Searching indicators values 
+        # if filter_clauses:
+        #queryset = queryset.filter(reduce(operator.and_, filter_clauses))
+        # Searching indicators values
         """ print(filter_clauses)
                 print(IndicatorValue.objects.filter(reduce(operator.and_, filter_clauses)).query)
                 queryset = IndicatorValue.objects.filter(reduce(operator.and_, filter_clauses))
@@ -234,6 +319,8 @@ class IndicatorValViewSet(mixins.CreateModelMixin,
         end = time.time()
         print("Serialize output: ", str(end - start))
         start = time.time() """
+        # return HttpResponse(json.dumps(lst), content_type='application/json')
+        return Response(content)
 
 
 @csrf_exempt
