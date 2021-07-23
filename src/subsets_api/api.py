@@ -217,6 +217,7 @@ def subsets():
     print("Cluster data " + str(len(cluster_values)))
 
     # With loop and indicatorsperiods from request
+    
     for indicator in indicators_params:
         indicator_clauses = [Q(**{filter + "__gte": indicator[filter][0], filter + "__lte": indicator[filter][1]})
                                   for filter in indicator if "month" in str(filter)]
@@ -232,25 +233,28 @@ def subsets():
         start = time.time()
         ind_values = IndicatorValue.objects(reduce(operator.and_, indicator_clauses)).select_related()
         rows = len(ind_values)
-        cluster_values.extend([{
-            #"crop_name": passport_params["crop"],
-            "pref_indicator": x.indicator_period.indicator.pref,
-            "indicator": x.indicator_period.indicator.name,
-            "cellid": x.cellid,
-            "month1": x.month1,
-            "month2": x.month2,
-            "month3": x.month3,
-            "month4": x.month4,
-            "month5": x.month5,
-            "month6": x.month6,
-            "month7": x.month7,
-            "month8": x.month8,
-            "month9": x.month9,
-            "month10": x.month10,
-            "month11": x.month11,
-            "month12": x.month12,
-            "period": x.indicator_period.period}
-            for x in ind_values])
+        for crop in crops:
+            cell_id_crop = [x.cellid for x in accesions if x.cellid  & x.crop == crop]
+            cluster_values.extend([{
+                #"crop_name": passport_params["crop"],
+                "crop_name": crop,
+                "pref_indicator": x.indicator_period.indicator.pref,
+                "indicator": x.indicator_period.indicator.name,
+                "cellid": x.cellid,
+                "month1": x.month1,
+                "month2": x.month2,
+                "month3": x.month3,
+                "month4": x.month4,
+                "month5": x.month5,
+                "month6": x.month6,
+                "month7": x.month7,
+                "month8": x.month8,
+                "month9": x.month9,
+                "month10": x.month10,
+                "month11": x.month11,
+                "month12": x.month12,
+                "period": x.indicator_period.period}
+                for x in ind_values if crop in x.cellid in cell_id_crop])
         end = time.time()
         print("Indicator values:" + str(rows) + " time: " + str(end-start))
     multivariety_analysis = []
