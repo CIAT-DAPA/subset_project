@@ -1,6 +1,7 @@
 from mongoengine import *
 
-class Crop(Document):    
+class Crop(Document):
+    _id = StringField(required=True)
     name = StringField(required=True)
     meta = {'collection': 'indicators_crop'}
 
@@ -37,12 +38,11 @@ class Accession(Document):
     meta = {'collection': 'accession'}
 
 class Indicator(Document):
-    #_id = StringField(required=True)
+    _id = StringField(required=True)
     name = StringField(required=True)
     pref = StringField(required=True)
     crop = ReferenceField(Crop)
     indicator_type = StringField(required=True)
-    
 
     meta = {'collection': 'indicators_indicator'}
 
