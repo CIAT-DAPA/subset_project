@@ -86,8 +86,8 @@ def dbscan_func(scaled_data, eps = 20, minPts = 10):
     labels = db.labels_
     return labels
 
-def agglomerative_func(scaled_data, n_clusters):
-    model = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean', linkage='ward')
+def agglomerative_func(scaled_data, n_clusters = 5):
+    model = AgglomerativeClustering(n_clusters = n_clusters, affinity = 'euclidean', linkage = 'ward')
     model.fit(scaled_data)
     labels = model.labels_
     return labels
