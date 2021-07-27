@@ -39,28 +39,28 @@ def data_to_slope_sd_mean(data, n_months, n_years):
     return data_list_result
 
 
-def crop_str_to_arr(elt):
+""" def crop_str_to_arr(elt):
     elt['indicator_period']['indicator']['crop'] = json.loads(elt['indicator_period']['indicator']['crop'])
-    return elt
+    return elt """
 
 
 def transform_data(data, n_months, n_years):
-    indicator_prefs = data['indicator_period_indicator_pref'].unique()
+    indicator_prefs = data['pref_indicator'].unique()
     trnsformed_res = pd.DataFrame([])
 
     for pref in indicator_prefs:
-        sub_pref = (data.groupby(['indicator_period_indicator_pref'])).get_group(pref)
-        years = data['indicator_period_period'].unique()
+        sub_pref = (data.groupby(['pref_indicator'])).get_group(pref)
+        years = data['period'].unique()
         df_merge_years = pd.DataFrame([])
         for year in years:
-            grp_year = (sub_pref.groupby(['indicator_period_period'])).get_group(year)
+            grp_year = (sub_pref.groupby(['period'])).get_group(year)
             cell_ids = grp_year['cellid'].unique()
             df_by_cellids = pd.DataFrame([])
 
             for cell_id in cell_ids:
                 grp_cell = (grp_year.groupby(['cellid'])).get_group(cell_id)
                 grp_cell.drop(labels=['cellid'], axis="columns", inplace=True)                
-                out = grp_cell.set_index(['indicator_period_period','indicator_period_indicator_pref']).stack()                
+                out = grp_cell.set_index(['period','pref_indicator']).stack()                
                 out.index = out.index.map('_'.join)
                 result = out.to_frame().T
                 result.insert(loc=0, column='cellid', value=cell_id)
@@ -100,19 +100,16 @@ def hdbscan_func(scaled_data):
 
 
 def clustering_analysis(algorithms, data, n_months, n_years, **kwargs):
-    #flatten data to indicators dataframe
-    indicators = [crop_str_to_arr(x) for x in data]
-    df = pd.DataFrame([flatten(x) for x in indicators])
-    df.drop(labels=['_id','indicator_period_indicator_indicator_type',
-    'indicator_period__id','indicator_period_indicator__id',
-    'indicator_period_indicator_name','indicator_period_indicator_crop_0__id'
-    ], axis="columns", inplace=True) 
+    #flatten data to a dataframe
+    #indicators = [crop_str_to_arr(x) for x in data]
+    df = pd.DataFrame([flatten(x) for x in data['data']])
+    df.drop(labels=['indicator'], axis="columns", inplace=True)
     analysis_res = pd.DataFrame([])
     #group df by crop name
-    crops = df['indicator_period_indicator_crop_0_name'].unique()
+    crops = df['crop'].unique()
     for crop in crops:
-        gr = (df.groupby(['indicator_period_indicator_crop_0_name'])).get_group(crop)
-        gr.drop(labels=['indicator_period_indicator_crop_0_name'], axis="columns", inplace=True)
+        gr = (df.groupby(['crop'])).get_group(crop)
+        gr.drop(labels=['crop'], axis="columns", inplace=True)
         
         transformed_gr = transform_data(gr, n_months, n_years)
         #indicators data without cellid
