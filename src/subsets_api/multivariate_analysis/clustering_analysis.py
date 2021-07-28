@@ -102,7 +102,7 @@ def hdbscan_func(scaled_data):
 def clustering_analysis(algorithms, data, n_months, n_years, **kwargs):
     #flatten data to a dataframe
     #indicators = [crop_str_to_arr(x) for x in data]
-    df = pd.DataFrame([flatten(x) for x in data['data']])
+    df = pd.DataFrame([flatten(x) for x in data])
     df.drop(labels=['indicator'], axis="columns", inplace=True)
     analysis_res = pd.DataFrame([])
     #group df by crop name
