@@ -37,7 +37,7 @@ request_body = {
                 #{"indicator": "60818c34fc024440e44621f2","month1":[0,109], "month2":[0,109], "month3":[0,109],"month4":[0,109], "month5":[0,109], "month6":[0,109], "month7":[0,109],"month8":[0,109], "month9":[0,109], "month10":[0,109], "month11":[0,109],"month12":[0, 109],"period": [1983,2016]}
         ],
     #"crop": ["60818b1efc024440e44621d3"],
-    "passport": {"crop": ["60818b1efc024440e44621d3"], "country_name": []},
+    "passport": {"crop": ["60818b1efc024440e44621d3", "60818b1efc024440e44621b9"], "country_name": ["Mexico"]},
     #"passport": {"countries": []},
     "analysis": [{"algorithm":"dbscan" }]
 }

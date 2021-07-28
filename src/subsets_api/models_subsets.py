@@ -1,7 +1,7 @@
 from mongoengine import *
 
 class Crop(Document):
-    _id = StringField(required=True)
+    #_id = StringField(required=True)
     name = StringField(required=True)
     meta = {'collection': 'indicators_crop'}
 

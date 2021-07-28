@@ -63,7 +63,7 @@ def crop_list():
     crops = Crop.objects.all()
 
     start = time.time()
-    result = [{"name": x.name, "id": x._id}
+    result = [{"name": x.name, "id": x.id}
               for x in crops]
     rows = len(result)
     end = time.time()
@@ -117,22 +117,25 @@ def subsets():
     nYears = (period[1]+1) - period[0]
     nMonths = nYears * 12
 
+    #Get crops
+    crops = Crop.objects(Q(id__in = passport_params['crop']))
+    result_crops = [{"id":x.id,"name": x.name} for x in crops]
+
+    print("Crops: " + str(len(crops)) )
     # Filtering accessions according to passport data
     start = time.time()
     #accesions = Accession.objects(Q(crop__in = crop_params) & Q(country_name__in = passport_params["countries"]))
     filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
                       for filter in passport_params if len(passport_params[filter]) > 0]
-    print(filter_clauses)
+    
     accesions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
+    print("Accessions: " + str(len(accesions)) )
     cell_ids = [x.cellid for x in accesions if x.cellid]
     cell_ids = list(set(cell_ids))
-    result_accessions = [{"crop": x.crop.name, "cellid": x.cellid} for x in accesions if x.cellid]
-    rows = len(accesions)
-    end = time.time()
-    print("Accessions: " + str(rows) + " time: " + str(end-start))
 
     # Filtering periods
     cluster_values = []
+    lst_values = []
     algorithms = [x["algorithm"] for x in analysis_params]
 
     # With loop and indicators
@@ -214,16 +217,13 @@ def subsets():
                             for x in ind_values])        
     end = time.time()
     print("Indicator values: " + str(rows) + " time: " + str(end-start)) """
-    print("Cluster data " + str(len(cluster_values)))
-
-    # With loop and indicatorsperiods from request
     
+    # With loop and indicatorsperiods from request
     for indicator in indicators_params:
         indicator_clauses = [Q(**{filter + "__gte": indicator[filter][0], filter + "__lte": indicator[filter][1]})
                                   for filter in indicator if "month" in str(filter)]
         periods_ids = indicator["indicator"]
         indicator_clauses = [Q(**{'indicator_period__in': periods_ids})] + indicator_clauses + [Q(**{'cellid__in': cell_ids})]
-        print(indicator["indicator"])
         start = time.time()
         rows = len(periods_ids)
         end = time.time()
@@ -232,12 +232,16 @@ def subsets():
         # Filtering values of indicators
         start = time.time()
         ind_values = IndicatorValue.objects(reduce(operator.and_, indicator_clauses)).select_related()
-        rows = len(ind_values)
-        for crop in crops:
-            cell_id_crop = [x.cellid for x in accesions if x.cellid  & x.crop == crop]
+        rows = len(list(set(ind_values)))
+
+        print("Accessions: " + str(rows) )
+
+        for crop in result_crops:
+            print(crop['name'])
+            cell_id_crop = [x.cellid for x in accesions if x.cellid and x.crop.id == crop['id']]
+            cell_id_crop = list(set(cell_id_crop))
             cluster_values.extend([{
-                #"crop_name": passport_params["crop"],
-                "crop_name": crop,
+                "crop": crop['name'],
                 "pref_indicator": x.indicator_period.indicator.pref,
                 "indicator": x.indicator_period.indicator.name,
                 "cellid": x.cellid,
@@ -254,7 +258,13 @@ def subsets():
                 "month11": x.month11,
                 "month12": x.month12,
                 "period": x.indicator_period.period}
-                for x in ind_values if crop in x.cellid in cell_id_crop])
+                for x in ind_values if  x.cellid in cell_id_crop])
+                #for x in ind_values])
+
+            #result = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in cluster_values)]
+
+        lst_values = lst_values + cluster_values
+        print(str(len(lst_values)))
         end = time.time()
         print("Indicator values:" + str(rows) + " time: " + str(end-start))
     multivariety_analysis = []
@@ -264,7 +274,7 @@ def subsets():
     #end = time.time()
     #print("Multivariable analysis. time: " + str(end-start))
 
-    return jsonify(cluster_values)
+    return jsonify(lst_values)
 
 
 if __name__ == "__main__":
