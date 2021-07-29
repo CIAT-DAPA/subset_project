@@ -92,8 +92,8 @@ def agglomerative_func(scaled_data, n_clusters = 5):
     labels = model.labels_
     return labels
 
-def hdbscan_func(scaled_data):
-    clusterer = hdbscan.HDBSCAN(min_cluster_size = 10)
+def hdbscan_func(scaled_data, min_cluster_size = 10):
+    clusterer = hdbscan.HDBSCAN(min_cluster_size = min_cluster_size)
     clusterer.fit(scaled_data)
     labels = clusterer.labels_
     return labels
@@ -119,17 +119,19 @@ def clustering_analysis(algorithms, data, n_months, n_years, **kwargs):
         
         if "dbscan" in algorithms:
             dbscan_args = [k for k, v in inspect.signature(dbscan_func).parameters.items()]
-            dbscan_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in dbscan_args}
+            dbscan_dict = {k: kwargs[k] for k in dict(kwargs) if k in dbscan_args}
             dbscan_labels = dbscan_func(scaled_data, **dbscan_dict)
             scaled_data["cluster_dbscan"] = dbscan_labels
         
         if "hdbscan" in algorithms:
-            hdbscan_labels = hdbscan_func(scaled_data)
+            hdbscan_args = [k for k, v in inspect.signature(hdbscan_func).parameters.items()]
+            hdbscan_dict = {k: kwargs[k] for k in dict(kwargs) if k in hdbscan_args}
+            hdbscan_labels = hdbscan_func(scaled_data, **hdbscan_dict)
             scaled_data["cluster_hdbscan"] = hdbscan_labels
         
         if "agglomerative" in algorithms:
             agglo_args = [k for k, v in inspect.signature(agglomerative_func).parameters.items()]
-            agglo_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in agglo_args}
+            agglo_dict = {k: kwargs[k] for k in dict(kwargs) if k in agglo_args}
             agglo_labels = agglomerative_func(scaled_data, **agglo_dict)
             scaled_data["cluster_aggolmerative"] = agglo_labels     
 
