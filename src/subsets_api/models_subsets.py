@@ -35,7 +35,12 @@ class Accession(Document):
     taxonomy_subt_author = StringField(required=True)
     coord_flag = StringField(required=True)
 
-    meta = {'collection': 'accession'}
+    meta = {'collection': 'accession',
+            'auto_create_index':False,
+            'indexes': [
+           {'name': 'crop_query', 'fields': ['crop'],},
+           {'name': 'crop_country_query', 'fields': ['crop', 'country_name'],},
+        ]}
 
 class Indicator(Document):
     _id = StringField(required=True)
@@ -71,5 +76,6 @@ class IndicatorValue(Document):
     month11 = FloatField(required=False)
     month12 = FloatField(required=False)
 
-    meta = {'collection': 'indicators_indicatorvalue'}
+    meta = {'collection': 'test'}
+    # meta = {'collection': 'indicators_indicatorvalue'}
     

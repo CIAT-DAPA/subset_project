@@ -9,7 +9,7 @@ from mongoengine.queryset.visitor import Q
 from functools import reduce
 import operator
 import json
-#from multivariate_analysis.dbscan_analysis import clustering_analysis
+from multivariate_analysis.clustering_analysis import clustering_analysis
 
 import time
 
@@ -47,7 +47,8 @@ def accessions_list():
                "taxonomy_genus": x.taxonomy_genus,
                "taxonomy_sp_author": x.taxonomy_sp_author,
                "taxonomy_species": x.taxonomy_species,
-               "taxonomy_taxon_name": x.taxonomy_taxon_name
+               "taxonomy_taxon_name": x.taxonomy_taxon_name,
+               "cellid": x.cellid
                }
               for x in accessions]
     rows = len(result)
@@ -136,7 +137,8 @@ def subsets():
     # Filtering periods
     cluster_values = []
     lst_values = []
-    algorithms = [x["algorithm"] for x in analysis_params]
+    # algorithms = [x["algorithm"] for x in analysis_params]
+    algorithms = analysis_params['algorithm']
 
     # With loop and indicators
     """ for indicator in indicators_params:
@@ -269,12 +271,19 @@ def subsets():
         print("Indicator values:" + str(rows) + " time: " + str(end-start))
     multivariety_analysis = []
     # Runing multivariable analysis
-    #start = time.time()
-    # analysis = clustering_analysis(algorithms, "crop_name": crop_name, "pref_indicator": pref_indicator, "period":period, "cellid": cellid)
-    #end = time.time()
-    #print("Multivariable analysis. time: " + str(end-start))
+    # startana = time.time()
+    analysis = clustering_analysis(algorithms, lst_values, nMonths, nYears)
+    print(analysis)
+    # endana = time.time()
+    # print("Multivariety: " + str(len(analysis)) + "Time: " + str(endana-startana))
+    result = analysis.to_json(orient = "records")
+    parsed = json.loads(result)
+    content = {
+        'data': lst_values,
+        'multivariety_analysis': parsed
+    }
 
-    return jsonify(lst_values)
+    return jsonify(content)
 
 
 if __name__ == "__main__":
