@@ -1,0 +1,58 @@
+<div class="container">
+  <div class="mt-4" style="width: 30%; display: flex">
+    <div class="circle" [ngStyle]="{ 'background-color': circleColor }">
+      <img *ngIf="!showInitials" src="{{ photoUrl }}" />
+
+      <div *ngIf="showInitials" class="initials">
+        {{ initials }}
+      </div>
+    </div>
+
+    <h1 class="ml-3 mt-3">{{ username }}</h1>
+  </div>
+  <hr />
+  <div class="flex-content">
+    <div class="detail-content">
+      <h2>Subsets Availables</h2>
+      <div class="table-content">
+        <table class="table table-striped mt-4">
+          <thead>
+            <tr>
+              <th
+                scope="col"
+                *ngFor="let header of headers"
+                class="item-table"
+                style="text-align: center"
+              >
+                {{ header }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="
+                let value of subsets$
+                  | paginate: { itemsPerPage: 5, currentPage: actualPage }
+              "
+              style="text-align: center; cursor: pointer; cursor: hand"
+            >
+              <td>{{ value.description }}</td>
+              <td>
+                <button class="btn btn-info" (click)="go(value.params)">
+                  Go</button
+                ><button
+                  class="ml-2 btn btn-danger"
+                  (click)="copyInputMessage(value.params, value.url)"
+                >
+                  Copy link
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <pagination-controls (pageChange)="actualPage = $event">
+        </pagination-controls>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,153 @@
+<div class="container">
+
+  <br>
+  <mat-tab-group mat-align-tabs="center">
+   <mat-tab *ngIf="namesResponse.includes('cluster_dbscan')" label="Dbscan Analysis">
+    <div class="analysis-table">
+    <table class="table table-striped mt-4">
+      <thead>
+        <tr>
+          <th
+            scope="col"
+            *ngFor="let header of headersTable_1"
+            class="item-table"
+            style="text-align: center"
+          >
+            {{ header }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="
+            let value of res$
+              | paginate: { itemsPerPage: 5, currentPage: actualPageDbscan } sort: cluster_dbscan
+          "
+          style="text-align: center; cursor: pointer; cursor: hand"
+        >
+          <td>{{ value.crop }}</td>
+          <td>{{ value.name }}</td>
+          <td>{{ value.number }}</td>
+          <td>{{ value.cluster_dbscan }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <pagination-controls (pageChange)="actualPageDbscan = $event">
+    </pagination-controls>
+  </div>
+   </mat-tab>
+   <mat-tab *ngIf="namesResponse.includes('cluster_hdbscan')" label="Hdbscan Analysis">
+    <div class="analysis-table">
+      <table class="table table-striped mt-4">
+        <thead>
+          <tr>
+            <th
+              scope="col"
+              *ngFor="let header of headersTable_1"
+              class="item-table"
+              style="text-align: center"
+            >
+              {{ header }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="
+              let value of res$
+                | paginate: { itemsPerPage: 5, currentPage: actualPageHdbscan } sort:cluster_hdbscan
+            "
+            style="text-align: center; cursor: pointer; cursor: hand"
+          >
+            <td>{{ value.crop }}</td>
+            <td>{{ value.name }}</td>
+            <td>{{ value.number }}</td>
+            <td>{{ value.cluster_hdbscan }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <pagination-controls (pageChange)="actualPageHdbscan = $event">
+      </pagination-controls>
+      </div>
+   </mat-tab>
+   <mat-tab *ngIf="namesResponse.includes('cluster_aggolmerative')" label="Agglomerative Analysis"> 
+    <div class="analysis-table">
+      <table class="table table-striped mt-4">
+        <thead>
+          <tr>
+            <th
+              scope="col"
+              *ngFor="let header of headersTable_1"
+              class="item-table"
+              style="text-align: center"
+            >
+              {{ header }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="
+              let value of res$
+                | paginate: { itemsPerPage: 5, currentPage: actualPageAgglomerative } sort:cluster_aggolmerative
+            "
+            style="text-align: center; cursor: pointer; cursor: hand"
+          >
+            <td>{{ value.crop }}</td>
+            <td>{{ value.name }}</td>
+            <td>{{ value.number }}</td>
+            <td>{{ value.cluster_aggolmerative }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <pagination-controls (pageChange)="actualPageAgglomerative = $event">
+      </pagination-controls>
+      </div>
+   </mat-tab>
+ </mat-tab-group>
+
+
+<!-- 
+  <table class="table table-striped mt-4">
+    <thead>
+      <tr>
+        <th
+          scope="col"
+          *ngFor="let header of headersTable_2"
+          class="item-table"
+          style="text-align: center"
+        >
+          {{ header }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="
+          let value of res$
+            | paginate: { itemsPerPage: 5, currentPage: actualPageT1 }
+        "
+        style="text-align: center; cursor: pointer; cursor: hand"
+      >
+        <td>{{value.crop.name}}</td>
+        <td>{{value.slope}}</td>
+        <td>{{value.mean}}</td>
+        <td>{{value.sd}}</td>
+        <td>{{value.indicator}}</td>
+        <td>{{value.cluster}}</td>
+      </tr>
+    </tbody>
+  </table>
+  <pagination-controls (pageChange)="actualPageT1 = $event">
+  </pagination-controls>
+
+  <hr> -->
+
+<!--   <div class="row">
+    <div id="maps"></div>
+    <div id="popups" class="ol-popup">
+        <a href="#" id="popup-closers" class="ol-popup-closer"></a>
+        <div id="popup-contents"></div>
+      </div>
+</div> -->
+</div>

@@ -1,0 +1,162 @@
+<div class="container mt-4">
+  <h1 style="font-size: 40px">Glossary</h1>
+  <p>
+    These tables contains the information related with the different indicators
+    calculated in this tool.
+  </p>
+  <hr />
+  <h2><strong>Generic indicators</strong></h2>
+  <table class="table table-striped mb-4">
+    <thead>
+      <tr>
+        <th
+          scope="col"
+          *ngFor="let header of headersArray"
+          class="item-table"
+          style="text-align: center"
+        >
+          {{ header }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr >
+        <td>Number of water stress days</td>
+        <td>Number of days per growing season, for which the ratio of actual to potential evapotranspiration (ERATIO) is below 0.5. The ERATIO is computed following a simple water balance model as in Jones and Thornton (2009).</td>
+        <td>days</td>
+        
+      </tr>
+      <tr >
+        <td>Number of days with water logging</td>
+        <td>Number of days per growing season, for which the soil is at least 50% between field capacity and saturation. Computed using the same simple water balance model as for NDWS.</td>
+        <td>days</td>
+        
+      </tr>
+      <tr >
+        <td>Extreme daily precipitation</td>
+        <td>The 95th percentile of precipitation per growing season, computed using the daily data.</td>
+        <td>mm</td>
+        
+      </tr>
+      <tr >
+        <td>Total precipitation</td>
+        <td>Total daily precipitation per month, computed using the daily data.</td>
+        <td>mm</td>
+        
+      </tr>
+      <tr >
+        <td>Average precipitation</td>
+        <td>Average daily precipitation per growing season, computed using the daily data.</td>
+        <td>mm</td>
+        
+      </tr>
+
+    <tr >
+      <td>Average solar radiation</td>
+      <td>Average solar radiation per month.</td>
+      <td>W/m²</td>
+      
+    </tr>
+    <tr >
+      <td>Average maximum temperature</td>
+      <td>Average maximum temperature per growing season.</td>
+      <td>°C</td>
+      
+    </tr>
+
+    <tr >
+      <td>Monthly mean daylength</td>
+      <td>Daylength of the middle Julian day of month per growing season.</td>
+      <td>Hours</td>
+      
+    </tr>
+    <tr >
+      <td>Number of days with high VPD</td>
+      <td>The count of days per month for which VPD is equal or greater than 4 kPa. High VPD can lead to reduced stomatal conductance, and lower transpiration and photosynthesis.</td>
+      <td>Days</td>
+      
+    </tr>
+    <tr >
+      <td>Average VPD</td>
+      <td>Average per growing season VPD.</td>
+      <td>Kpa</td>
+      
+    </tr>
+    <tr>
+      <td>Consecutive dry days</td>
+      <td>Maximum number of consecutive dry days (P less to 1 mm), per growing season.</td>
+      <td>days</td>
+
+    </tbody>
+  </table>
+  <hr>
+  <h2><strong>Extracted values indicators</strong></h2>
+  <table class="table table-striped mb-4">
+    <thead>
+      <tr>
+        <th
+          scope="col"
+          *ngFor="let header of headerExtratec"
+          class="item-table"
+          style="text-align: center"
+        >
+          {{ header }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr >
+        <td>Soil texture type</td>
+        <td>USDA texture class.</td>
+        <td>USDA</td>
+        
+      </tr>
+      <tr >
+        <td>Bulk density</td>
+        <td>Bulk density, averaged over the top 60 cm of soil.</td>
+        <td>SoilGrids</td>   
+      </tr>
+      <tr >
+        <td>Cation exchange capacity</td>
+        <td>Cation exchange capacity, averaged over the top 60 cm of soil.</td>
+        <td>SoilGrids</td>   
+      </tr>
+      <tr >
+        <td>Organic carbon content</td>
+        <td>Soil organic carbon, averaged over the top 60 cm of soil.</td>
+        <td>SoilGrids</td>   
+      </tr>
+
+    </tbody>
+  </table>
+  <hr>
+  <h2><strong>Indicators per crop</strong></h2>
+  <table class="table table-striped mb-4">
+    <thead>
+      <tr>
+        <th
+          scope="col"
+          *ngFor="let header of headersArray"
+          class="item-table"
+          style="text-align: center"
+        >
+          {{ header }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr >
+        <td>Number of days high daytime temperature</td>
+        <td>Number of days with NT_threshold > threshold per crop.</td>
+        <td>days</td>
+        
+      </tr>
+      <tr >
+        <td>Number of days with low minimum temperatures</td>
+        <td>number of days with NT_threshold  < threshold per crop.</td>
+        <td>days</td>   
+      </tr>
+
+    </tbody>
+  </table>
+</div>

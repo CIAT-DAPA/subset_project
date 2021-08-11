@@ -10,6 +10,7 @@ from functools import reduce
 import operator
 import json
 from multivariate_analysis.clustering_analysis import clustering_analysis
+import pandas as pd
 
 import time
 
@@ -113,6 +114,7 @@ def subsets():
     #crop_params = data['crop']
     indicators_params = data['data']
     analysis_params = data['analysis']
+    algorithms = analysis_params['algorithm']
 
     period = indicators_params[0]['period']
     nYears = (period[1]+1) - period[0]
@@ -138,7 +140,6 @@ def subsets():
     cluster_values = []
     lst_values = []
     # algorithms = [x["algorithm"] for x in analysis_params]
-    algorithms = analysis_params['algorithm']
 
     # With loop and indicators
     """ for indicator in indicators_params:
@@ -266,6 +267,9 @@ def subsets():
             #result = [dict(tupleized) for tupleized in set(tuple(item.items()) for item in cluster_values)]
 
         lst_values = lst_values + cluster_values
+        df = pd.DataFrame([s for s in lst_values])
+        df_groupby_indicator = df.groupby('indicator')
+        print(df_groupby_indicator.size())
         print(str(len(lst_values)))
         end = time.time()
         print("Indicator values:" + str(rows) + " time: " + str(end-start))

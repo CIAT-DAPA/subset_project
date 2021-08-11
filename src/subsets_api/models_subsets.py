@@ -36,10 +36,12 @@ class Accession(Document):
     coord_flag = StringField(required=True)
 
     meta = {'collection': 'accession',
-            'auto_create_index':False,
+            'auto_create_index':False,    
+            "index_background": True,
             'indexes': [
-           {'name': 'crop_query', 'fields': ['crop'],},
-           {'name': 'crop_country_query', 'fields': ['crop', 'country_name'],},
+        #    {'fields': ['+crop'],},
+            ('+crop', '+country_name'),
+            ('+crop'),
         ]}
 
 class Indicator(Document):
@@ -62,7 +64,6 @@ class IndicatorValue(Document):
     #_id = StringField(required=True)
     cellid = IntField(required=True)
     indicator_period = ReferenceField(IndicatorPeriod)
-
     month1 = FloatField(required=False)
     month2 = FloatField(required=False)
     month3 = FloatField(required=False)
@@ -76,6 +77,19 @@ class IndicatorValue(Document):
     month11 = FloatField(required=False)
     month12 = FloatField(required=False)
 
-    meta = {'collection': 'test'}
+    meta = {'collection': 'test',
+            'auto_create_index':False,    
+            "index_background": True,
+            'indexes': [
+        #    {'fields': ['+crop'],},
+            ('+indicator_period', '+month1','+month2','+month3', 'cellid'),
+            ('+indicator_period', '+month4','+month5','+month6', 'cellid'),
+            ('+indicator_period', '+month7','+month8','+month9', 'cellid'),
+            ('+indicator_period', '+month10','+month11','+month12', 'cellid'),
+            ('+indicator_period', '+month1', '+month2', '+month3', '+month4',
+             '+month5', '+month6', '+month7', '+month8', '+month9', '+month10',
+             '+month11','+month12', 'cellid'),
+            ]
+            }
     # meta = {'collection': 'indicators_indicatorvalue'}
     

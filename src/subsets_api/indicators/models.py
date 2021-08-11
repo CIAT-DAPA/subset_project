@@ -92,7 +92,7 @@ class Accession(models.Model):
             mode.Index(fields=['crop', 'country_name', ]),
             mode.Index(fields=['geo_lon', 'geo_lat', ]),
         ]
-        db_table = 'accessions'
+        db_table = 'accession'
 
 
 class IndicatorPeriod(models.Model):

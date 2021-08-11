@@ -25,3 +25,21 @@
     stroke: steelblue;
     stroke-width: 1.5px;
 }
+
+.chart-wrapper {
+    width: 80%;
+}
+
+.container-plot {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* canvas {
+
+    width:300px !important;
+    height:300px !important;
+  
+  } */

@@ -4,54 +4,116 @@
     <option *ngFor="let x of indicators" value="{{x.name}}">{{x.name}}</option>
   </select>
 </div> -->
-<div class="mb-3 mt-3">
-<mat-form-field class="example-chip-list">
-  <mat-label>Select an indicator (s)</mat-label>
-  <mat-chip-list #chipList aria-label="Fruit selection">
-    <mat-chip *ngFor="let fruit of fruits" [selectable]="selectable" [removable]="removable" (removed)="remove(fruit)">
-      {{fruit}}
-      <mat-icon matChipRemove *ngIf="removable">X</mat-icon>
-    </mat-chip>
-    <input placeholder="New indicator..." #fruitInput [formControl]="fruitCtrl" [matAutocomplete]="auto"
-      [matChipInputFor]="chipList" [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-      (matChipInputTokenEnd)="add($event)">
-  </mat-chip-list>
-  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="selected($event)">
-    <mat-option *ngFor="let fruit of filteredFruits | async" [value]="fruit">
-      {{fruit}}
-    </mat-option> 
-  </mat-autocomplete>
-</mat-form-field>
+<div class="mt-3">
+  <mat-form-field class="example-chip-list" style="width: 98%">
+    <mat-label>Select an indicator (s)</mat-label>
+    <mat-chip-list #chipList aria-label="Fruit selection">
+      <mat-chip
+        *ngFor="let fruit of fruits" 
+        [selectable]="selectable"
+        [removable]="removable"
+        (removed)="remove(fruit)"
+      >
+        {{ fruit }}
+        <mat-icon matChipRemove *ngIf="removable">X</mat-icon>
+      </mat-chip>
+      <input
+        placeholder="New indicator..."
+        #fruitInput
+        [formControl]="fruitCtrl"
+        [matAutocomplete]="auto"
+        [matChipInputFor]="chipList"
+        [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+        (matChipInputTokenEnd)="add($event)"
+      />
+    </mat-chip-list>
+    <mat-autocomplete
+      #auto="matAutocomplete"
+      (optionSelected)="selected($event)"
+    >
+      <mat-option *ngFor="let fruit of filteredFruits | async" [value]="fruit">
+        {{ fruit }}
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
 </div>
-<div class="mb-4" *ngFor="let x of fruits">
-  <label for="value" class="form-label mt-2">Select an range of values - {{x}}</label>
-  <ngx-slider [(value)]="minValue" [(highValue)]="maxValue" [options]="options" [(ngModel)]="parameters.value">
-  </ngx-slider>
+<div class="">
+  <button mat-button (click)="openDialog()" style="color: #3f51b5">
+    Add custom data
+  </button>
+</div>
+<div class="mb-4" *ngFor="let x of fruits; let i = index">
+  <label [for]="'value' + i" class="form-label mt-2"
+  >Select an range of values - {{ x }}</label
+  >
+  <ngx-slider
+  [(value)]="listValues[i].minValue"
+  [id]="'value' + i"
+  [(highValue)]="listValues[i].highValue"
+  [options]="options"
+  >
+</ngx-slider>
 </div>
 <div class="mt-3 mb-3">
-  <label for="period" class="form-label">Add a year</label>
-  <input type="text" class="form-control" [(ngModel)]="parameters.period"
-    placeholder="use 1983, 1984,..., or 1983-2000">
+  <label for="period" class="form-label">Add a range of years</label>
+  <ngx-slider [(value)]="periodMinValue" id="period" [(highValue)]="periodMaxValue" [options]="periodOptions">
+  </ngx-slider>
+</div>
+<div class="mt-4" style="margin-top: 10% !important; width: 98%;">
+  <label for="period" class="form-label">Add a range of months</label>
+  <div style="display: flex; width: 100%;">
+  <div style="width: 48%;">
+    <label for="firstmonth">Initial month</label>
+    <select class="form-control" name="" id="firstmonth" [(ngModel)]="monthFirt">
+      <option value="1">January</option>
+      <option value="2">Febrary</option>
+      <option value="3">March</option>
+      <option value="4">April</option>
+      <option value="5">May</option>
+      <option value="6">June</option>
+      <option value="7">July</option>
+      <option value="8">August</option>
+      <option value="9">September</option>
+      <option value="10">October</option>
+      <option value="11">November</option>
+      <option value="12">December</option>
+    </select>
+  </div>
+  <div class="ml-2" style="width: 48%;">
+    <label for="firstmonth">End month</label>
+    <select class="form-control" name="" id="firstmonth" [(ngModel)]="monthEnd">
+      <option value="1">January</option>
+      <option value="2">Febrary</option>
+      <option value="3">March</option>
+      <option value="4">April</option>
+      <option value="5">May</option>
+      <option value="6">June</option>
+      <option value="7">July</option>
+      <option value="8">August</option>
+      <option value="9">September</option>
+      <option value="10">October</option>
+      <option value="11">November</option>
+      <option value="12">December</option>
+    </select>
+  </div>
 </div>
 
-<div class="mb-3">
-  <label for="month" class="form-label">Select a month (s)</label>
-  <section class="example-section">
-    <span class="example-list-section">
-      <mat-checkbox class="example-margin" [checked]="allComplete" [color]="months.color"
-        [indeterminate]="someComplete()" (change)="setAll($event.checked)">
-        {{months.name}}
-      </mat-checkbox>
-    </span>
-    <span class="example-list-section">
-      <ul>
-        <li *ngFor="let subtask of months.subtasks">
-          <mat-checkbox [(ngModel)]="subtask.completed" [color]="subtask.color" (ngModelChange)="updateAllComplete()">
-            {{subtask.name}}
-          </mat-checkbox>
-        </li>
-      </ul>
-    </span>
-  </section>
+<button class="mt-3" mat-button color="primary" (click)="showAdvanceProperties()">
+  {{buttonName}}
+</button>
+<div style="display: flex; width: 100%;" class="mt-2" [hidden]="advanceproperties">
+  <div style="width: 48%;">
+    <label for="firstmonth">MinPts</label>
+    <input type="number" class="form-control" [ngModel]="minPts">
+  </div>
+  <div class="ml-2" style="width: 48%;">
+    <label for="firstmonth">Epsilon</label>
+<input type="number" class="form-control" [ngModel]="epsilon">
+  </div>
 </div>
-<button class="btn btn-green mt-3" (click)="getSubsetsOfAccession()">Get Filter</button>
+</div>
+
+<ngx-spinner></ngx-spinner>
+<button class="btn btn-green mt-3" (click)="getSubsetsOfAccession()">
+  Get Filter
+</button>

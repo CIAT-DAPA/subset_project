@@ -1,0 +1,82 @@
+<mat-dialog-content class="mat-typography">
+<mat-card class="example-card">
+    <mat-card-header> 
+      <div mat-card-avatar class="example-header-image">
+      </div>
+      <mat-card-title>{{data.accession.number}}</mat-card-title>
+      <mat-card-subtitle>{{data.accession.name}}</mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content>
+        <h2 class="mt-4">Summary</h2>
+        <table class="table table-striped mt-2">
+    
+            <tbody>
+              <tr>
+                <td><strong>Accession Number</strong> </td>
+                <td>{{data.accession.number}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Holding institute</strong></td>
+                    <td>{{data.accession.institute_fullname}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Institute code</strong></td>
+                    <td>{{data.accession.institute_acronym}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Acquisition Date</strong></td>
+                    <td>{{data.accession.acq_date | date: 'longDate'}}</td>
+                </tr>
+            </tbody>
+          </table>
+          <h2>Taxonomy data</h2>
+          <table class="table table-striped mt-4">
+    
+            <tbody>
+              <tr>
+                <td><strong>Genus</strong> </td>
+                <td>{{data.accession.taxonomy_genus}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Specie</strong></td>
+                    <td>{{data.accession.taxonomy_species}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Scientific name</strong></td>
+                    <td>{{data.accession.taxonomy_taxon_name}}</td>
+                </tr>
+                <tr>
+                    <td><strong>Crop name</strong></td>
+                    <td>{{data.accession.crop}}</td>
+                </tr>
+            </tbody>
+          </table>
+          <h2>Accession name</h2>
+          <table class="table table-striped mt-4">
+            <tbody>
+              <tr>
+                <td><strong>Accession name</strong></td>
+                <td>{{data.accession.name}}</td>
+                </tr>
+            </tbody>
+          </table>
+
+          <h2>Collecting information</h2>
+          <table class="table table-striped mt-4">
+            <tbody>
+              <tr>
+                <td><strong>Collecting date of sample</strong> </td>
+                <td>{{data.accession.coll_date | date: 'longDate'}}</td>
+                </tr>
+            </tbody>
+          </table>
+          <div class="row mt-2">
+            <div id="map"></div>
+        </div>
+    </mat-card-content>
+  </mat-card>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <button mat-button [mat-dialog-close]="true" >Close</button>
+    <!-- <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Install</button> -->
+</mat-dialog-actions>

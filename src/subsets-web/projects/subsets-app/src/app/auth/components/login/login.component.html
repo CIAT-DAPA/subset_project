@@ -1,1 +1,63 @@
-<p>login works!</p>
+<!-- <div style="text-align: center">
+  <h1>Login</h1>
+</div>
+
+<input #username type="text" placeholder="username" />
+<input #password type="password" placeholder="password" />
+<button (click)="login(username.value, password.value)">login</button>
+<p>{{ error?.message }}</p>
+<p *ngIf="error">{{ error?.error | json }}</p> -->
+<div class="banner">
+
+  <mat-card class="mt-2">
+    <mat-card-content>
+    <h2>Welcome to Subsets tool</h2>
+    <h3>SignIn</h3>
+
+    <!--  <mat-error *ngIf="loginInvalid">
+      The username and password were not recognised
+    </mat-error> -->
+
+    <mat-form-field class="full-width-input">
+      <input
+        #username
+        matInput
+        placeholder="Username"
+        formControlName="username"
+        required
+      />
+
+      <!--  <mat-error> Please provide a valid email address </mat-error> -->
+    </mat-form-field>
+
+    <mat-form-field class="full-width-input">
+      <input
+        #password
+        matInput
+        type="password"
+        placeholder="Password"
+        formControlName="password"
+        required
+        />
+
+      <mat-error> Please provide a valid password </mat-error>
+    </mat-form-field>
+
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="login(username.value, password.value)"
+    >
+      Login
+    </button>
+  </mat-card-content>
+  <br>
+  <div class="dons mb-2">
+    <img src="../../../../assets/images/ciat.png" class="" alt="" >
+    <img src="../../../../assets/images/icard.svg" class="ml-3" alt="" height="35px">
+    <img src="../../../../assets/images/crop-trust.png" class="ml-3" alt="" height="45px">
+    <img src="" alt="">
+  </div>
+</mat-card>
+
+</div>

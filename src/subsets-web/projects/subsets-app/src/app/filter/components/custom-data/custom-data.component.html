@@ -1,0 +1,54 @@
+<h2 mat-dialog-title>Add custom data</h2>
+<mat-dialog-content class="mat-typography">
+    <div class="container">
+
+        <div class="form-group mt-3">
+            <label for="myfile">Add the file in csv format</label>
+            <input type="file" class="form-control" (change)="onFileSelect()" id="load-file" name="myfile">
+        </div>
+        <hr>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col" *ngFor="let header of headersArray | async ; let i = index" class="item-table"
+                        style="text-align: center;">{{header}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let value of results | async | slice:0:5 ; let i = index" style="text-align: center;">
+                    <td *ngFor="let prop of headersArray | async">
+                        {{value[prop]}}</td>
+                </tr>
+            </tbody>
+        </table>
+        <p *ngIf="(results | async)?.length"><strong>Amount of rows:</strong> {{(results | async)?.length}}</p>
+        <hr>
+        <div class="mb-3" [hidden]="listVisible">
+            <label for="month" class="form-label">Select the var(s) to evaluate</label>
+            <section class="example-section">
+                <span class="example-list-section">
+                    <mat-checkbox class="example-margin" [checked]="allComplete" [color]="months.color"
+                        [indeterminate]="someComplete()" (change)="setAll($event.checked)">
+                        {{months.name}}
+                    </mat-checkbox>
+                </span>
+                <span class="example-list-section">
+                    <ul class="vars-list">
+                        <li *ngFor="let subtask of months.subtasks" class="ml-4">
+                            <mat-checkbox [(ngModel)]="subtask.completed" [color]="subtask.color"
+                                (ngModelChange)="updateAllComplete()">
+                                {{subtask.name}}
+                            </mat-checkbox>
+                        </li>
+                    </ul>
+                </span>
+            </section>
+        </div>
+
+    </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <button mat-button (click)="close()">Cancel</button>
+    <button mat-button (click)="findCustomIndicator()" [hidden]="listVisible" cdkFocusInitial>Calculate</button>
+    <!-- <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Install</button> -->
+</mat-dialog-actions>
