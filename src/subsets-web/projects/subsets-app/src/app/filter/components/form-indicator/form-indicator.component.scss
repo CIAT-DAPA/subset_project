@@ -6,3 +6,15 @@
 .example-chip-list {
     width: 100%;
   }
+
+  ul {
+      list-style: none;
+  }
+
+  .example-month-picker .mat-calendar-period-button {
+    pointer-events: none;
+  }
+  
+  .example-month-picker .mat-calendar-arrow {
+    display: none;
+  }

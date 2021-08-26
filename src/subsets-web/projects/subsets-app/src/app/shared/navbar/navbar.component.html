@@ -1,16 +1,42 @@
-<nav class="navbar navbar-expand-lg navbar-light" style="background-color: #2B2924;">
+<nav class="navbar navbar-expand-lg sticky-top navbar-light" style="background-color: #2B2924;">
     <div class="container-fluid">
-      <a class="navbar-brand font-title" href="#">Subsets Tool</a>
+      <!-- <i class="fab fa-pagelines mr-2"></i> -->
+      <a class="navbar-brand font-title" routerLink="/explore/home"><img src="../../../assets/images/crop-detail.png" width="30px" height="30px" alt=""> Subsettings</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse font-title" id="navbarNav">
         <ul class="navbar-nav font-title">
           <li class="nav-item">
-            <a class="nav-link active" aria-current="page" href="#">Home</a>
+            <a class="nav-link font-title" routerLink="/explore/filter">EXPLORE</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link font-title" href="#">Features</a>
+            <a class="nav-link font-title" routerLink="/explore/about-us">ABOUT US</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link font-title" routerLink="/explore/glosary">GLOSSARY</a>
+          </li>
+        </ul>
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item dropdown dropleft">
+            <a *ngIf="username" class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              {{username}}
+            </a>
+            <a *ngIf="!username" class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Sign in
+            </a>
+            <ul *ngIf="username" class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink" style="color: #000;">
+              <li><a class="dropdown-item" style="color: #000 !important; "  routerLink="/explore/profile">Profile</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" style="color: #000 !important;" (click)="logout()">Logout</a></li>
+            </ul>
+            <ul *ngIf="!username" class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink" style="color: #000;">
+              <li><a class="dropdown-item" style="color: #000 !important; "  routerLink="/login">Sign in</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" style="color: #000 !important;" routerLink="/signup">Sign up</a></li>
+            </ul>
+           <!--  <div class="dropdown-menu" style="padding: 15px; padding-bottom: 0px;">
+            </div> -->
           </li>
         </ul>
       </div>

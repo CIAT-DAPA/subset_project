@@ -45,66 +45,50 @@ import time
 from django.db import connection
 
 
-class ListFilter(Filter):
-    def filter(self, qs, value):
-        print(value)
-        if not value:
-            return qs
-
-        # For django-filter versions < 0.13, use lookup_type instead of lookup_expr
-        self.lookup_expr = 'in'
-        values = value.split(',')
-        return super(ListFilter, self).filter(qs, values)
-
-
-class AccommodationFilter(FilterSet):
-    ids = ListFilter(field_name='id')
-    crop_name = ListFilter(field_name='crop__name')
-    country_name = ListFilter(field_name='country_name')
-    name = ListFilter(field_name='name')
-    samp_stat = ListFilter(field_name='samp_stat')
-    institute_fullname = ListFilter(field_name='institute_fullname')
-    geo_lon = ListFilter(field_name='geo_lon')
-    geo_lat = ListFilter(field_name='geo_lat')
-    taxonomy_taxon_name = ListFilter(field_name='taxonomy_taxon_name')
-
-    class Meta:
-        model = Accession
-        fields = ['ids', 'crop_name', 'name', 'country_name',
-                  'samp_stat', 'institute_fullname', 'geo_lon', 'geo_lat', 'taxonomy_taxon_name']
-
-
-class AccessionsList(mixins.CreateModelMixin,
-                     mixins.ListModelMixin,
-                     mixins.RetrieveModelMixin,
-                     mixins.UpdateModelMixin,
-                     viewsets.GenericViewSet):
-    queryset = Accession.objects.all()
-    serializer_class = AccessionsSerializer
-    filter_backends = [DjangoFilterBackend]
-    filter_class = AccommodationFilter
-    """ filterset_fields = ['crop', 'name', 'country_name',
-                        'samp_stat', 'institute_fullname', 'institute_acronym', 'geo_lon', 'geo_lat', 'taxonomy_taxon_name'] """
-
-
-class MyPagination(PageNumberPagination):
-    page_size = 10
-    page_size_query_param = 'page_size'
-    max_page_size = 250000
-    last_page_strings = ('the_end',)
-
-
 class AccessionsView(mixins.CreateModelMixin,mixins.ListModelMixin,mixins.RetrieveModelMixin,mixins.UpdateModelMixin,viewsets.GenericViewSet):
     
-    #queryset = Accession.objects.all()
+    queryset = Accession.objects.all()
     serializer_class = AccessionsSerializer
-    pagination_class = MyPagination
-    permission_classes = []
-    authentication_classes = []
-    renderer_classes = [JSONRenderer]
 
     def create(self, request, *args, **kwargs):
-        print(Accession.objects.all())
+        data = request.get_json()
+
+        start = time.time()
+        filter_clauses = [Q(**{filter + "__in": data[filter]})
+                        for filter in data if len(data[filter]) > 0]
+        print(filter_clauses)
+        #accessions = Accession.objects((Q(crop__in = data["crop"])) & (Q(country_name__in = data["country_name"]))).select_related()
+        accessions = Accession.objects(
+            reduce(operator.and_, filter_clauses)).select_related()
+        rows = len(accessions)
+        end = time.time()
+        print("Accessions: " + str(rows) + " time: " + str((end-start)*1000.0))
+
+        start = time.time()
+        result = [{"name": x.name,
+                "number": x.number,
+                "acq_date": x.acq_date,
+                "coll_date": x.coll_date,
+                "country_name": x.country_name,
+                "institute_fullname": x.institute_fullname,
+                "institute_acronym": x.institute_acronym,
+                "crop": x.crop.name,
+                "geo_lon": x.geo_lon,
+                "geo_lat": x.geo_lat,
+                "geo_ele": x.geo_ele,
+                "taxonomy_genus": x.taxonomy_genus,
+                "taxonomy_sp_author": x.taxonomy_sp_author,
+                "taxonomy_species": x.taxonomy_species,
+                "taxonomy_taxon_name": x.taxonomy_taxon_name,
+                "cellid": x.cellid
+                }
+                for x in accessions]
+        rows = len(result)
+        end = time.time()
+        print("Result " + str(rows) + " time: " + str((end-start)*1000.0))
+
+        return Response(result)
+        """ print(Accession.objects.all())
         passport_params = request.data['passport']
         crop_params = request.data['crop']
         passport = passport_params[0]
@@ -125,7 +109,7 @@ class AccessionsView(mixins.CreateModelMixin,mixins.ListModelMixin,mixins.Retrie
         #    serializer = self.serializer_class(page, many=True)
         #    return self.get_paginated_response(serializer.data)
         # return Response(que)
-        return Response(self.serializer_class(queryset))
+        return Response(self.serializer_class(queryset)) """
 
 
 class CropList(mixins.CreateModelMixin,

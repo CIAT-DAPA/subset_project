@@ -1,29 +1,64 @@
 <mat-tab-group mat-align-tabs="start">
-  <mat-tab label="Table">
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th scope="col" *ngFor="let header of headers" class="item-table" style="text-align: center;">{{header}}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let value of accessions$ | paginate: { itemsPerPage: 10, currentPage: ActualPage}"
-          style="text-align: center;">
-          <td>{{value.id}}</td>
-          <td>{{value.number}}</td>
-          <td>{{value.name}}</td>
-          <td>{{value.crop_name}}</td>
-          <td>{{value.country_name}}</td>
-          <td>{{value.doi}}</td>
-          <td>{{value.institute_fullname}}</td>
-          <td>{{value.samp_stat}}</td>
-        </tr>
-      </tbody>
-    </table>
-    <pagination-controls (pageChange)="ActualPage = $event">
-
-    </pagination-controls>
+  <mat-tab label="General">
+    <!-- <mat-progress-bar mode="determinate" value="40"></mat-progress-bar> -->
+    <div
+      *ngIf="accessions$.length > 0"
+      class="container"
+    >
+      <h2 class="mt-2"><strong>Accessions list found</strong></h2>
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th
+              scope="col"
+              *ngFor="let header of headers"
+              
+              style="text-align: center"
+            >
+              {{ header }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="
+              let value of accessions$
+                | paginate: { itemsPerPage: 5, currentPage: ActualPage }
+            "
+            style="cursor: pointer; cursor: hand"
+            (click)="openAccessionDetail(value)"
+          >
+            <td>{{ value.number }}</td>
+            <td>{{ value.crop }}</td>
+            <td>{{ value.taxonomy_taxon_name }}</td>
+            <td><button class="btn btn-info">See more</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <pagination-controls (pageChange)="ActualPage = $event">
+      </pagination-controls>
+      <!-- <div class="page-buttons">
+        <button class="btn prev" (click)="fetchPrevious()">Prev
+        </button>
+        <button class="btn next" (click)="fetchNext()">Next
+        </button>
+      </div> -->
+      <br>
+      <p style="text-align: left">
+        Number of accessions found: {{ amountData | number: '2.' }}
+      </p>
+      <hr />
+      <h2><strong>Accessions location</strong></h2>
+      <map-outcomes [acce]="accessions$"></map-outcomes>
+    </div>
   </mat-tab>
-  <mat-tab label="Map">Content 2</mat-tab>
-  <mat-tab label="Plot"><app-plot-outcomes></app-plot-outcomes></mat-tab>
+  <mat-tab label="Plot">
+    <app-plot-outcomes></app-plot-outcomes>
+  </mat-tab>
+  <mat-tab label="Cluster">
+    <app-multivariable-analysis></app-multivariable-analysis>
+  </mat-tab>
+  <mat-tab label="Summary">
+    <app-summary></app-summary>
+  </mat-tab>
 </mat-tab-group>

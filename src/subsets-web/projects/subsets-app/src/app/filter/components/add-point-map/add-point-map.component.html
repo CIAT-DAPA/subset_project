@@ -1,0 +1,21 @@
+<h2 mat-dialog-title>Find by coordinates analogues</h2>
+<div class="container form-input">
+    <div class="div-input">
+        <label for="latitude">Latitude:</label>
+        <input id="latitude" class="form-control" type="number" [(ngModel)]="latitude" placeholder="Latitude">
+    </div>
+
+    <div class="ml-3 div-input">
+        <label for="longitude">Longitude:</label>
+        <input id="longitude" type="number" class="form-control" [(ngModel)]="longitude" placeholder="Longitude">
+    </div>
+    <button class="btn btn-success mt-3" (click)="setCenter()">Find coordinates</button>
+</div>
+<br>
+<div id="map" class="map"></div>
+<div id="mouse-position"></div>
+<mat-dialog-actions align="end">
+    <button mat-button (click)="close()">Cancel</button>
+    <button mat-button (click)="accept()">Accept</button>
+    <!-- <button mat-button [mat-dialog-close]="true" cdkFocusInitial>Install</button> -->
+  </mat-dialog-actions>

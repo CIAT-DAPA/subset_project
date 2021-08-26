@@ -1,86 +1,102 @@
-import { Component, OnInit, Input, OnChanges } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  Input,
+  OnChanges,
+  ViewChild,
+  ElementRef,
+  AfterContentInit,
+} from '@angular/core';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 import { Options } from '@angular-slider/ngx-slider';
-import { Observable } from 'rxjs';
+import { from, Observable, of, zip } from 'rxjs';
 import { SharedService } from '../../../core/service/shared.service';
-import { ThemePalette } from '@angular/material/core';
+import {
+  groupBy,
+  map,
+  mergeMap,
+  reduce,
+  startWith,
+  switchMap,
+  toArray,
+} from 'rxjs/operators';
+import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
+import { HttpClient } from '@angular/common/http';
 
 //chips
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
+import { AddPointMapComponent } from '../add-point-map/add-point-map.component';
+import { FormControl } from '@angular/forms';
+import {
+  MatAutocomplete,
+  MatAutocompleteSelectedEvent,
+} from '@angular/material/autocomplete';
+import { NotificationService } from '../../../core/service/notification.service';
+import { SpinnerService } from '../../../core/service/spinner.service';
+import { ActivatedRoute, Router } from '@angular/router';
 
-export interface Month {
-  id: number;
-  name: string;
-  completed: boolean;
-  color: ThemePalette;
-  subtasks?: Month[];
+export interface DialogData {
+  animal: 'panda' | 'unicorn' | 'lion';
 }
-/* import { FilterService } from '@core/' */
 
 @Component({
   selector: 'alliance-cgiar-org-form-filter',
   templateUrl: './form-filter.component.html',
-  styleUrls: ['./form-filter.component.scss']
+  styleUrls: ['./form-filter.component.scss'],
 })
-export class FormFilterComponent implements OnInit {
-  setTabsVisible:boolean= false
-  parameters: any = {}
-  params: any = {}
-  subsets$ = []
-  accessions$ = []
-  crops$: any = []
-  accessionsFiltered$: any = []
-  indicators: any = []
-  accessionsIndicator$:any = []
-  //chips
-  visible = true;
-  selectable = true;
-  removable = true;
-  addOnBlur = true;
-  readonly separatorKeysCodes: number[] = [ENTER, COMMA];
-  countries: any = [
-    { name: 'Slovakia' },
-    { name: 'Ghana' },
-  ];
+export class FormFilterComponent implements OnInit, AfterContentInit {
+  /* New get structure */
+  properties!: any[];
+  amountData: number = 0;
+  /* End  New get structure */
 
-  //checkbox month
+  isRunning: boolean = false;
+  summary$: any;
+  /* Chips Autocomplete var */
+  //chips-autocomplete crops start
+  visible: boolean = true;
+  selectable: boolean = true;
+  removable: boolean = true;
+  addOnBlur: boolean = false;
+  separatorKeysCodes = [ENTER, COMMA];
+  CropsCtrl = new FormControl();
+  filteredCrops: Observable<any[]>;
+  crops: Array<string> = [];
+  allCrops: any = [];
+  allCropsArray: any = [];
+  @ViewChild('fruitInput') fruitInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('auto') matAutocomplete!: MatAutocomplete;
+  /* Chips Autocomplete finish */
+  /* Chips Autocomplete var */
+  /* chips-autocomplete countries start */
+  countriesCtrl = new FormControl();
+  filteredCountries: Observable<any[]>;
+  countries: Array<string> = [];
+  allCountries: Array<string> = [];
+  @ViewChild('countryInput') countryInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('countryAuto') matAutocompleteContry!: MatAutocomplete;
+  /* Chips Autocomplete finish */
 
-  months: Month = {
-    id: 0,
-    name: 'All',
-    completed: false,
-    color: 'primary',
-    subtasks: [
-      { id: 1, name: 'January', completed: false, color: 'primary' },
-      { id: 2, name: 'Febrary', completed: false, color: 'primary' },
-      { id: 3, name: 'March', completed: false, color: 'primary' },
-      { id: 4, name: 'April', completed: false, color: 'primary' },
-      { id: 5, name: 'May', completed: false, color: 'primary' },
-      { id: 6, name: 'June', completed: false, color: 'primary' },
-      { id: 7, name: 'July', completed: false, color: 'primary' },
-      { id: 8, name: 'August', completed: false, color: 'primary' },
-      { id: 9, name: 'September', completed: false, color: 'primary' },
-      { id: 10, name: 'October', completed: false, color: 'primary' },
-      { id: 11, name: 'November', completed: false, color: 'primary' },
-      { id: 12, name: 'December', completed: false, color: 'primary' },
-    ]
-  };
+  longitudeAndLatitudeVisible: boolean = true;
+  setTabsVisible: boolean = false;
+
+  params: any = {};
+  passportParams: any = {};
+  cropParams: any = {};
+  subsets$ = [];
+  accessions$ = [];
+  countries$: any = [];
+  crops$: any = [];
+  accessionsFiltered$: any = [];
+  indicators: any = [];
+  accessionsIndicator$: any = [];
 
   allComplete: boolean = false;
 
   //end checkbox month
 
-
-  mcpd = [
-    { id: 100, name: 'wild' },
-    { id: 110, name: 'natural' },
-    { id: 120, name: 'semi-natural/wild' },
-    { id: 130, name: 'semi-natural/sown' },
-    { id: 200, name: 'weedy' },
-    { id: 300, name: 'landrace' },
-    { id: 400, name: 'breeding' },
-  ]
+  mcpd: any[] = [];
 
   minValue: number = 0;
   maxValue: number = 10;
@@ -89,163 +105,259 @@ export class FormFilterComponent implements OnInit {
     ceil: 300,
     showTicksValues: true,
     tickStep: 0.5,
-    tickValueStep: 30
+    tickValueStep: 30,
   };
 
-  constructor(private api: IndicatorService, private sharedService: SharedService) {
-    this.parameters = {
-      month: "",
-      value: "",
-      indicator: "",
-      period: "",
-    }
-    this.params = {
-      crop_name: "", name: "", country_name: "",
-      samp_stat: "", institute_fullname: "", institute_acronym: ""
-    }
+  constructor(
+    private api: IndicatorService,
+    private sharedService: SharedService,
+    public dialog: MatDialog,
+    private httpClient: HttpClient,
+    private notifyService: NotificationService,
+    private _spinnerService: SpinnerService,
+    private route: ActivatedRoute,
+    private router: Router
+  ) {
+    this.filteredCrops = this.CropsCtrl.valueChanges.pipe(
+      startWith(null),
+      map((fruit: string | null) =>
+        fruit ? this._filter(fruit, this.allCrops) : this.allCrops.slice()
+      )
+    );
+
+    /* Autocomplete countries */
+    this.filteredCountries = this.countriesCtrl.valueChanges.pipe(
+      startWith(null),
+      map((country: string | null) =>
+        country
+          ? this._filter(country, this.allCountries)
+          : this.allCountries.slice()
+      )
+    );
+
+    this.passportParams = {
+      name: [],
+      crop: [],
+      country_name: [],
+      samp_stat: [],
+      institute_fullname: [],
+      institute_acronym: [],
+      longitude: [],
+      latitude: [],
+      taxonomy_taxon_name: [],
+    };
+
+    this.cropParams = {
+      names: [],
+    };
   }
 
+  openDialog() {
+    const dialogRef = this.dialog.open(AddPointMapComponent, {
+      data: {
+        animal: 'panda',
+      },
+    });
+    dialogRef.afterClosed().subscribe((data) => {
+      if (data) {
+        this.params.longitude = data.longitude;
+        this.params.latitude = data.latitude;
+        this.longitudeAndLatitudeVisible = false;
+      }
+    });
+  }
+
+  sendIndicatorPar(pars: any) {
+    this.sharedService.sendIndicatorsPar(pars);
+  }
+
+  ngAfterContentInit() {}
+
   ngOnInit(): void {
-    this.sharedService.sendSubsetObservable.subscribe(data => {
-      this.accessions$ = data
-    })
-    this.sharedService.sendAccessionsObservable.subscribe(data => {
-      this.accessionsIndicator$ = data
-      console.log(this.accessionsIndicator$);
-      
-    })
-    this.getIndicators()
-    this.getCrops()
+    this.mcpd = [
+      { id: 100, name: 'wild' },
+      { id: 110, name: 'natural' },
+      { id: 120, name: 'semi-natural/wild' },
+      { id: 130, name: 'semi-natural/sown' },
+      { id: 200, name: 'weedy' },
+      { id: 300, name: 'landrace' },
+      { id: 400, name: 'breeding' },
+    ];
+
+    if (this.router.url.includes('filter;passport')) {
+      let paramsPassp: any = this.route.snapshot.paramMap.get('passport');
+      let paramsInd: any = this.route.snapshot.paramMap.get('indicator');
+      let jsonParamsPas = JSON.parse(paramsPassp);
+      if (paramsInd) {
+        let jsonParamsInd = JSON.parse(paramsInd);
+        this.getAccessionsAutomatically(jsonParamsPas, jsonParamsInd);
+      }
+    }
+
+    this.getCountries();
+    this.getCrops();
+    // Send accessions to indicators form
+    this.sharedService.sendSubsetObservable.subscribe((data) => {
+      this.accessions$ = data;
+    });
+    this.sharedService.sendAccessionsObservable.subscribe((data) => {
+      this.accessionsIndicator$ = data;
+    });
   }
 
   drawTable(subsets: any) {
-    this.sharedService.sendSubsets(subsets)
+    this.sharedService.sendSubsets(subsets);
   }
 
   setDataIndicator(acce: any) {
-    this.sharedService.sendAccession(acce)
+    this.sharedService.sendAccession(acce);
   }
 
-  getSubsetsOfAccession = () => {
-    this.parameters.month = this.getAllSelected()
-    this.api.getSubsetsOfAccession(this.parameters).subscribe(
-      (data) => {
-        this.subsets$ = data
-        this.filterAccessionsByIndicator()
-      },
-      (error) => {
-        console.log(error)
-      }
-    )
+  setSummary(summ: any) {
+    this.sharedService.sendSummary(summ);
   }
 
-  getAccessions = () => {
-    this.api.getAccessions(this.params).subscribe(
-      (data) => {
-        this.accessions$ = data
-        console.log(data);
-        this.drawTable(data)
-        this.setDataIndicator(data)
-      },
-      (error) => (console.log(error)
-      )
-    )
-  }
-
-  getIndicators = () => {
-    this.api.getIndicators().subscribe(
-      (data) => {
-        this.indicators = data
-        //console.log(data);
-      },
-      (error) => (console.log(error)
-      )
-    )
+  sendPassportParameters(params: any) {
+    this.sharedService.sendPassport(params);
   }
 
   getCrops = () => {
     this.api.getCrops().subscribe(
       (data) => {
-        this.crops$ = data
-        //console.log(data);
+        this.crops$ = data;
+        this.crops$.forEach((prop: any) => {
+          this.allCrops.push(prop.name);
+          this.allCropsArray.push(prop);
+        });
       },
-      (error) => (console.log(error)
-      )
-    )
+      (error) => console.log(error)
+    );
+  };
+
+  getCountries() {
+    this.httpClient.get('assets/dbs/countries.json').subscribe((data) => {
+      this.countries$ = data;
+      this.countries$.forEach((element: any) => {
+        this.allCountries.push(element.name);
+      });
+    });
   }
+
+  getAccessions = () => {
+    this.passportParams.crop = this.filterCropsById(this.crops);
+    this.passportParams.country_name = this.countries;
+    this.sendPassportParameters(this.passportParams);
+    this.api.getAccessions(this.passportParams).subscribe(
+      (data) => {
+        if (data.length === 0) {
+          this.notifyService.showWarning(
+            "The system didn't find data with the entered parameters",
+            'Warning'
+          );
+        } else {
+          this.accessions$ = data;
+          this.drawTable(data);
+          this.setDataIndicator(data);
+          this.setSummary(this.accessions$);
+        }
+      },
+      (error) => console.log(error)
+    );
+  };
+
+  getAccessionsAutomatically = (prop: any, ind: any) => {
+    this.api.getAccessions(prop).subscribe(
+      (data) => {
+        if (data.length === 0) {
+          this.notifyService.showWarning(
+            "The system didn't find data with the entered parameters",
+            'Warning'
+          );
+        } else {
+          this.accessions$ = data;
+          this.drawTable(data);
+          this.setDataIndicator(data);
+          this.setSummary(this.accessions$);
+          this.sendIndicatorPar(ind);
+        }
+      },
+      (error) => console.log(error)
+    );
+  };
 
   filterAccessionsByIndicator() {
     this.subsets$.forEach((value: any) => {
-      let accesionsfind = this.accessions$.filter((acces: any) => acces.cellid == value.cellid)
+      let accesionsfind = this.accessions$.filter(
+        (acces: any) => acces.cellid == value.cellid
+      );
       for (let vat of accesionsfind) {
-        this.accessionsFiltered$.push(vat)
+        this.accessionsFiltered$.push(vat);
       }
     });
-    this.accessions$ = this.accessionsFiltered$
-    this.drawTable(this.accessions$)
+    this.accessions$ = this.accessionsFiltered$;
+    this.drawTable(this.accessions$);
   }
 
-  //Chips
+  filterCropsById(crops: String[]): String[] {
+    let cropSelected: String[] = [];
+    crops.forEach((value: any) => {
+      let cropsFind = this.allCropsArray.filter(
+        (prop: any) => prop.name == value
+      );
+      cropsFind.forEach((element: any) => {
+        if (!cropSelected.includes(element.id)) cropSelected.push(element.id);
+      });
+    });
+    return cropSelected;
+  }
 
-  add(event: MatChipInputEvent): void {
+  add(event: MatChipInputEvent, addList: any, ctrl: any): void {
     const input = event.input;
     const value = event.value;
-    // Add our fruit
+
+    // Add our item
     if ((value || '').trim()) {
-      this.countries.push({ name: value.trim() });
+      addList.push(value.trim());
     }
     // Reset the input value
     if (input) {
       input.value = '';
     }
-    console.log(this.countries);
-
+    ctrl.setValue(null);
   }
 
-  remove(fruit: any): void {
-    const index = this.countries.indexOf(fruit);
+  remove(fruit: string, addedList: any): void {
+    const index = addedList.indexOf(fruit);
 
     if (index >= 0) {
-      this.countries.splice(index, 1);
+      addedList.splice(index, 1);
     }
   }
 
-  //end chips
-
-  //checkbox filter
-
-  updateAllComplete() {
-    this.allComplete = this.months.subtasks != null && this.months.subtasks.every(t => t.completed);
+  selectedCrop(
+    event: MatAutocompleteSelectedEvent,
+    addList: any,
+    ctrl: any
+  ): void {
+    addList.push(event.option.viewValue);
+    this.fruitInput.nativeElement.value = '';
+    ctrl.setValue(null);
   }
 
-  someComplete(): boolean {
-    if (this.months.subtasks == null) {
-      return false;
-    }
-    return this.months.subtasks.filter(t => t.completed).length > 0 && !this.allComplete;
+  selectedCountry(
+    event: MatAutocompleteSelectedEvent,
+    addList: any,
+    ctrl: any
+  ): void {
+    addList.push(event.option.viewValue);
+    this.countryInput.nativeElement.value = '';
+    ctrl.setValue(null);
   }
 
-  setAll(completed: boolean) {
-    this.allComplete = completed;
-    if (this.months.subtasks == null) {
-      return;
-    }
-    this.months.subtasks.forEach(t => t.completed = completed);
+  private _filter(value: string, allitems: any): string[] {
+    const filterValue = value.toLowerCase();
+    return allitems.filter(
+      (item: any) => item.toLowerCase().indexOf(filterValue) === 0
+    );
   }
-
-  getAllSelected():any {
-    if (this.months.subtasks != null) {
-      let lst: Month[] = []
-      let lst_final: any = []
-      lst = this.months.subtasks.filter((value: any) => value.completed == true)
-      lst.forEach(element => {
-        lst_final.push(element.id)
-      });
-      return lst_final
-      
-    }
-    
-  }
-
 }
-

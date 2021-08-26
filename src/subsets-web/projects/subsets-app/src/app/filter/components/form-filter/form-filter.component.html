@@ -1,108 +1,189 @@
 <div class="flex-container">
-
-    <div class="filter-space container mt-3">
-      <h2><span>FILTER SUBSETS</span> </h2>
-      <hr>
-      <mat-tab-group mat-align-tabs="center">
-        <mat-tab label="Accessions">
-          <hr>
-          <div class="mb-3">
-            <label for="crop" class="form-label">Select a crop name</label>
-            <select class="form-control" name="crop" id="crop" [(ngModel)]="params.crop_name">
-              <option *ngFor="let x of crops$" value="{{x.name}}">{{x.name}}</option>
-            </select>
-          </div>
-          <hr>
-          <div class="mb-3">
-            <label for="name" class="form-label">Accession name</label>
-            <input type="text" class="form-control" [(ngModel)]="params.name">
-          </div>
-          <div class="mb-3">
-            <label for="country" class="form-label">Country</label>
-            <input type="text" class="form-control" [(ngModel)]="params.country_name" placeholder="i.e. Slovakia">
-          </div>
-          <!--         <div class="mb-3">
-  
-            <mat-form-field class="example-chip-list">
-              <mat-label>Select country(ies)</mat-label>
-              <mat-chip-list #chipList aria-label="Fruit selection">
-                <mat-chip *ngFor="let fruit of countries" [selectable]="selectable"
-                         [removable]="removable" (removed)="remove(fruit)">
-                  {{fruit.name}}
-                  <mat-icon matChipRemove *ngIf="removable">x</mat-icon>
-                </mat-chip>
-                <input placeholder="New fruit..."
-                       [matChipInputFor]="chipList"
-                       [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                       [matChipInputAddOnBlur]="addOnBlur"
-                       (matChipInputTokenEnd)="add($event)">
-              </mat-chip-list>
-  
-            </mat-form-field>
-          </div> -->
-          <div class="mb-3">
-            <label for="institute-name" class="form-label">Institute Acronym</label>
-            <input type="text" class="form-control" [(ngModel)]="params.institute_acronym">
-          </div>
-          <div class="mb-3">
-            <label for="biological-status" class="form-label">Select a biological status</label>
-            <select name="biological-status" id="biological-status" class="form-control" [(ngModel)]="params.samp_stat">
-              <option *ngFor="let x of mcpd" value="{{x.id}}">{{x.name}}</option>
-            </select>
-          </div>
-          <button class="btn btn-green" (click)="getAccessions()">Get Accessions</button>
-        </mat-tab>
-        <mat-tab label="Indicators">
-          <app-form-indicator></app-form-indicator>
-         <!--  <div class="mb-3 mt-3">
-            <label for="indicator" class="form-label">Select an indicator</label>
-            <select name="indicator" id="indicator" class="form-control" [(ngModel)]="parameters.indicator">
-              <option *ngFor="let x of indicators" value="{{x.pref}}">{{x.name}}</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label for="period" class="form-label">Add a year</label>
-            <input type="text" class="form-control" [(ngModel)]="parameters.period"
-              placeholder="i.e. 1983, 1984, ..., 2016">
-          </div>
-  
-          <div class="mb-3">
-            <label for="month" class="form-label">Select a month (s)</label>
-          <section class="example-section">
-            <span class="example-list-section">
-              <mat-checkbox class="example-margin" [checked]="allComplete" [color]="months.color"
-                [indeterminate]="someComplete()" (change)="setAll($event.checked)">
-                {{months.name}}
-              </mat-checkbox>
-            </span>
-            <span class="example-list-section">
-              <ul>
-                <li *ngFor="let subtask of months.subtasks">
-                  <mat-checkbox [(ngModel)]="subtask.completed" [color]="subtask.color"
-                    (ngModelChange)="updateAllComplete()">
-                    {{subtask.name}}
-                  </mat-checkbox>
-                </li>
-              </ul>
-            </span>
-          </section>
+  <div class="filter-space container mt-3">
+    <h2><span>FILTER SUBSETS</span></h2>
+    <hr />
+    <mat-vertical-stepper linear #stepper>
+      <mat-step [editable]="true">
+        <ng-template matStepLabel>Set passport data</ng-template>
+        <div class="mt-3" style="width: 98%">
+          <mat-form-field class="example-chip-list">
+            <mat-label>Select a crop (s)</mat-label>
+            <mat-chip-list #chipList aria-label="Fruit selection">
+              <mat-chip
+                *ngFor="let crop of crops"
+                [selectable]="selectable"
+                [removable]="removable"
+                (removed)="remove(crop, crops)"
+              >
+                {{ crop }}
+                <mat-icon matChipRemove *ngIf="removable">X</mat-icon>
+              </mat-chip>
+              <input
+                placeholder="Add crop..."
+                #fruitInput
+                [formControl]="CropsCtrl"
+                [matAutocomplete]="auto"
+                [matChipInputFor]="chipList"
+                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                (matChipInputTokenEnd)="add($event, crops, CropsCtrl)"
+              />
+            </mat-chip-list>
+            <mat-autocomplete
+              #auto="matAutocomplete"
+              (optionSelected)="selectedCrop($event, crops, CropsCtrl)"
+            >
+              <mat-option
+                *ngFor="let crop of filteredCrops | async"
+                [value]="crop"
+              >
+                {{ crop }}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
         </div>
-          <div class="mb-4">
-            <label for="value" class="form-label">Select an range of values</label>
-            <ngx-slider [(value)]="minValue" [(highValue)]="maxValue" [options]="options" [(ngModel)]="parameters.value">
-            </ngx-slider>
+        <div class="mb-3">
+          <label for="taxon" class="form-label">Taxon name</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="params.taxonomy_taxon_name"
+          />
+        </div>
+        <div class="mt-3" style="width: 98%">
+          <mat-form-field class="example-chip-list">
+            <mat-label>Select a country (ies)</mat-label>
+            <mat-chip-list #countryList aria-label="Country selection">
+              <mat-chip
+                *ngFor="let country of countries"
+                [selectable]="selectable"
+                [removable]="removable"
+                (removed)="remove(country, countries)"
+              >
+                {{ country }}
+                <mat-icon matChipRemove *ngIf="removable">X</mat-icon>
+              </mat-chip>
+              <input
+                placeholder="Add country..."
+                #countryInput
+                [formControl]="countriesCtrl"
+                [matAutocomplete]="countryAuto"
+                [matChipInputFor]="countryList"
+                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                (matChipInputTokenEnd)="add($event, countries, countriesCtrl)"
+              />
+            </mat-chip-list>
+            <mat-autocomplete
+              #countryAuto="matAutocomplete"
+              (optionSelected)="
+                selectedCountry($event, countries, countriesCtrl)
+              "
+            >
+              <mat-option
+                *ngFor="let country of filteredCountries | async"
+                [value]="country"
+              >
+                {{ country }}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
+        </div>
+        <div class="mb-3">
+          <button mat-button (click)="openDialog()" style="color: #3f51b5">
+            Add coordinates.
+          </button>
+        </div>
+        <div
+          class="mb-3 div-coordinates"
+          [hidden]="longitudeAndLatitudeVisible"
+        >
+          <div class="coordinate">
+            <label for="longitude" class="form-label">Longitude</label>
+            <input
+              type="text"
+              disabled
+              class="form-control"
+              [(ngModel)]="params.longitude"
+            />
           </div>
-          <button class="btn btn-green mt-3" (click)="getSubsetsOfAccession()">Get Filter</button> -->
-        </mat-tab>
-        <!--  <mat-tab label="Third">Content 3</mat-tab> -->
-      </mat-tab-group>
-    </div>
-    <div class="outcome-space">
-      <div class="band-green">
-        <h1 class="ml-2">Subsets of accessions overview</h1>
-        <h3 class="ml-2 m-0 font-medium">Summary information about the parameters selected</h3>
-      </div>
-      <!-- <app-tabs [accessions]="accessions$"></app-tabs> -->
-      <app-tabs></app-tabs>
-    </div>
+          <div class="coordinate ml-3">
+            <label for="latitude" class="form-label">Latitude</label>
+            <input
+              type="text"
+              disabled
+              class="form-control"
+              [(ngModel)]="params.latitude"
+            />
+          </div>
+        </div>
+        <div class="mb-3">
+          <label for="institute-name" class="form-label"
+            >Institute Acronym</label
+          >
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="params.institute_acronym"
+          />
+        </div>
+        <div class="mb-3">
+          <label for="biological-status" class="form-label"
+            >Select a biological status</label
+          >
+          <select
+            name="biological-status"
+            id="biological-status"
+            class="form-control"
+            [(ngModel)]="params.samp_stat"
+          >
+            <option *ngFor="let x of mcpd" value="{{ x.id }}">
+              {{ x.name }}
+            </option>
+          </select>
+        </div>
+        <div>
+          <ngx-spinner></ngx-spinner>
+          <button
+            mat-button
+            color="primary"
+            matStepperNext
+            (click)="getAccessions()"
+          >
+            Next
+          </button>
+        </div>
+      </mat-step>
+      <mat-step [editable]="true" (click)="getAccessions()">
+        <ng-template matStepLabel>Set indicators</ng-template>
+        <app-form-indicator
+          [passportParms]="passportParams"
+          [cropParms]="cropParams"
+        ></app-form-indicator>
+        <div>
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button matStepperNext>Next</button>
+        </div>
+      </mat-step>
+      <!--   <mat-step>
+        <ng-template matStepLabel>Set indicator by crop</ng-template>
+        <p>You are now done.</p>
+        <div>
+          <button mat-button matStepperPrevious>Back</button>
+          <button mat-button (click)="stepper.reset()">Reset</button>
+        </div>
+      </mat-step> -->
+    </mat-vertical-stepper>
   </div>
+  <div class="outcome-space">
+    <div class="band-green">
+      <h1 class="ml-2">Subsets of accessions overview</h1>
+      <h3 class="ml-2 m-0 font-medium">
+        Summary information about the parameters selected
+      </h3>
+    </div>
+    <!-- <app-tabs [accessions]="accessions$"></app-tabs> -->
+    <app-tabs
+      [crops]="crops"
+      [params]="passportParams"
+    ></app-tabs>
+  </div>
+</div>

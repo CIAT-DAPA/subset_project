@@ -1,8 +1,9 @@
-
+@import '~ngx-toastr/toastr.css';
 // Custom Theming for Angular Material
 // For more information: https://material.angular.io/guide/theming
 @import '~@angular/material/theming';
 // Plus imports for other components in your app.
+
 
 // Include the common styles for Angular Material. We include this here so that you only
 // have to load a single css file for Angular Material in your app.
@@ -12,6 +13,13 @@
 // Define the palettes for your theme using the Material Design palettes available in palette.scss
 // (imported above). For each palette, you can optionally specify a default, lighter, and darker
 // hue. Available color palettes: https://material.io/design/color/
+
+$custom-typography: mat-typography-config(
+  $font-family: 'Roboto, sans-serif',
+  $body-1: mat-typography-level(16px)
+);
+@include mat-core($custom-typography);
+
 $subsets-app-primary: mat-palette($mat-indigo);
 $subsets-app-accent: mat-palette($mat-pink, A200, A100, A400);
 
@@ -36,7 +44,9 @@ $subsets-app-theme: mat-light-theme((
 /* You can add global styles to this file, and also import other style files */
 
 html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+body { margin: 0; font-family: 'Roboto', sans-serif !important; 
+}
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+html, body {
+  font-family: 'Robot';
+}

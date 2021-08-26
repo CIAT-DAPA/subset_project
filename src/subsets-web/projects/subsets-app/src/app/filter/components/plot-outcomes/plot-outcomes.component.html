@@ -1,4 +1,57 @@
-<h2>Stats</h2>
-<div>
-    <nvd3 [options]="options" [data]="data"></nvd3>
+<div class="container" style="text-align: center;">
+
+ <br>
+ <mat-tab-group mat-align-tabs="center">
+  <mat-tab *ngFor="let item of indicatorsValue$ | async" label="{{item[0]}}">
+    <div class="container-plot">
+
+      <div class="chart-wrapper" *ngFor="let user of item[1]; let i = index">
+        <h4>Period evaluated: {{user.period}}</h4>
+        <canvas baseChart id="chart{{i}}"   style="width: 450px !important;" 
+        [datasets]="[user.data]" 
+            [labels]="lineChartLabels" 
+            [options]="lineOptions"
+            [colors]="lineChartColors" 
+            [legend]="lineChartLegend" 
+            [chartType]="lineChartType" 
+            [plugins]="lineChartPlugins">
+          </canvas>
+        </div>
+      </div>
+  </mat-tab>
+</mat-tab-group>
+ <!--  <div *ngFor="let item of indicatorsValue$ | async">  --><!-- subscribe with async and iterate grouped arrays -->
+    <!-- <h3><strong>{{item[0]}}</strong></h3>  --><!-- first item is headers, display it -->
+    <!-- <div style="width: 100%; display: flex; flex-wrap: wrap;"> -->
+  <!--   <div *ngFor="let user of item[1]; let i = index">
+      <div class="chart-wrapper">
+        <canvas baseChart id="chart{{i}}" style="width: 450px !important;"
+            [datasets]="[{ data:[user.month1, user.month2, user.month3, user.month4, user.month5, user.month6, user.month7, user.month8, user.month9, user.month10, user.month11, user.month12], label:user.indicator}]" 
+            [labels]="lineChartLabels" 
+            [options]="lineChartOptions"
+            [colors]="lineFillColors" 
+            [legend]="lineChartLegend" 
+            [chartType]="lineChartType" 
+            [plugins]="lineChartPlugins">
+          </canvas>
+      </div>
+    </div> -->
+    <!-- <div *ngFor="let user of item[1]; let i = index"> -->
+  <!--     <div class="chart-wrapper" *ngFor="let user of item[1]; let i = index">
+        <p>{{user.indicator}}</p>
+        <canvas baseChart id="chart{{i}}"   style="width: 450px !important;" 
+            [datasets]="[user.data]" 
+            [labels]="lineChartLabels" 
+            [options]="lineOptions"
+            [colors]="lineChartColors" 
+            [legend]="lineChartLegend" 
+            [chartType]="lineChartType" 
+            [plugins]="lineChartPlugins">
+          </canvas>
+      </div> -->
+    <!-- </div> -->
+<!--   </div>
+</div> -->
+<!-- </div> -->
   </div>
+<!-- <density-chart></density-chart> -->
