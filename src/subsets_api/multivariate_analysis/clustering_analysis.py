@@ -58,19 +58,22 @@ def transform_data(data, n_months, n_years):
             df_by_cellids = pd.DataFrame([])
 
             for cell_id in cell_ids:
-                grp_cell = (grp_year.groupby(['cellid'])).get_group(cell_id)
-                grp_cell.drop(labels=['cellid'], axis="columns", inplace=True)                
-                out = grp_cell.set_index(['period','pref_indicator']).stack()                
+                grp_cell = (grp_year.groupby(['cellid'], as_index = False)).get_group(cell_id).reset_index()
+                grp_cell.drop(labels = ['index','cellid'], axis = "columns", inplace = True)   
+                # work on only one row as all rows are identical for the same (cellid, year, ind)
+                grp_cell_row = grp_cell.loc[[0]]   
+                out = grp_cell_row.set_index(['period','pref_indicator']).stack(dropna = False)                
                 out.index = out.index.map('_'.join)
                 result = out.to_frame().T
-                result.insert(loc=0, column='cellid', value=cell_id)
+                result.insert(loc = 0, column = 'cellid', value = cell_id)
                 df_by_cellids = df_by_cellids.append(result)
             
             if df_merge_years.empty:
                 df_merge_years = df_by_cellids
             else:
-                df_merge_years = pd.merge(df_merge_years, df_by_cellids)
+                df_merge_years = pd.merge(df_merge_years, df_by_cellids)            
 
+        df_merge_years.dropna(inplace=True)
         res = data_to_slope_sd_mean(df_merge_years, n_months, n_years)
         df = pd.DataFrame(res, columns=['cellid','slope_'+pref,'mean_'+pref, 'sd_'+pref])
     
