@@ -74,6 +74,10 @@ def transform_data(data, n_months, n_years):
                 df_merge_years = pd.merge(df_merge_years, df_by_cellids)            
 
         df_merge_years.dropna(inplace=True)
+        
+        if df_merge_years.empty:
+            raise ValueError('Empty dataframe after removing NA values')
+        
         res = data_to_slope_sd_mean(df_merge_years, n_months, n_years)
         df = pd.DataFrame(res, columns=['cellid','slope_'+pref,'mean_'+pref, 'sd_'+pref])
     
