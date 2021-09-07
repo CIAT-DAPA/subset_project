@@ -1,4 +1,5 @@
 from mongoengine import *
+from mongoengine.fields import StringField
 
 class Crop(Document):
     #_id = StringField(required=True)
@@ -42,14 +43,22 @@ class Accession(Document):
         #    {'fields': ['+crop'],},
             ('+crop', '+country_name'),
             ('+crop'),
+            ('+taxonomy_taxon_name'),
+            ('+institute_fullname'),
         ]}
+
+class IndicatorType(Document):
+    _id = StringField(required=True)
+    name = StringField(required=True)
+
+    meta = {'collection': 'indicators_indicatortype'}
 
 class Indicator(Document):
     _id = StringField(required=True)
     name = StringField(required=True)
     pref = StringField(required=True)
-    crop = ReferenceField(Crop)
-    indicator_type = StringField(required=True)
+    crop = ListField(StringField(), default=list)
+    indicator_type = ReferenceField(IndicatorType)
 
     meta = {'collection': 'indicators_indicator'}
 
@@ -77,7 +86,7 @@ class IndicatorValue(Document):
     month11 = FloatField(required=False)
     month12 = FloatField(required=False)
 
-    meta = {'collection': 'test',
+    meta = {'collection': 'indicator_value',
             'auto_create_index':False,    
             "index_background": True,
             'indexes': [
