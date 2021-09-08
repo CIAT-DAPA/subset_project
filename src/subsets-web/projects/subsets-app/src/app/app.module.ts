@@ -33,6 +33,7 @@ import {
 } from './core/service/auth.service';
 import { InterceptorService } from './core/service/interceptor.service';
 import { MaxPipePipe } from './max-pipe.pipe';
+import { MethodologyComponent } from './methodology/components/methodology/methodology.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { MaxPipePipe } from './max-pipe.pipe';
     IndicatorComponent,
     //TabsComponent,
     LayoutComponent,
+    MethodologyComponent,
   ],
   imports: [
     CoreModule,

@@ -25,13 +25,14 @@ import { SummaryComponent } from './components/summary/summary.component';
 import { MultivariableAnalysisComponent } from './components/multivariable-analysis/multivariable-analysis.component';
 import { FormSubsetComponent } from './components/form-subset/form-subset.component';
 import { MaxPipePipe } from '../max-pipe.pipe';
+import { FormSpecifcPerCropComponent } from './components/form-specifc-per-crop/form-specifc-per-crop.component';
  
 // d3 and nvd3 should be included somewhere
 
 
 
 @NgModule({
-  declarations: [FormFilterComponent, MapOutcomesComponent, PlotOutcomesComponent, TableOutcomesComponent, FormIndicatorComponent, TabsComponent, DensityChartComponent, AddPointMapComponent, CustomDataComponent, AccessionsDetailComponent, SummaryComponent, MultivariableAnalysisComponent, FormSubsetComponent, MaxPipePipe],
+  declarations: [FormFilterComponent, MapOutcomesComponent, PlotOutcomesComponent, TableOutcomesComponent, FormIndicatorComponent, TabsComponent, DensityChartComponent, AddPointMapComponent, CustomDataComponent, AccessionsDetailComponent, SummaryComponent, MultivariableAnalysisComponent, FormSubsetComponent, MaxPipePipe, FormSpecifcPerCropComponent],
   imports: [
     CommonModule,
     FilterRoutingModule,

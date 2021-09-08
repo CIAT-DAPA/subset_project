@@ -151,9 +151,8 @@ def subsets():
     crops = Crop.objects(Q(id__in = passport_params['crop']))
     result_crops = [{"id":x.id,"name": x.name} for x in crops]
 
-    print("Crops: " + str(len(crops)) )
     # Filtering accessions according to passport data
-    start = time.time()
+    start_time_accessions = time.time()
 
     # Filter clauses to get accessions in order to parameters
     filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
@@ -166,7 +165,9 @@ def subsets():
     cell_ids = [x.cellid for x in accesions if x.cellid]
     # Reduce cellid list
     cell_ids = list(set(cell_ids))
-    print(str(len(cell_ids)))
+    end_time_accessions = time.time()
+    time_accessions = end_time_accessions - start_time_accessions
+    print("Accessions time: " + str(time_accessions))
 
     # Filtering periods
 
@@ -178,6 +179,7 @@ def subsets():
     # With loop and indicatorsperiods from request
     for indicator in indicators_params:
         # month dict for each indicator in the query
+        start_time_query_multivariate = time.time()
         months_filter = [{x: indicator[x] for x in indicator if 'month' in x}]
 
         """ indicator_clauses = [Q(**{filter + "__gte": indicator[filter][0], filter + "__lte": indicator[filter][1]})
@@ -187,49 +189,23 @@ def subsets():
         periods_ids = indicator["indicator"]
         # Clauses to get data for multivariate analysis
         indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
-        # Clauses to get data for univariate analysis
-        # indicator_clauses = [Q(**{'indicator_period__in': periods_ids})] + indicator_clauses + [Q(**{'cellid__in': cell_ids})]
 
-        start = time.time()
         rows = len(periods_ids)
-        end = time.time()
-        print("Periods: " + str(rows) + " time: " + str(end-start))
-
-        # Filtering values of indicators
-        # start = time.time()
-        # ind_values = IndicatorValue.objects(reduce(operator.and_, indicator_clauses)).select_related()
-        # rows = len(ind_values)
-        # print("Univariate: " + str(rows) )
 
         # Filtering values of indicator to multivariate analysis
         indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
         rows_indicator = len(indicator_periods_values)
         print("multivariate: " + str(rows_indicator))
+        end_time_query_multivariate = time.time()
+
+        time_query_multivariate = end_time_query_multivariate - start_time_query_multivariate
+        print("Multivariate query: " + str(time_query_multivariate))
 
         # loop for each crop present in the query
         for crop in result_crops:
             cell_id_crop = [x.cellid for x in accesions if x.cellid and x.crop.id == crop['id']]
             # cellid list from crop
             cell_id_crop = list(set(cell_id_crop))
-            """ cluster_values.extend([{
-                "crop": crop['name'],
-                "pref_indicator": x.indicator_period.indicator.pref,
-                "indicator": x.indicator_period.indicator.name,
-                "cellid": x.cellid,
-                "month1": x.month1,
-                "month2": x.month2,
-                "month3": x.month3,
-                "month4": x.month4,
-                "month5": x.month5,
-                "month6": x.month6,
-                "month7": x.month7,
-                "month8": x.month8,
-                "month9": x.month9,
-                "month10": x.month10,
-                "month11": x.month11,
-                "month12": x.month12,
-                "period": x.indicator_period.period}
-                for x in ind_values if  x.cellid in cell_id_crop]) """
             # Dict to multivariate analysis
             multivariate_values.extend([{
                 "crop": crop['name'],
@@ -251,9 +227,11 @@ def subsets():
                 "period": x.indicator_period.period}
                 for x in indicator_periods_values if  x.cellid in cell_id_crop])
 
+
         # Create a df from multivariate analysis dict
         df_multivariate = pd.DataFrame([s for s in multivariate_values])
         # df to univariate analysis
+        start_time_query_univariate = time.time()
         df_univariate = df_multivariate
         # Query to filter the univariate data
         query_gt = ' & '.join([f'{k}>{v[0]}' for k, v in months_filter[0].items()])
@@ -263,6 +241,9 @@ def subsets():
         # Filter univariate data from query
         univ = df_univariate.query(query)
         print("Univariate: " + str(len(univ)))
+        end_time_query_univariate = time.time()
+        time_query_univariate = end_time_query_univariate - start_time_query_univariate
+        print("Filter Univariate: " + str(time_query_univariate))
         # Append to list for each indicator in the query
         lst_values.append(univ)
 
@@ -276,7 +257,6 @@ def subsets():
         print(df_multivariate)
         lst_df_multivariate.append(df_multivariate)
         # lst_values = lst_values + cluster_values
-        end = time.time()
     
     """ End query to univariate analysis """
 
@@ -293,6 +273,7 @@ def subsets():
     """ Process to get percentil (25, 50, 75) """
     # From response to df
     if univariate_parsed:
+        start_time_quartile = time.time()
         df = pd.DataFrame([s for s in univariate_parsed])
         month_columns = df.columns.difference(['indicator', 'period', 'crop','cellid','pref_indicator'])
         df_groupby_indicator = df.groupby(['indicator', 'period', 'crop'])[month_columns].quantile([0.25,0.5,0.75])
@@ -312,28 +293,50 @@ def subsets():
 
         quantiles = json.loads(df_to_json)
 
+        end_time_quartile = time.time()
+
+        time_quartile = end_time_quartile - start_time_quartile
+        print("Quartile: " + str(time_quartile))
+
         """ End Process to get percentils """
 
         """ Process Multivariate analysis """
         # Runing multivariable analysis
         try:
+            start_time_multivariate_analysis = time.time()
             analysis = clustering_analysis(algorithms, multivariate_parsed, nMonths, nYears, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
                                         n_clusters=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
             result = analysis.to_json(orient = "records")
             parsed = json.loads(result)
+            end_time_multivariate_analysis = time.time()
+            time_multivariate_analysis = end_time_multivariate_analysis - start_time_multivariate_analysis
             content = {
                 'data': univariate_parsed,
                 'multivariety_analysis': parsed,
-                'quantile': quantiles
+                'quantile': quantiles,
+                'times': {
+                    'accessions': time_accessions,
+                    'multivariate_data': time_query_multivariate,
+                    'univariate_data': time_query_univariate,
+                    'quartile': time_quartile,
+                    'multivariate_analysis': time_multivariate_analysis
+                }
             }
         except ValueError as ve:
             print(str(ve))
             content = {
                 'data': univariate_parsed,
                 'multivariety_analysis': [],
-                'quantile': quantiles
+                'quantile': quantiles,
+                'times': {
+                    'accessions': time_accessions,
+                    'multivariate_data': time_query_multivariate,
+                    'univariate_data': time_query_univariate,
+                    'quartile': time_quartile,
+                    'multivariate_analysis': -1
+                }
             }
-            print(content)        
+            print("Exception")   
 
         """ End process multivariate analysis  """
 
@@ -341,23 +344,40 @@ def subsets():
 
     else:
         try:
+            start_time_multivariate_analysis = time.time()
             analysis = clustering_analysis(algorithms, multivariate_parsed, nMonths, nYears, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
                                         n_clusters=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
             result = analysis.to_json(orient = "records")
             parsed = json.loads(result)
+            end_time_multivariate_analysis = time.time()
+            time_multivariate_analysis = end_time_multivariate_analysis - start_time_multivariate_analysis
             content = {
                 'data': [],
                 'multivariety_analysis': parsed,
-                'quantile': []
+                'quantile': [],
+                'times': {
+                    'accessions': time_accessions,
+                    'multivariate_data': time_query_multivariate,
+                    'univariate_data': -1,
+                    'quartile': -1,
+                    'multivariate_analysis': time_multivariate_analysis
+                }
             }
         except ValueError as ve:
             print(str(ve))
             content = {
                 'data': [],
                 'multivariety_analysis': [],
-                'quantile': []
+                'quantile': [],
+                'times': {
+                    'accessions': time_accessions,
+                    'multivariate_data': time_query_multivariate,
+                    'univariate_data': -1,
+                    'quartile': -1,
+                    'multivariate_analysis': -1
+                }
             }
-            print(content)        
+            print("Exception")
 
 
     return jsonify(content)
@@ -501,4 +521,4 @@ def subsets_kha():
 if __name__ == "__main__":
 
     connect('indicatordb', host='dbmongotst01.cgiarad.org', port=27017)
-    app.run(threaded=True, port=5001, debug=True)
+    app.run(threaded=True, host='0.0.0.0', port=8437, debug=False)

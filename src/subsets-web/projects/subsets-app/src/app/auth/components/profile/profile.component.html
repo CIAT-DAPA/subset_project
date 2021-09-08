@@ -38,10 +38,15 @@
             >
               <td>{{ value.description }}</td>
               <td>
-                <button class="btn btn-info" (click)="go(value.params)">
-                  Go</button
-                ><button
-                  class="ml-2 btn btn-danger"
+                <button
+                  mat-button
+                  (click)="go(value.params)"
+                  style="color: #3f51b5"
+                >
+                  Go
+                </button>
+                <button
+                  mat-stroked-button
                   (click)="copyInputMessage(value.params, value.url)"
                 >
                   Copy link

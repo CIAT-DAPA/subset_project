@@ -3,6 +3,8 @@ import { SharedService } from '../../core/service/shared.service';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { AccessionsDetailComponent } from '../../filter/accessions-detail/accessions-detail.component';
 import { IndicatorService } from '../../indicator/service/indicator.service';
+import { saveAs } from 'file-saver';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-tabs',
@@ -28,6 +30,8 @@ export class TabsComponent implements OnInit {
     ]
     this.amountData = 0;
    }
+
+
 
    openAccessionDetail(object:any) {
     const dialogRef = this.dialog.open(AccessionsDetailComponent, {
@@ -66,6 +70,22 @@ export class TabsComponent implements OnInit {
     });
   }
 
+  downloadJsonFormat(data:any) {
+    const blob = new Blob([JSON.stringify(data)], {type : 'application/json'});
+    saveAs(blob, 'accessions.json');
+    }
+
+  downloadCsvFormat(data: any) {
+    const replacer = (key:any, value:any) => value === null ? '' : value; // specify how you want to handle null values here
+    const header = Object.keys(data[0]);
+    let csv = data.map((row:any) => header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(','));
+    csv.unshift(header.join(','));
+    let csvArray = csv.join('\r\n');
+
+    var blob = new Blob([csvArray], {type: 'text/csv' })
+    saveAs(blob, "accessions.csv");
+}
+
     drawTable(subsets: any) {
     this.sharedService.sendSubsets(subsets);
   }
@@ -79,20 +99,6 @@ export class TabsComponent implements OnInit {
   }
 
 
-    // function fetches the next paginated items by using the url in the next property
-    fetchNext() {
-      let nextSplit = this.next.split("/")
-      console.log(nextSplit[4] + "/" + nextSplit[5])
-      this.setProperties(nextSplit[4] + "/" + nextSplit[5]);
-    }
-  
-    // function fetches the previous paginated items by using the url in the previous property
-    fetchPrevious() {
-      let prevSplit = this.previous.split("/")
-      console.log(prevSplit[4] + "/" + prevSplit[5])
-      this.setProperties(prevSplit[4] + "/" + prevSplit[5]);
-    }
-  /* End get new data accessions */
 
   ngOnInit(): void {
     this.sharedService.sendSubsetObservable.subscribe(data => {

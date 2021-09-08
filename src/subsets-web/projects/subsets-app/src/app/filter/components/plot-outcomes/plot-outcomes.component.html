@@ -6,20 +6,29 @@
     <div class="container-plot">
 
       <div class="chart-wrapper" *ngFor="let user of item[1]; let i = index">
-        <h4>Period evaluated: {{user.period}}</h4>
+        <mat-card class="example-card mt-3 mb-3">
+          <mat-card-header>
+            <div mat-card-avatar class="example-header-image"></div>
+            <mat-card-title>{{user.crop}}</mat-card-title>
+            <mat-card-subtitle>{{user.period}}</mat-card-subtitle>
+          </mat-card-header>
+          <mat-card-content>
         <canvas baseChart id="chart{{i}}"   style="width: 450px !important;" 
-        [datasets]="[user.data]" 
+        [datasets]="user.data" 
             [labels]="lineChartLabels" 
-            [options]="lineOptions"
+            [options]="{responsive:true, scales: {yAxes: [{scaleLabel: {display: true,labelString: user.indicator}}]}}"
             [colors]="lineChartColors" 
             [legend]="lineChartLegend" 
             [chartType]="lineChartType" 
             [plugins]="lineChartPlugins">
           </canvas>
+          </mat-card-content>
+        </mat-card>
         </div>
       </div>
   </mat-tab>
 </mat-tab-group>
+
  <!--  <div *ngFor="let item of indicatorsValue$ | async">  --><!-- subscribe with async and iterate grouped arrays -->
     <!-- <h3><strong>{{item[0]}}</strong></h3>  --><!-- first item is headers, display it -->
     <!-- <div style="width: 100%; display: flex; flex-wrap: wrap;"> -->

@@ -40,6 +40,7 @@ import { MatDatepicker } from '@angular/material/datepicker';
 import * as _moment from 'moment';
 import { defaultFormat as _rollupMoment, Moment } from 'moment';
 import { listLazyRoutes } from '@angular/compiler/src/aot/lazy_routes';
+import { NotificationService } from '../../../core/service/notification.service';
 
 @Component({
   selector: 'app-form-indicator',
@@ -50,13 +51,19 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   buttonName: any = 'Show properties advanced';
   advanceproperties: boolean = true;
   params$: any;
-  minPts!: number;
-  epsilon!: number;
   monthFirt: number;
   monthEnd: number;
   months$!: any[];
   request$: any;
   multiv$: any = [];
+  minAndMax: any;
+  indicatorsPerCrop$: any[] = [];
+
+  /* Advance properties */
+  dbscanCheck: boolean;
+  hdbscanCheck: boolean;
+  agglomerativeCheck: boolean;
+
   //chips-autocomplete start
   visible: boolean = true;
   selectable: boolean = true;
@@ -66,14 +73,8 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   separatorKeysCodes = [ENTER, COMMA];
   fruitCtrl = new FormControl();
   filteredFruits: Observable<any[]>;
-  fruits: Array<string> = [
-    /* 'Extreme daily precipitation', */
-  ];
-  allFruits: Array<string> = [
-    /*     'Extreme daily precipitation',
-        'Consecutive dry days',
-        'Total precipitation', */
-  ];
+  fruits: Array<string> = [];
+  allFruits: Array<string> = [];
   allIndicatorsArray: any = [];
   @ViewChild('fruitInput') fruitInput!: ElementRef<HTMLInputElement>;
   @ViewChild('auto') matAutocomplete!: MatAutocomplete;
@@ -87,24 +88,6 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   indicatorPeriods$: any = [];
   indicators$: any = [];
   parameters: any = {};
-  /* Test month slider */
-  valueM: number = 1;
-  highvalueM: number = 1;
-  optionsM: Options = {
-    floor: 1,
-    ceil: 12,
-    translate: (value: number, label: LabelType): string => {
-      switch (label) {
-        case LabelType.Low:
-          return '<b>Month initial:</b> ' + value;
-        case LabelType.High:
-          return '<b>Month final:</b> ' + value;
-        default:
-          return '' + value;
-      }
-    },
-  };
-  /* End month slider */
 
   minValue: number = 0;
   maxValue: number = 10;
@@ -114,6 +97,16 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     showTicksValues: true,
     tickStep: 0.5,
     tickValueStep: 30,
+    translate: (value: number, label: LabelType): string => {
+      switch (label) {
+        case LabelType.Low:
+          return '<b>Min:</b> ' + value;
+        case LabelType.High:
+          return '<b>Max:</b> ' + value;
+        default:
+          return value.toString();
+      }
+    },
   };
 
   periods: any = [];
@@ -121,7 +114,7 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   periodMaxValue: number = 1983;
   periodOptions: Options = {
     floor: 1983,
-    ceil: 2017,
+    ceil: 2016,
     showTicksValues: true,
     tickStep: 1,
     tickValueStep: 30,
@@ -129,12 +122,18 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   allComplete: boolean = false;
   finalRequest: any = [];
   cellids$: any = [];
+  hyperParameters: any;
+  algorithmsList: string[];
 
   constructor(
     private api: IndicatorService,
     private sharedService: SharedService,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    private notifyService: NotificationService
   ) {
+    this.agglomerativeCheck = true;
+    this.dbscanCheck = false;
+    this.hdbscanCheck = false;
     this.monthFirt = 1;
     this.monthEnd = 12;
     this.listValues = [];
@@ -151,19 +150,39 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
       indicator: '',
       period: '',
     };
+
+    this.hyperParameters = {
+      minpts: 20,
+      epsilon: 10,
+      min_cluster_size: 10,
+      n_clusters: 5
+    };
+    this.algorithmsList = [];
+  }
+
+  addAlgorithmsToList() {
+    if (this.agglomerativeCheck) {
+      this.algorithmsList.push("agglomerative");
+    }
+    if (this.dbscanCheck) {
+      this.algorithmsList.push("dbscan");
+    }
+    if (this.hdbscanCheck) {
+      this.algorithmsList.push("hdbscan");
+    }
   }
 
   showAdvanceProperties() {
     if (this.buttonName == 'Show properties advanced') {
       this.advanceproperties = false;
       this.buttonName = 'Hidden properties advanced';
-      this.epsilon = 20;
-      this.minPts = 10;
+      // this.epsilon = 20;
+      // this.minPts = 10;
     } else {
       this.advanceproperties = true;
       this.buttonName = 'Show properties advanced';
-      this.epsilon = 20;
-      this.minPts = 10;
+      // this.epsilon = 20;
+      // this.minPts = 10;
     }
   }
 
@@ -184,7 +203,8 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
         ); */
   }
 
-  ngAfterContentInit() {}
+  ngAfterContentInit() {
+  }
 
   getDate() {
     let indicator = ['p95'];
@@ -219,10 +239,6 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   }
 
   ngOnInit(): void {
-    this.sharedService.sendIndicatorsParObservable.subscribe((data) => {
-      this.params$ = data;
-      this.getSubsetsOfAccessionAutomatically(this.params$);
-    });
     this.sharedService.sendSubsetObservable.subscribe((data) => {
       this.accessions$ = data;
     });
@@ -238,6 +254,14 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     this.sharedService.sendAccession(acce);
   }
 
+  sendIndicatorSummary(indSum: any) {
+    this.sharedService.sendIndicatorSummary(indSum);
+  }
+
+  sendTime(tim: any) {
+    this.sharedService.sendTimes(tim);
+  }
+
   setMultivariableData(mul: any) {
     this.sharedService.sendMultivariable(mul);
   }
@@ -250,9 +274,15 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     this.api.getIndicators().subscribe(
       (data) => {
         this.indicators$ = data;
+        console.log(data);
         this.indicators$.forEach((element: any) => {
-          this.allFruits.push(element.name);
-          this.allIndicatorsArray.push(element);
+          if (element.indicator_type == 'generic') {
+            this.allFruits.push(element.name);
+            this.allIndicatorsArray.push(element);
+          }
+          if (element.indicator_type == 'specific') {
+            this.indicatorsPerCrop$.push(element);
+          }
         });
       },
       (error) => console.log(error)
@@ -278,9 +308,14 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   }
 
   getSubsetsOfAccession = () => {
+    let obj: any = {};
+    this.request$ = {};
+    this.finalRequest = [];
+    this.algorithmsList = [];
+
+    this.addAlgorithmsToList()
     this.periods = [this.periodMinValue, this.periodMaxValue];
     let indicators: String[] = this.fruits;
-    let obj: any = {};
     indicators.forEach((props: any, index: any) => {
       obj = {
         indicator: this.filterIndicatorPeriodById(
@@ -299,16 +334,41 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     this.request$ = {
       data: this.finalRequest,
       passport: this.passportParms,
-      analysis: { algorithm: ["dbscan", "hdbscan","agglomerative"] },
+      analysis: {
+        algorithm: this.algorithmsList,
+        hyperparameter: this.hyperParameters,
+      },
     };
     this.sendIndicatorsParameters(this.request$);
     this.api.getSubsetsOfAccessionTest(this.request$).subscribe(
       (data) => {
-        this.seIndicatorValue(data.data);
-        this.setMultivariableData(data.multivariety_analysis);
-        // this.filterMultivariableData();
-        obj = {};
-        this.request$ = {};
+        if (data.data.length === 0) {
+          this.notifyService.showWarning(
+            "The system didn't find data with the entered parameters",
+            'Warning'
+          );
+          obj = {};
+          this.request$ = {};
+          this.finalRequest = [];
+          this.algorithmsList = [];
+        } else {
+          this.sendIndicatorSummary(data.data);
+          this.seIndicatorValue(data.quantile);
+          this.sendTime(data.times);
+        }
+        if (data.multivariety_analysis.length === 0) {
+          this.notifyService.showWarning(
+            "all the rows of the dataframe contain missing values and thus the clustering is not performed",
+            'Warning'
+          );
+          obj = {};
+          this.request$ = {};
+          this.finalRequest = [];
+          this.algorithmsList = [];
+        } else {
+          this.setMultivariableData(data.multivariety_analysis);
+          this.sendTime(data.times);
+        }
       },
       (error) => {
         console.log(error);
@@ -317,38 +377,34 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   };
 
   getSubsetsOfAccessionAutomatically = (prop: any) => {
+    console.log("Hello world");
     this.sendIndicatorsParameters(prop);
-    this.api.getSubsetsOfAccessionTest(prop).subscribe(
+    this.api.getSubsetsOfAccessionTest(this.request$).subscribe(
       (data) => {
-        console.log(data);
+        if (data.data.length === 0) {
+          this.notifyService.showWarning(
+            "The system didn't find data with the entered parameters",
+            'Warning'
+          );
+          this.request$ = {};
+          this.finalRequest = [];
+          this.algorithmsList = [];
+        } else {
+          this.sendIndicatorSummary(data.data);
+          this.seIndicatorValue(data.quantile);
+          this.setMultivariableData(data.multivariety_analysis);
+        }
 
-        /* this.subsets$ = data.data[0]*/
-        this.cellids$ = data.data.cellids;
-        this.seIndicatorValue(data.data.data);
-        this.filterAccessionsByIndicator();
-        this.setMultivariableData(data.data.multivariety);
-        /* this.seIndicatorValue(data.data[1])
-        this.subsets$ = data.data[0] */
+        // this.filterMultivariableData();
+        this.request$ = {};
+        this.finalRequest = [];
+        this.algorithmsList = [];
       },
       (error) => {
         console.log(error);
       }
     );
   };
-
-  filterAccessionsByIndicator() {
-    this.cellids$.forEach((prop: any) => {
-      let accesionsfind = this.accessions$.filter(
-        (acces: any) => acces.cellid == prop
-      );
-      for (let vat of accesionsfind) {
-        this.accessionsFiltered$.push(vat);
-      }
-    });
-    this.accessions$ = this.accessionsFiltered$;
-    this.setSummary(this.accessions$);
-    this.drawTable(this.accessions$);
-  }
 
   filterIndicatorsById(indicators: String): String {
     console.log(this.indicators$);
@@ -441,7 +497,8 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   private _filter(value: string): string[] {
     const filterValue = value.toLowerCase();
     return this.allFruits.filter(
-      (fruit) => fruit.toLowerCase().indexOf(filterValue) === 0
+      // (fruit) => fruit.toLowerCase().indexOf(filterValue) === 0
+      (fruit) => fruit.toLowerCase().includes(filterValue)
     );
   }
 }

@@ -15,7 +15,8 @@ username:any;
 
    logout() {
      this._authService.logout()
-     this.router.navigate(['login'])
+    //  this.router.navigate(['login'])
+    window.location.reload()
 
    }
 

@@ -41,13 +41,44 @@
             </mat-autocomplete>
           </mat-form-field>
         </div>
+
         <div class="mb-3">
-          <label for="taxon" class="form-label">Taxon name</label>
-          <input
-            type="text"
-            class="form-control"
-            [(ngModel)]="params.taxonomy_taxon_name"
-          />
+          <div class="mt-3" style="width: 98%">
+            <mat-form-field class="example-chip-list">
+              <mat-label>Select a taxon name (s)</mat-label>
+              <mat-chip-list #taxonList aria-label="Taxon selection">
+                <mat-chip
+                  *ngFor="let tax of taxon"
+                  [selectable]="selectable"
+                  [removable]="removable"
+                  (removed)="remove(tax, taxon)"
+                >
+                  {{ tax }}
+                  <mat-icon matChipRemove *ngIf="removable">X</mat-icon>
+                </mat-chip>
+                <input
+                  placeholder="Add taxon name..."
+                  #taxonInput
+                  [formControl]="taxonCtrl"
+                  [matAutocomplete]="taxonAuto"
+                  [matChipInputFor]="taxonList"
+                  [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                  (matChipInputTokenEnd)="add($event, taxon, taxonCtrl)"
+                />
+              </mat-chip-list>
+              <mat-autocomplete
+                #taxonAuto="matAutocomplete"
+                (optionSelected)="selectedTaxon($event, taxon, taxonCtrl)"
+              >
+                <mat-option
+                  *ngFor="let tx of filteredTaxon | async"
+                  [value]="tx"
+                >
+                  {{ tx }}
+                </mat-option>
+              </mat-autocomplete>
+            </mat-form-field>
+          </div>
         </div>
         <div class="mt-3" style="width: 98%">
           <mat-form-field class="example-chip-list">
@@ -115,15 +146,43 @@
             />
           </div>
         </div>
-        <div class="mb-3">
-          <label for="institute-name" class="form-label"
-            >Institute Acronym</label
-          >
-          <input
-            type="text"
-            class="form-control"
-            [(ngModel)]="params.institute_acronym"
-          />
+        <div class="mt-3 mb-3" style="width: 98%">
+          <mat-form-field class="example-chip-list">
+            <mat-label>Select an institute name (s)</mat-label>
+            <mat-chip-list #instituteList aria-label="Institute selection">
+              <mat-chip
+                *ngFor="let inst of institutes"
+                [selectable]="selectable"
+                [removable]="removable"
+                (removed)="remove(inst, institutes)"
+              >
+                {{ inst }}
+                <mat-icon matChipRemove *ngIf="removable">X</mat-icon>
+              </mat-chip>
+              <input
+                placeholder="Add institute..."
+                #instituteInput
+                [formControl]="instituteCtrl"
+                [matAutocomplete]="instituteAuto"
+                [matChipInputFor]="instituteList"
+                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                (matChipInputTokenEnd)="add($event, institutes, instituteCtrl)"
+              />
+            </mat-chip-list>
+            <mat-autocomplete
+              #instituteAuto="matAutocomplete"
+              (optionSelected)="
+                selectedInstitute($event, institutes, instituteCtrl)
+              "
+            >
+              <mat-option
+                *ngFor="let inst of filteredInstitute | async"
+                [value]="inst"
+              >
+                {{ inst }}
+              </mat-option>
+            </mat-autocomplete>
+          </mat-form-field>
         </div>
         <div class="mb-3">
           <label for="biological-status" class="form-label"
@@ -133,7 +192,7 @@
             name="biological-status"
             id="biological-status"
             class="form-control"
-            [(ngModel)]="params.samp_stat"
+            [(ngModel)]="passportParams.samp_stat"
           >
             <option *ngFor="let x of mcpd" value="{{ x.id }}">
               {{ x.name }}

@@ -22,6 +22,7 @@ import {
 } from 'rxjs/operators';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { HttpClient } from '@angular/common/http';
+import { saveAs } from 'file-saver';
 
 //chips
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
@@ -77,6 +78,23 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   @ViewChild('countryInput') countryInput!: ElementRef<HTMLInputElement>;
   @ViewChild('countryAuto') matAutocompleteContry!: MatAutocomplete;
   /* Chips Autocomplete finish */
+
+  /* Taxon autocomplete start */
+  taxonCtrl = new FormControl();
+  filteredTaxon: Observable<any[]>;
+  taxon: Array<string> = [];
+  allTaxon: Array<string> = [];
+  @ViewChild('taxonInput') taxonInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('taxonAuto') matAutocompleteTaxon!: MatAutocomplete;
+  /* Taxon autocomplete end */
+  /* Taxon autocomplete start */
+  instituteCtrl = new FormControl();
+  filteredInstitute: Observable<any[]>;
+  institutes: Array<string> = [];
+  allInstitutes: Array<string> = [];
+  @ViewChild('instituteInput') instituteInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('instituteAuto') matAutocompleteInstitute!: MatAutocomplete;
+  /* Taxon autocomplete end */
 
   longitudeAndLatitudeVisible: boolean = true;
   setTabsVisible: boolean = false;
@@ -135,6 +153,25 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
       )
     );
 
+    /* Autocomplete taxon */
+    this.filteredTaxon = this.taxonCtrl.valueChanges.pipe(
+      startWith(null),
+      map((country: string | null) =>
+        country
+          ? this._filter(country, this.allTaxon)
+          : this.allTaxon.slice()
+      )
+    );
+    /* Autocomplete institute */
+    this.filteredInstitute = this.instituteCtrl.valueChanges.pipe(
+      startWith(null),
+      map((inst: string | null) =>
+        inst
+          ? this._filter(inst, this.allInstitutes)
+          : this.allInstitutes.slice()
+      )
+    );
+
     this.passportParams = {
       name: [],
       crop: [],
@@ -168,6 +205,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   }
 
   sendIndicatorPar(pars: any) {
+    console.log(pars)
     this.sharedService.sendIndicatorsPar(pars);
   }
 
@@ -205,6 +243,18 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     });
   }
 
+  sendIndicatorSummary(indSum: any) {
+    this.sharedService.sendIndicatorSummary(indSum);
+  }
+
+  setMultivariableData(mul: any) {
+    this.sharedService.sendMultivariable(mul);
+  }
+
+  seIndicatorValue(indVal: any) {
+    this.sharedService.sendIndicatorValue(indVal);
+  }
+
   drawTable(subsets: any) {
     this.sharedService.sendSubsets(subsets);
   }
@@ -218,13 +268,16 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   }
 
   sendPassportParameters(params: any) {
+    console.log(params)
     this.sharedService.sendPassport(params);
   }
 
   getCrops = () => {
     this.api.getCrops().subscribe(
       (data) => {
-        this.crops$ = data;
+        this.crops$ = data.crops;
+        this.allTaxon = data.taxs
+        this.allInstitutes = data.institute
         this.crops$.forEach((prop: any) => {
           this.allCrops.push(prop.name);
           this.allCropsArray.push(prop);
@@ -246,6 +299,9 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   getAccessions = () => {
     this.passportParams.crop = this.filterCropsById(this.crops);
     this.passportParams.country_name = this.countries;
+    this.passportParams.institute_fullname = this.institutes;
+    this.passportParams.taxonomy_taxon_name = this.taxon;
+
     this.sendPassportParameters(this.passportParams);
     this.api.getAccessions(this.passportParams).subscribe(
       (data) => {
@@ -265,6 +321,17 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     );
   };
 
+  downloadFile(data: any) {
+    const replacer = (key:any, value:any) => value === null ? '' : value; // specify how you want to handle null values here
+    const header = Object.keys(data[0]);
+    let csv = data.map((row:any) => header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(','));
+    csv.unshift(header.join(','));
+    let csvArray = csv.join('\r\n');
+
+    var blob = new Blob([csvArray], {type: 'text/csv' })
+    saveAs(blob, "myFile.csv");
+}
+
   getAccessionsAutomatically = (prop: any, ind: any) => {
     this.api.getAccessions(prop).subscribe(
       (data) => {
@@ -278,12 +345,35 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
           this.drawTable(data);
           this.setDataIndicator(data);
           this.setSummary(this.accessions$);
-          this.sendIndicatorPar(ind);
+          this.getSubsetsOfAccessionAutomatically(ind)
         }
       },
       (error) => console.log(error)
     );
   };
+
+  getSubsetsOfAccessionAutomatically = (prop: any) => {
+    console.log("Hello world");
+    this.api.getSubsetsOfAccessionTest(prop).subscribe(
+      (data) => {
+        if (data.data.length === 0) {
+          this.notifyService.showWarning(
+            "The system didn't find data with the entered parameters",
+            'Warning'
+          );
+
+        } else {
+          this.sendIndicatorSummary(data.data);
+          this.seIndicatorValue(data.quantile);
+          this.setMultivariableData(data.multivariety_analysis);
+        }
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  };
+
 
   filterAccessionsByIndicator() {
     this.subsets$.forEach((value: any) => {
@@ -354,10 +444,30 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     ctrl.setValue(null);
   }
 
+  selectedTaxon(
+    event: MatAutocompleteSelectedEvent,
+    addList: any,
+    ctrl: any
+  ): void {
+    addList.push(event.option.viewValue);
+    this.taxonInput.nativeElement.value = '';
+    ctrl.setValue(null);
+  }
+
+  selectedInstitute(
+    event: MatAutocompleteSelectedEvent,
+    addList: any,
+    ctrl: any
+  ): void {
+    addList.push(event.option.viewValue);
+    this.instituteInput.nativeElement.value = '';
+    ctrl.setValue(null);
+  }
+
   private _filter(value: string, allitems: any): string[] {
     const filterValue = value.toLowerCase();
     return allitems.filter(
-      (item: any) => item.toLowerCase().indexOf(filterValue) === 0
+      (item: any) => item.toLowerCase().includes(filterValue)
     );
   }
 }

@@ -3,19 +3,22 @@ import numpy as np
 from pandas.core import groupby  
 from functools import reduce
 
-data = [{'period':1995,'cellid':1, 'month1':0.1, 'month2':0.1},{'period':1995,'cellid':3, 'month1':0.2, 'month2':0.3},
-        {'period':1996,'cellid':1, 'month1':0.3, 'month2':0.1}, {'period':1996,'cellid':2, 'month1':0.4, 'month2':0.1}, {'period':1996,'cellid':3, 'month1':0.7, 'month2':0.5},
-        {'period':1997,'cellid':1, 'month1':0.9, 'month2':0.6}, {'period':1997,'cellid':2, 'month1':0.3, 'month2':0.4}, {'period':1997,'cellid':3, 'month1':0.1, 'month2':0.3}]
+data = [{'period':1995,'cellid':1, 'month1':0.1, 'month2':0.9, 'month3':0.1, 'month4':0.3, 'month5':0.4, 'month6':0.4},{'period':1995,'cellid':3, 'month1':0.2, 'month2':0.3, 'month3':0, 'month4':0.2, 'month5':0.3, 'month6':0.5},
+        {'period':1996,'cellid':1, 'month1':0.3, 'month2':0.1, 'month3':0.1, 'month4':0.3, 'month5':0.4, 'month6':0.5}, {'period':1996,'cellid':2, 'month1':0.4, 'month2':0.1, 'month3':0.1, 'month4':0.3, 'month5':0.4, 'month6':0.4}, {'period':1996,'cellid':3, 'month1':0.7, 'month2':0.5, 'month3':0.7, 'month4':0.8, 'month5':0.7, 'month6':0.7},
+        {'period':1997,'cellid':1, 'month1':0.9, 'month2':0.6, 'month3':0.4, 'month4':0.1, 'month5':2, 'month6':1}, {'period':1997,'cellid':2, 'month1':0.3, 'month2':0.4, 'month3':0.1, 'month4':0.3, 'month5':0.4, 'month6':0.4}, {'period':1997,'cellid':3, 'month1':0.1, 'month2':0.3, 'month3':0.1, 'month4':0.1, 'month5':0.1, 'month6':0.1}]
 
 df = pd.DataFrame(data)
 
-for x in range(len(df)):
-        for colums in list(df.columns.values):
-                if 'month' in colums:
-                        if 0.7 <= df.loc[x, colums] or df.loc[x, colums] <= 0.2:
-                                df.loc[x, colums] = np.nan
+months = ['month1', 'month2']
+month_dict = {'month1':[0.2,0.5],'month2':[0.2,0.5]}
 
-print(df)
+query_gt = ' & '.join([f'{k}>={v[0]}' for k, v in month_dict.items()])
+query_lt = ' & '.join([f'{k}<={v[1]}' for k, v in month_dict.items()])
+
+query = query_gt + ' & ' + query_lt
+print(query)
+
+print(df.query(query))
 # df_gt = df.loc[:, 'month1'] >= 0.7 
 # df_lt = df.loc[:, 'month1'] <=
 

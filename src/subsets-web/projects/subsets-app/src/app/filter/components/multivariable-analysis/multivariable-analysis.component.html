@@ -1,113 +1,191 @@
 <div class="container">
-
-  <br>
+  <br />
   <mat-tab-group mat-align-tabs="center">
-   <mat-tab *ngIf="namesResponse.includes('cluster_dbscan')" label="Dbscan Analysis">
-    <div class="analysis-table">
-    <table class="table table-striped mt-4">
-      <thead>
-        <tr>
-          <th
-            scope="col"
-            *ngFor="let header of headersTable_1"
-            class="item-table"
-            style="text-align: center"
-          >
-            {{ header }}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          *ngFor="
-            let value of res$
-              | paginate: { itemsPerPage: 5, currentPage: actualPageDbscan } sort: cluster_dbscan
-          "
-          style="text-align: center; cursor: pointer; cursor: hand"
-        >
-          <td>{{ value.crop }}</td>
-          <td>{{ value.name }}</td>
-          <td>{{ value.number }}</td>
-          <td>{{ value.cluster_dbscan }}</td>
-        </tr>
-      </tbody>
-    </table>
-    <pagination-controls (pageChange)="actualPageDbscan = $event">
-    </pagination-controls>
+    <mat-tab
+      *ngIf="namesResponse.includes('cluster_dbscan')"
+      label="Dbscan Analysis"
+    >
+    <div
+    class=""
+    style="width: 100%; display: flex; justify-content: flex-end"
+  >
+    <button
+      mat-button
+      (click)="downloadCsvFormat(resDbscan$)"
+      style="color: #3f51b5"
+    >
+      <i class="fas fa-file-csv"></i> Download csv
+    </button>
+    <button
+      mat-button
+      (click)="downloadJsonFormat(resDbscan$)"
+      style="color: #3f51b5"
+    >
+      <i class="fab fa-js"></i> Download json
+    </button>
   </div>
-   </mat-tab>
-   <mat-tab *ngIf="namesResponse.includes('cluster_hdbscan')" label="Hdbscan Analysis">
-    <div class="analysis-table">
-      <table class="table table-striped mt-4">
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              *ngFor="let header of headersTable_1"
-              class="item-table"
-              style="text-align: center"
+      <div class="analysis-table">
+        <table class="table table-striped mt-4">
+          <thead>
+            <tr>
+              <th
+                scope="col"
+                *ngFor="let header of headersTable_1"
+                class="item-table"
+                style="text-align: center"
+              >
+                {{ header }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container
+              *ngFor="
+                let value of resDbscan$
+                  | paginate: { itemsPerPage: 5, currentPage: actualPageDbscan }
+              "
             >
-              {{ header }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="
-              let value of res$
-                | paginate: { itemsPerPage: 5, currentPage: actualPageHdbscan } sort:cluster_hdbscan
-            "
-            style="text-align: center; cursor: pointer; cursor: hand"
-          >
-            <td>{{ value.crop }}</td>
-            <td>{{ value.name }}</td>
-            <td>{{ value.number }}</td>
-            <td>{{ value.cluster_hdbscan }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <pagination-controls (pageChange)="actualPageHdbscan = $event">
-      </pagination-controls>
+              <tr
+                *ngIf="value.cluster_dbscan >= 0"
+                style="text-align: center; cursor: pointer; cursor: hand"
+              >
+                <td>{{ value.crop }}</td>
+                <td>{{ value.name }}</td>
+                <td>{{ value.number }}</td>
+                <td>{{ value.cluster_dbscan }}</td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+        <pagination-controls (pageChange)="actualPageDbscan = $event">
+        </pagination-controls>
       </div>
-   </mat-tab>
-   <mat-tab *ngIf="namesResponse.includes('cluster_aggolmerative')" label="Agglomerative Analysis"> 
-    <div class="analysis-table">
-      <table class="table table-striped mt-4">
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              *ngFor="let header of headersTable_1"
-              class="item-table"
-              style="text-align: center"
+    </mat-tab>
+    <mat-tab
+      *ngIf="namesResponse.includes('cluster_hdbscan')"
+      label="Hdbscan Analysis">
+      <div
+      class=""
+      style="width: 100%; display: flex; justify-content: flex-end"
+    >
+      <button
+        mat-button
+        (click)="downloadCsvFormat(resHdbscan$)"
+        style="color: #3f51b5"
+      >
+        <i class="fas fa-file-csv"></i> Download csv
+      </button>
+      <button
+        mat-button
+        (click)="downloadJsonFormat(resHdbscan$)"
+        style="color: #3f51b5"
+      >
+        <i class="fab fa-js"></i> Download json
+      </button>
+    </div>
+    
+      <div class="analysis-table">
+        <table class="table table-striped mt-4">
+          <thead>
+            <tr>
+              <th
+                scope="col"
+                *ngFor="let header of headersTable_1"
+                class="item-table"
+                style="text-align: center"
+              >
+                {{ header }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container
+              *ngFor="
+                let value of resHdbscan$
+                  | paginate
+                    : { itemsPerPage: 5, currentPage: actualPageHdbscan }
+              "
             >
-              {{ header }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="
-              let value of res$
-                | paginate: { itemsPerPage: 5, currentPage: actualPageAgglomerative } sort:cluster_aggolmerative
-            "
-            style="text-align: center; cursor: pointer; cursor: hand"
-          >
-            <td>{{ value.crop }}</td>
-            <td>{{ value.name }}</td>
-            <td>{{ value.number }}</td>
-            <td>{{ value.cluster_aggolmerative }}</td>
-          </tr>
-        </tbody>
-      </table>
-      <pagination-controls (pageChange)="actualPageAgglomerative = $event">
-      </pagination-controls>
+              <tr
+                *ngIf="value.cluster_hdbscan >= 0"
+                style="text-align: center; cursor: pointer; cursor: hand"
+              >
+                <td>{{ value.crop }}</td>
+                <td>{{ value.name }}</td>
+                <td>{{ value.number }}</td>
+                <td>{{ value.cluster_hdbscan }}</td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+        <pagination-controls (pageChange)="actualPageHdbscan = $event">
+        </pagination-controls>
       </div>
-   </mat-tab>
- </mat-tab-group>
+    </mat-tab>
+    <mat-tab
+      *ngIf="namesResponse.includes('cluster_aggolmerative')"
+      label="Agglomerative Analysis"
+    >
+    <div
+    class=""
+    style="width: 100%; display: flex; justify-content: flex-end"
+  >
+    <button
+      mat-button
+      (click)="downloadCsvFormat(resAgglomerative$)"
+      style="color: #3f51b5"
+    >
+      <i class="fas fa-file-csv"></i> Download csv
+    </button>
+    <button
+      mat-button
+      (click)="downloadJsonFormat(resAgglomerative$)"
+      style="color: #3f51b5"
+    >
+      <i class="fab fa-js"></i> Download json
+    </button>
+  </div>
+      <div class="analysis-table">
+        <table class="table table-striped mt-4">
+          <thead>
+            <tr>
+              <th
+                scope="col"
+                *ngFor="let header of headersTable_1"
+                class="item-table"
+                style="text-align: center"
+              >
+                {{ header }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <ng-container
+              *ngFor="
+                let value of resAgglomerative$
+                  | paginate
+                    : { itemsPerPage: 5, currentPage: actualPageAgglomerative }
+              "
+            >
+              <tr
+                *ngIf="value.cluster_aggolmerative >= 0"
+                style="text-align: center; cursor: pointer; cursor: hand"
+              >
+                <td>{{ value.crop }}</td>
+                <td>{{ value.name }}</td>
+                <td>{{ value.number }}</td>
+                <td>{{ value.cluster_aggolmerative }}</td>
+              </tr>
+            </ng-container>
+          </tbody>
+        </table>
+        <pagination-controls (pageChange)="actualPageAgglomerative = $event">
+        </pagination-controls>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
 
-
-<!-- 
+  <!-- 
   <table class="table table-striped mt-4">
     <thead>
       <tr>
@@ -143,7 +221,7 @@
 
   <hr> -->
 
-<!--   <div class="row">
+  <!--   <div class="row">
     <div id="maps"></div>
     <div id="popups" class="ol-popup">
         <a href="#" id="popup-closers" class="ol-popup-closer"></a>

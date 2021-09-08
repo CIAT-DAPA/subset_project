@@ -1,56 +1,82 @@
 <mat-tab-group mat-align-tabs="start">
   <mat-tab label="General">
     <!-- <mat-progress-bar mode="determinate" value="40"></mat-progress-bar> -->
-    <div
-      *ngIf="accessions$.length > 0"
-      class="container"
-    >
-      <h2 class="mt-2"><strong>Accessions list found</strong></h2>
-      <table class="table table-striped">
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              *ngFor="let header of headers"
-              
-              style="text-align: center"
-            >
-              {{ header }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="
-              let value of accessions$
-                | paginate: { itemsPerPage: 5, currentPage: ActualPage }
-            "
-            style="cursor: pointer; cursor: hand"
-            (click)="openAccessionDetail(value)"
+    <div *ngIf="accessions$.length > 0" class="container">
+      <mat-card class="mt-2 mb-2">
+        <mat-card-header>
+          <mat-card-title>Accessions list found</mat-card-title>
+        </mat-card-header>
+        <div
+          class=""
+          style="width: 100%; display: flex; justify-content: flex-end"
+        >
+          <button
+            mat-button
+            (click)="downloadCsvFormat(accessions$)"
+            style="color: #3f51b5"
           >
-            <td>{{ value.number }}</td>
-            <td>{{ value.crop }}</td>
-            <td>{{ value.taxonomy_taxon_name }}</td>
-            <td><button class="btn btn-info">See more</button></td>
-          </tr>
-        </tbody>
-      </table>
-      <pagination-controls (pageChange)="ActualPage = $event">
-      </pagination-controls>
-      <!-- <div class="page-buttons">
+            <i class="fas fa-file-csv"></i> Download csv
+          </button>
+          <button
+            mat-button
+            (click)="downloadJsonFormat(accessions$)"
+            style="color: #3f51b5"
+          >
+            <i class="fab fa-js"></i> Download json
+          </button>
+        </div>
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th
+                scope="col"
+                *ngFor="let header of headers"
+                style="text-align: center"
+              >
+                {{ header }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              *ngFor="
+                let value of accessions$
+                  | paginate: { itemsPerPage: 5, currentPage: ActualPage }
+              "
+              style="cursor: pointer; cursor: hand; text-align: center;"
+              (click)="openAccessionDetail(value)"
+            >
+              <td>{{ value.number }}</td>
+              <td>{{ value.crop }}</td>
+              <td>{{ value.taxonomy_taxon_name }}</td>
+              <td><button mat-stroked-button>See more</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <pagination-controls (pageChange)="ActualPage = $event">
+        </pagination-controls>
+        <!-- <div class="page-buttons">
         <button class="btn prev" (click)="fetchPrevious()">Prev
         </button>
         <button class="btn next" (click)="fetchNext()">Next
         </button>
       </div> -->
-      <br>
-      <p style="text-align: left">
-        Number of accessions found: {{ amountData | number: '2.' }}
-      </p>
-      <hr />
-      <h2><strong>Accessions location</strong></h2>
-      <map-outcomes [acce]="accessions$"></map-outcomes>
+        <br />
+        <p style="text-align: left">
+          Number of accessions found: {{ amountData | number: '2.' }}
+        </p>
+      </mat-card>
+
+      <mat-card  class="mt-2 mb-2">
+        <mat-card-header>
+          <mat-card-title>Accessions location</mat-card-title>
+        </mat-card-header>
+        <map-outcomes [acce]="accessions$"></map-outcomes>
+      </mat-card>
     </div>
+  </mat-tab>
+  <mat-tab label="Accessions">
+    <table-outcomes></table-outcomes>
   </mat-tab>
   <mat-tab label="Plot">
     <app-plot-outcomes></app-plot-outcomes>

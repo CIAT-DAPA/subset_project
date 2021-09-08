@@ -56,7 +56,9 @@ export class MultivariableAnalysisComponent
   actualPageHdbscan: number = 1;
   actualPageAgglomerative: number = 1;
   actualPageT2: number = 1;
-  res$: any;
+  resDbscan$: any;
+  resHdbscan$: any;
+  resAgglomerative$: any;
   resMap$: any;
   test$: any;
   t1: any = of([1, 2, 3, 4, 5]);
@@ -109,7 +111,9 @@ export class MultivariableAnalysisComponent
     combineLatest([of(this.multivariable$), of(this.accessions$)])
       .pipe(map((res: any) => mergeById(res[0], res[1])))
       .subscribe((res: any) => {
-        this.res$ = res;
+        this.resDbscan$ = res.sort((a:any,b:any) => a.cluster_dbscan - b.cluster_dbscan)
+        this.resHdbscan$ = res.sort((a:any,b:any) => a.cluster_hdbscan - b.cluster_hdbscan)
+        this.resAgglomerative$ = res.sort((a:any,b:any) => a.cluster_aggolmerative - b.cluster_aggolmerative)
         // this.setSummary(this.res$);
       });
   }
@@ -203,157 +207,21 @@ export class MultivariableAnalysisComponent
     });
   }
 
-  drawMap(res: any) {
-    var coordinates: any = [];
-    res.forEach((element: any) => {
-      let prop = element[1];
-      prop.forEach((val: any) => {
-        this.palmira = new Feature({
-          geometry: new Point(fromLonLat([val.geo_lon, val.geo_lat])),
-          name: val.name,
-          obj: val,
-        });
-        coordinates.push(this.palmira);
-      });
-    });
+  downloadJsonFormat(data:any) {
+    const blob = new Blob([JSON.stringify(data)], {type : 'application/json'});
+    saveAs(blob, 'clusters.json');
+    }
 
-    var iconStyle = new Style({
-      image: new CircleStyle({
-        radius: 10,
-        stroke: new Stroke({
-          color: 'orange',
-          width: 2,
-        }),
-        fill: new Fill({
-          color: 'green',
-        }),
-      }),
-    });
+  downloadCsvFormat(data: any) {
+    const replacer = (key:any, value:any) => value === null ? '' : value; // specify how you want to handle null values here
+    const header = Object.keys(data[0]);
+    let csv = data.map((row:any) => header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(','));
+    csv.unshift(header.join(','));
+    let csvArray = csv.join('\r\n');
 
-    var labelStyle = new Style({
-      text: new Text({
-        font: '8px Calibri,sans-serif',
-        overflow: true,
-        fill: new Fill({
-          color: '#000',
-        }),
-        stroke: new Stroke({
-          color: '#fff',
-          width: 3,
-        }),
-      }),
-    });
-
-    /* let selectSingleClick = new Select(); */
-
-    var style = [iconStyle];
-
-    this.vectorSourceT = new VectorSource({
-      features: coordinates,
-    });
-
-    this.vectorLayer = new VectorLayer({
-      source: this.vectorSourceT,
-      style: function (feature) {
-        labelStyle.getText().setText(feature.get('name'));
-        return style;
-      },
-    });
-
-    this.map = new Map({
-      target: 'maps',
-      controls: defaultCOntrols({
-        attributionOptions: {
-          collapsible: false,
-        },
-      }),
-      layers: [
-        new TileLayer({
-          source: new OSM(),
-        }),
-        this.vectorLayer,
-      ],
-      view: new View({
-        center: olProj.fromLonLat([0, 0]),
-        zoom: 1,
-      }),
-    });
-
-    var container = document.getElementById('popups');
-    var overlay = new Overlay({
-      element: container as HTMLElement,
-      autoPan: true,
-      autoPanAnimation: {
-        duration: 250,
-      },
-    });
-    this.map.addOverlay(overlay);
-
-    var closer: any = document.getElementById('popup-closers');
-    closer.onclick = function () {
-      overlay.setPosition(undefined);
-      closer.blur();
-      return false;
-    };
-
-    var content: any = document.getElementById('popup-contents');
-    this.map.on('singleclick', function (this: any, evt: any) {
-      var name = this.forEachFeatureAtPixel(evt.pixel, function (feature: any) {
-        return feature.get('name');
-      });
-      var coordinate = evt.coordinate;
-      content.innerHTML = name;
-      overlay.setPosition(coordinate);
-    });
-
-    this.map.on('pointermove', function (this: any, evt: any) {
-      //this.getTargetElement().style.cursor = this.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
-      var name = this.forEachFeatureAtPixel(evt.pixel, function (feature: any) {
-        return feature.get('name');
-      });
-      if (name) {
-        var coordinate = evt.coordinate;
-        content.innerHTML = name;
-        overlay.setPosition(coordinate);
-      }
-    });
-
-    this.map.on('singleclick', (evt: any) => {
-      this.map.forEachFeatureAtPixel(evt.pixel, (layer: any) => {
-        var obj = layer.get('obj');
-        this.openAccessionDetail(obj);
-      });
-    });
-  }
-
-  getInfoMap() {
-    const mergeById = (t: any, s: any) =>
-      t.map((p: any) =>
-        Object.assign(
-          {},
-          p,
-          s.find((q: any) => p.cellid === q.cellid)
-        )
-      );
-    combineLatest([of(this.accessions$), of(this.multivariable$)])
-      .pipe(map((res: any) => mergeById(res[0], res[1])))
-      .subscribe((res: any) => {
-        this.resMap$ = res;
-      });
-    of(this.resMap$)
-      .pipe(
-        switchMap((data: any) =>
-          from(data).pipe(
-            groupBy((item: any) => item.cluster),
-            mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
-            toArray()
-          )
-        )
-      )
-      .subscribe((res: any) => {
-        this.drawMap(res);
-      });
-  }
+    var blob = new Blob([csvArray], {type: 'text/csv' })
+    saveAs(blob, "clusters.csv");
+}
 
   openAccessionDetail(object: any) {
     const dialogRef = this.dialog.open(AccessionsDetailComponent, {

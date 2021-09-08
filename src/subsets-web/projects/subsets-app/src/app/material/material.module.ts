@@ -16,6 +16,7 @@ import {MatStepperModule} from '@angular/material/stepper';
 import {MatProgressBarModule} from '@angular/material/progress-bar';
 import {MatIconModule} from '@angular/material/icon';
 import {ClipboardModule} from '@angular/cdk/clipboard';
+import {MatTooltipModule} from '@angular/material/tooltip';
 
 /* import { NgxMatMomentModule } from '@angular-material-components/moment-adapter'; */
 
@@ -40,7 +41,8 @@ import {ClipboardModule} from '@angular/cdk/clipboard';
     MatStepperModule,
     MatProgressBarModule,
     MatIconModule,
-    ClipboardModule
+    ClipboardModule,
+    MatTooltipModule
   ],
   exports: [
     MatTabsModule,
@@ -57,7 +59,8 @@ import {ClipboardModule} from '@angular/cdk/clipboard';
     MatStepperModule,
     MatProgressBarModule,
     MatIconModule,
-    ClipboardModule
+    ClipboardModule,
+    MatTooltipModule
   ]
 })
 export class MaterialModule { }

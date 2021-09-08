@@ -1,34 +1,129 @@
 <div class="container mt-2">
-    <div *ngFor="let item of summary$  | async; let i = index">
-        <h2> <strong>{{item[0]}}</strong></h2>
+  <div *ngFor="let item of summary$ | async; let i = index">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ item[0] }}</mat-card-title>
+      </mat-card-header>
     <table class="table table-striped mt-2">
-    
+      <tbody>
+        <tr>
+          <td>Total accessions filtered by passport indicators</td>
+          <td>{{ item[1].length | number: '2.' }}</td>
+        </tr>
+        <tr>
+          <td>Total accessions filtered by indicators</td>
+          <td>{{ getAMountAccessionsByIndicator(item[0]) | number: '0.' }}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="" style="width: 100%;"  *ngIf="namesResponse.includes('cluster_dbscan')">
+      <h3>
+        <strong>Dbscan Analysis</strong>
+      </h3>
+      <table class="table table-striped mt-2">
         <tbody>
+        <tr>
+          <td>Total number of accessions by dbscan analysis</td>
+          <td>{{ getNumberOfAccessions(item[0], 'dbscan') | number: '0.' }}</td>
+        </tr>
+        <tr>
+          <td>Total number of cluster by dbscan analysis</td>
+          <td *ngIf="multivariable$">
+            {{ getNumberOfClusters(item[0], 'dbscan') | number: '0.' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="" style="width: 100%;"  *ngIf="namesResponse.includes('cluster_hdbscan')">
+    <h3>
+      <strong>HDbscan Analysis</strong>
+    </h3>
+    <table class="table table-striped mt-2">
+      <tbody>
+        <tr>
+          <td>Total number of accessions by hdbscan analysis</td>
+          <td>{{ getNumberOfAccessions(item[0], 'hdbscan') | number: '0.' }}</td>
+        </tr>
+        <tr>
+          <td>Total number of cluster by hdbscan analysis</td>
+          <td *ngIf="multivariable$">
+            {{ getNumberOfClusters(item[0], 'hdbscan') | number: '0.' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="" style="width: 100%;"  *ngIf="namesResponse.includes('cluster_aggolmerative')">
+    <h3>
+      <strong>Agglomerative Analysis</strong>
+    </h3>
+    <table class="table table-striped mt-2">
+      <tbody>
+        <tr>
+          <td>Total number of accessions by agglomerative analysis</td>
+          <td>{{ getNumberOfAccessions(item[0], 'aggolmerative') | number: '0.' }}</td>
+        </tr>
+        <tr>
+          <td>Total number of cluster by agglomerative analysis</td>
+          <td *ngIf="multivariable$">
+            {{ getNumberOfClusters(item[0], 'aggolmerative') | number: '0.' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  </mat-card>
+  </div>
+  <div *ngIf="username" class="mt-2" style="width: 100%; display: flex; align-items: flex-end; flex-direction: column">
+    <div class="example-button-container">
+      <button
+        mat-fab
+        color="primary"
+        aria-label="Example icon button with a bookmark icon">
+        <mat-icon (click)="openDialog()">add</mat-icon>
+      </button>
+    </div>
+    <div class="" style="width: 30%;" *ngIf="time$">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>Times</mat-card-title>
+      </mat-card-header>
+      <table class="table mt-2">
+        <tbody>
+          <ng-container *ngIf="time$.accessions >= 0">
           <tr>
-            <td>Total accessions filtered </td>
-            <td>{{item[1].length | number: '2.'}}</td>
-            </tr>
-            <tr>
-                <td>Total number of accessions by dbscan analysis</td>
-                <td>{{totalAccessionsDbscan}}<td>
-            </tr>
-            <tr>
-                <td>Total number of accessions by hdbscan analysis</td>
-                <td>{{totalAccessionsHdbscan}}</td>
-            </tr>
-            <tr>
-                <td>Total number of accessions by agglomerative analysis</td>
-                <td>{{totalAccessionsAgglomerative}}</td>
-            </tr>
+            <td>Get accessions data</td>
+            <td>{{ time$.accessions  | number: '0.' }} Sec.</td>
+          </tr>
+        </ng-container>
+        <ng-container *ngIf="time$.multivariate_data >= 0">
+          <tr>
+            <td>Get multivariate data</td>
+            <td>{{ time$.multivariate_data  | number: '0.' }} Sec.</td>
+          </tr>
+        </ng-container>
+        <ng-container *ngIf="time$.univariate_data >= 0">
+          <tr>
+            <td>Get univariate data</td>
+            <td>{{ time$.univariate_data  | number: '0.' }} Sec.</td>
+          </tr>
+        </ng-container>
+        <ng-container *ngIf="time$.quartile >= 0">
+          <tr>
+            <td>Generate quartiles</td>
+            <td>{{ time$.quartile  | number: '0.' }} Sec.</td>
+          </tr>
+        </ng-container>
+          <ng-container *ngIf="time$.multivariate_analysis >= 0">
+          <tr>
+            <td>Generate clusters</td>
+            <td>{{ time$.multivariate_analysis  | number: '0.' }} Sec.</td>
+          </tr>
+        </ng-container>
         </tbody>
       </table>
-    
+    </mat-card>
     </div>
-    <div style="width: 100%; display: flex; justify-content: flex-end;">
-        <div class="example-button-container">
-            <button mat-fab color="primary" aria-label="Example icon button with a bookmark icon">
-              <mat-icon (click)="openDialog()">add</mat-icon>
-            </button>
-          </div>
-    </div>
+  </div>
 </div>

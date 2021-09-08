@@ -10,7 +10,7 @@ import {
   ElementRef,
   AfterContentInit,
 } from '@angular/core';
-import { from, of, zip } from 'rxjs';
+import { from, Observable, of, zip } from 'rxjs';
 import {
   groupBy,
   map,
@@ -91,21 +91,131 @@ export class PlotOutcomesComponent implements OnInit, AfterContentInit {
   ) {}
 
   ngAfterContentInit() {
-    /*     this.sharedService.sendIndicatorValueObservable.pipe(
-      groupBy((data:any) => data.indicator_period?.period),
-      mergeMap((group:any) => zip(of(group.key), group.pipe(toArray()))))
-    .subscribe((succ: any) => console.log(JSON.stringify(succ)));
- */
-    /* this.indicatorsValue$ = this.sharedService.sendIndicatorValueObservable.pipe(
-      switchMap((data: any) =>
-        from(data).pipe(
-          groupBy((item: any) => item.indicator_period.period),
-          mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
-          reduce((acc: any, val: any) => acc.concat([val]), []),
+    this.indicatorsValue$ = this.sharedService.sendIndicatorValueObservable
+      .pipe(
+        switchMap((data: any) =>
+          from(data).pipe(
+            groupBy((data: any) => data.indicator),
+            mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
+            map((arr: any) => {
+              const newArray = arr[1].map((obj: any) => {
+                const newObject: any = {};
+                const dataQuartile1: any[] = [];
+                const dataQuartile2: any[] = [];
+                const dataQuartile3: any[] = [];
+                // console.log(obj.data[0])
+                Object.keys(obj.data[0]).forEach((val: string) => {
+                  if (val.includes('month')) {
+                    dataQuartile1.push(obj.data[0][val]);
+                    // console.log(dataQuartile1)
+                  }
+                });
+                Object.keys(obj.data[1]).forEach((val: string) => {
+                  if (val.includes('month')) {
+                    dataQuartile2.push(obj.data[1][val]);
+                    // console.log(dataQuartile1)
+                  }
+                });
+                Object.keys(obj.data[2]).forEach((val: string) => {
+                  if (val.includes('month')) {
+                    dataQuartile3.push(obj.data[2][val]);
+                    // console.log(dataQuartile1)
+                  }
+                });
+                newObject.indicator = obj.indicator;
+                newObject.crop = obj.crop;
+                newObject.period = obj.period;
+                newObject.data = [
+                  {
+                    data: dataQuartile1,
+                    label: 'Quartile 1',
+                    lineTension: 0,
+                    fill:false
+                  },
+                  {
+                    data: dataQuartile2,
+                    label: 'Quartile 2',
+                    lineTension: 0,
+                    fill:false
+                  },
+                  {
+                    data: dataQuartile3,
+                    label: 'Quartile 3',
+                    lineTension: 0,
+                    fill:false
+                  },
+                ];
+                return newObject;
+              });
+              arr[1] = newArray;
+              return arr;
+            }),
+            toArray()
+          )
         )
       )
-    ) */
-    this.indicatorsValue$ = this.sharedService.sendIndicatorValueObservable.pipe(
+      /* .subscribe((val: any) => {
+        console.log(val);
+      }); */
+    /* this.indicatorsValue$ = this.sharedService.sendIndicatorValueObservable
+      .pipe(
+        groupBy((data: any) => data.indicator),
+        mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
+        map((arr: any) => {
+          const newArray = arr[1].map((obj: any) => {
+            const newObject: any = {};
+            const dataQuartile1: any[] = [];
+            const dataQuartile2: any[] = [];
+            const dataQuartile3: any[] = [];
+            // console.log(obj.data[0])
+            Object.keys(obj.data[0]).forEach((val: string) => {
+              if (val.includes('month')) {
+                dataQuartile1.push(obj.data[0][val]);
+                // console.log(dataQuartile1)
+              }
+            });
+            Object.keys(obj.data[1]).forEach((val: string) => {
+              if (val.includes('month')) {
+                dataQuartile2.push(obj.data[1][val]);
+                // console.log(dataQuartile1)
+              }
+            });
+            Object.keys(obj.data[2]).forEach((val: string) => {
+              if (val.includes('month')) {
+                dataQuartile3.push(obj.data[2][val]);
+                // console.log(dataQuartile1)
+              }
+            });
+            newObject.indicator = obj.indicator;
+            newObject.crop = obj.crop;
+            newObject.period = obj.period;
+            newObject.data = [
+              {
+                data: dataQuartile1,
+                label: 'Quartile 1',
+              },
+              {
+                data: dataQuartile2,
+                label: 'Quartile 2',
+              },
+              {
+                data: dataQuartile3,
+                label: 'Quartile 2',
+              },
+            ];
+            return newObject;
+          });
+          arr[1] = newArray;
+          return arr;
+        })
+      )
+      .subscribe((succ: any) => {
+        console.log("Hello world");
+        console.log(succ);
+      }); */
+    /*   )
+      ); */
+    /* this.indicatorsValue$ = this.sharedService.sendIndicatorValueObservable.pipe(
       switchMap((data: any) =>
         from(data).pipe(
           groupBy((item: any) => item.indicator),
@@ -198,34 +308,8 @@ export class PlotOutcomesComponent implements OnInit, AfterContentInit {
           toArray()
         )
       )
-    );
+    ); */
     // .subscribe((val: any) => console.log(val));
-
-    this.maxValue$ = this.sharedService.sendIndicatorValueObservable
-      .pipe(
-        switchMap((data: any) =>
-          from(data).pipe(
-            groupBy((item: any) => item.indicator_period__period),
-            mergeMap((group) => {
-              return group.pipe(toArray());
-            }),
-            mergeMap((arr: any) => {
-              // Take each from above array and group each array by manDate
-              return from(arr).pipe(
-                groupBy((val: any) => val.indicator_period__indicator__name),
-                mergeMap((group) => {
-                  return group.pipe(toArray()); // return the group values as Arrays
-                })
-              );
-            }),
-            max(),
-            /* groupBy((item: any) => item.period),
-          mergeMap((group) => zip(of(group.key), group.pipe(toArray()))), */
-            toArray()
-          )
-        )
-      );
-      /* .subscribe((val: any) => console.log(val)); */
   }
 
   ngOnInit(): void {}
