@@ -34,7 +34,7 @@ def slope_sd_mean(row, n_months, n_years):
 
 
 def data_to_slope_sd_mean(data, n_months, n_years):
-    data_list = data.values.tolist()
+    data_list = data.reset_index().values.tolist()
     data_list_result = [slope_sd_mean(elt, n_months, n_years) for elt in data_list]
     return data_list_result
 
@@ -45,40 +45,22 @@ def data_to_slope_sd_mean(data, n_months, n_years):
 
 
 def transform_data(data, n_months, n_years):
+
     indicator_prefs = data['pref_indicator'].unique()
     trnsformed_res = pd.DataFrame([])
 
     for pref in indicator_prefs:
         sub_pref = (data.groupby(['pref_indicator'])).get_group(pref)
-        years = data['period'].unique()
-        df_merge_years = pd.DataFrame([])
-        for year in years:
-            grp_year = (sub_pref.groupby(['period'])).get_group(year)
-            cell_ids = grp_year['cellid'].unique()
-            df_by_cellids = pd.DataFrame([])
+        sub_pref.drop(labels=['pref_indicator'], axis="columns", inplace=True)
+        df_pivoted = sub_pref.pivot(index='cellid', columns=['period'])
+        df_pivoted = df_pivoted.swaplevel(0,1, axis=1).sort_index(axis=1)         
 
-            for cell_id in cell_ids:
-                grp_cell = (grp_year.groupby(['cellid'], as_index = False)).get_group(cell_id).reset_index()
-                grp_cell.drop(labels = ['index','cellid'], axis = "columns", inplace = True)   
-                # work on only one row as all rows are identical for the same (cellid, year, ind)
-                grp_cell_row = grp_cell.loc[[0]]   
-                out = grp_cell_row.set_index(['period','pref_indicator']).stack(dropna = False)                
-                out.index = out.index.map('_'.join)
-                result = out.to_frame().T
-                result.insert(loc = 0, column = 'cellid', value = cell_id)
-                df_by_cellids = df_by_cellids.append(result)
-            
-            if df_merge_years.empty:
-                df_merge_years = df_by_cellids
-            else:
-                df_merge_years = pd.merge(df_merge_years, df_by_cellids)            
+        df_pivoted.dropna(inplace=True)
 
-        df_merge_years.dropna(inplace=True)
+        if df_pivoted.empty:
+            raise ValueError('Empty dataframe after removing NA values for indicator '+ pref)
         
-        if df_merge_years.empty:
-            raise ValueError('Empty dataframe after removing NA values')
-        
-        res = data_to_slope_sd_mean(df_merge_years, n_months, n_years)
+        res = data_to_slope_sd_mean(df_pivoted, n_months, n_years)
         df = pd.DataFrame(res, columns=['cellid','slope_'+pref,'mean_'+pref, 'sd_'+pref])
     
         if trnsformed_res.empty:
@@ -87,6 +69,7 @@ def transform_data(data, n_months, n_years):
             trnsformed_res = pd.merge(trnsformed_res, df)
 
     return trnsformed_res
+
 
 def dbscan_func(scaled_data, eps = 20, minPts = 10):
     db = DBSCAN(eps = eps, min_samples = minPts).fit(scaled_data)
