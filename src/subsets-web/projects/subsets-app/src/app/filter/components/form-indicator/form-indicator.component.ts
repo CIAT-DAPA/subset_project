@@ -311,9 +311,9 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     let obj: any = {};
     this.request$ = {};
     this.finalRequest = [];
-    this.algorithmsList = [];
+    /* this.algorithmsList = [];
 
-    this.addAlgorithmsToList()
+    this.addAlgorithmsToList() */
     this.periods = [this.periodMinValue, this.periodMaxValue];
     let indicators: String[] = this.fruits;
     indicators.forEach((props: any, index: any) => {
@@ -334,13 +334,13 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     this.request$ = {
       data: this.finalRequest,
       passport: this.passportParms,
-      analysis: {
+      /* analysis: {
         algorithm: this.algorithmsList,
         hyperparameter: this.hyperParameters,
-      },
+      }, */
     };
     this.sendIndicatorsParameters(this.request$);
-    this.api.getSubsetsOfAccessionTest(this.request$).subscribe(
+    /* this.api.getSubsetsOfAccessionTest(this.request$).subscribe(
       (data) => {
         if (data.data.length === 0) {
           this.notifyService.showWarning(
@@ -373,7 +373,7 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
       (error) => {
         console.log(error);
       }
-    );
+    ); */
   };
 
   getSubsetsOfAccessionAutomatically = (prop: any) => {

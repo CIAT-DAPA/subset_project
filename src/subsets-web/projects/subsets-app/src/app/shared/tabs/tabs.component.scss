@@ -42,3 +42,11 @@ a {
 #carousel-custom .carousel-outer {
     position: relative;
 }
+
+.advance-properties {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: space-around
+
+}

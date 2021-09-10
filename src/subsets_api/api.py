@@ -122,6 +122,256 @@ def indicator_period_list():
     return json.dumps(result, default=str)
 
 
+def getAccessionsFiltered(crops, accessions,cell_ids,indicators_params):
+    """ Query to filter accessions in order to indicators params """
+    multivariate_values = []
+    for indicator in indicators_params:
+
+        # Indicator periods ids
+        periods_ids = indicator["indicator"]
+        # Clauses to get data for multivariate analysis
+        indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+
+        # Filtering values of indicator to multivariate analysis
+        indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+        rows_indicator = len(indicator_periods_values)
+
+        # loop for each crop present in the query
+        for crop in crops:
+            cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
+            # cellid list from crop
+            cell_id_crop = list(set(cell_id_crop))
+            # Dict to multivariate analysis
+            multivariate_values.extend([{
+                "crop": crop['name'],
+                "pref_indicator": x.indicator_period.indicator.pref,
+                "indicator": x.indicator_period.indicator.name,
+                "cellid": x.cellid,
+                "month1": x.month1,
+                "month2": x.month2,
+                "month3": x.month3,
+                "month4": x.month4,
+                "month5": x.month5,
+                "month6": x.month6,
+                "month7": x.month7,
+                "month8": x.month8,
+                "month9": x.month9,
+                "month10": x.month10,
+                "month11": x.month11,
+                "month12": x.month12,
+                "period": x.indicator_period.period}
+                for x in indicator_periods_values if  x.cellid in cell_id_crop])
+    return multivariate_values
+
+
+
+
+
+""" Service to get subsets of accessions """
+@app.route('/api/v1/subset', methods=['GET', 'POST'])
+@cross_origin()
+def subset():
+    # Start
+    lst_df_univariate = []
+    data = request.get_json()
+    # Passport paramns
+    passport_params = data['passport']
+    # Indicators params
+    indicators_params = data['data']
+
+    period = indicators_params[0]['period']
+    
+    # Months list calculated
+    ob = [k for k in indicators_params[0] if "month" in str(k)]
+    content = {}
+
+    #Get crops
+    crops = Crop.objects(Q(id__in = passport_params['crop']))
+    result_crops = [{"id":x.id,"name": x.name} for x in crops]
+
+    # Filter clauses to get accessions in order to parameters
+    filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
+                      for filter in passport_params if len(passport_params[filter]) > 0]
+    # Query to get accessions
+    accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
+
+    # Cellids found in the accessions objects
+    cell_ids = [x.cellid for x in accessions if x.cellid]
+    # Reduce cellid list
+    cell_ids = list(set(cell_ids))
+
+    result = getAccessionsFiltered(crops=result_crops, accessions=accessions,cell_ids=cell_ids,indicators_params=indicators_params)
+  
+    if result:
+        df_multivariate = pd.DataFrame([s for s in result])
+        df_groupby = df_multivariate.groupby(['indicator'])
+        
+        for indx, group in enumerate(df_groupby):
+            months_filter = [{x: indicators_params[indx][x] for x in indicators_params[indx] if 'month' in x}]
+
+            # Query to filter the univariate data
+            query_gt = ' & '.join([f'{k}>{v[0]}' for k, v in months_filter[0].items()])
+            query_lt = ' & '.join([f'{k}<{v[1]}' for k, v in months_filter[0].items()])
+            query = query_gt + ' & ' + query_lt
+
+            # Filter univariate data from query
+            univ = group[1].query(query)
+
+            lst_df_univariate.append(univ)
+            # lst_values = lst_values + cluster_values
+        
+        """ End query to univariate analysis """
+
+        # Data for univariate analysis
+        univariate_data = pd.concat(lst_df_univariate)
+        univariate_result = univariate_data.to_json(orient = "records")
+        univariate_parsed = json.loads(univariate_result)
+
+
+    return jsonify(univariate_parsed)
+
+""" Service to get quantile """
+@app.route('/api/v1/quantile', methods=['GET', 'POST'])
+@cross_origin()
+def quantile():
+    # Start
+    lst_df_univariate = []
+    data = request.get_json()
+    # Passport paramns
+    passport_params = data['passport']
+    # Indicators params
+    indicators_params = data['data']
+
+    period = indicators_params[0]['period']
+    
+    # Months list calculated
+    ob = [k for k in indicators_params[0] if "month" in str(k)]
+    content = {}
+
+    #Get crops
+    crops = Crop.objects(Q(id__in = passport_params['crop']))
+    result_crops = [{"id":x.id,"name": x.name} for x in crops]
+
+    # Filter clauses to get accessions in order to parameters
+    filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
+                      for filter in passport_params if len(passport_params[filter]) > 0]
+    # Query to get accessions
+    accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
+
+    # Cellids found in the accessions objects
+    cell_ids = [x.cellid for x in accessions if x.cellid]
+    # Reduce cellid list
+    cell_ids = list(set(cell_ids))
+
+    result = getAccessionsFiltered(crops=result_crops, accessions=accessions,cell_ids=cell_ids,indicators_params=indicators_params)
+  
+    if result:
+        df_multivariate = pd.DataFrame([s for s in result])
+        df_groupby = df_multivariate.groupby(['indicator'])
+        
+        for indx, group in enumerate(df_groupby):
+            months_filter = [{x: indicators_params[indx][x] for x in indicators_params[indx] if 'month' in x}]
+
+            # Query to filter the univariate data
+            query_gt = ' & '.join([f'{k}>{v[0]}' for k, v in months_filter[0].items()])
+            query_lt = ' & '.join([f'{k}<{v[1]}' for k, v in months_filter[0].items()])
+            query = query_gt + ' & ' + query_lt
+
+            # Filter univariate data from query
+            univ = group[1].query(query)
+
+            lst_df_univariate.append(univ)
+            # lst_values = lst_values + cluster_values
+        
+        """ End query to univariate analysis """
+
+        # Data for univariate analysis
+        univariate_data = pd.concat(lst_df_univariate)
+        univariate_result = univariate_data.to_json(orient = "records")
+        univariate_parsed = json.loads(univariate_result)
+
+        if univariate_parsed:
+            df = pd.DataFrame([s for s in univariate_parsed])
+            month_columns = df.columns.difference(['indicator', 'period', 'crop','cellid','pref_indicator'])
+            df_groupby_indicator = df.groupby(['indicator', 'period', 'crop'])[month_columns].quantile([0.25,0.5,0.75])
+
+            # convert quantile index to quantile column
+            df_groupby_indicator.reset_index(level=3, inplace=True)
+            df_groupby_indicator.rename(columns={'level_3': 'quantile'}, inplace=True)
+
+            #convert indexes to column names
+            df_groupby_indicator.reset_index(inplace = True)
+            qt_month_columns = df_groupby_indicator.columns.difference(['indicator', 'period', 'crop','cellid','pref_indicator'])
+
+            df_to_json = (df_groupby_indicator.groupby(['indicator', 'period', 'crop'])[qt_month_columns]
+            .apply(lambda x: x.to_dict('r'))
+            .reset_index(name='data')
+            .to_json(orient='records'))
+
+            quantiles = json.loads(df_to_json)
+
+
+    return jsonify(quantiles)
+
+""" Service to create clusters """
+@app.route('/api/v1/clusters', methods=['GET', 'POST'])
+@cross_origin()
+def clusters():
+    lst_df_multivariate = []
+    data = request.get_json()
+    # Passport paramns
+    passport_params = data['passport']
+    # Indicators params
+    indicators_params = data['data']
+    # Multivariate params
+    analysis_params = data['analysis']
+
+    period = indicators_params[0]['period']
+
+       # Algorithms list to use
+    algorithms = analysis_params['algorithm']
+    # hyperparameters to the multivariate analysis
+    hyperparameters = analysis_params['hyperparameter']
+
+    nYears = (period[1]+1) - period[0]
+    # Months list calculated
+    ob = [k for k in indicators_params[0] if "month" in str(k)]
+    # months number calculated
+    nMonths = len(ob)
+    content = {}
+
+    #Get crops
+    crops = Crop.objects(Q(id__in = passport_params['crop']))
+    result_crops = [{"id":x.id,"name": x.name} for x in crops]
+
+    # Filter clauses to get accessions in order to parameters
+    filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
+                      for filter in passport_params if len(passport_params[filter]) > 0]
+    # Query to get accessions
+    accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
+
+    # Cellids found in the accessions objects
+    cell_ids = [x.cellid for x in accessions if x.cellid]
+    # Reduce cellid list
+    cell_ids = list(set(cell_ids))
+
+    result = getAccessionsFiltered(crops=result_crops, accessions=accessions,cell_ids=cell_ids,indicators_params=indicators_params)
+
+    if result:
+        try:
+            analysis = clustering_analysis(algorithms, result, nMonths, nYears, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
+                                        n_clusters=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
+            results = analysis.to_json(orient = "records")
+            parsed = json.loads(results)
+            print(parsed)
+        except ValueError as ve:
+            print(str(ve))
+            print("Exception")
+    
+    return jsonify(parsed)
+
+
+
 @app.route('/api/v1/subsets', methods=['GET', 'POST'])
 @cross_origin()
 def subsets():
@@ -247,7 +497,8 @@ def subsets():
         # Append to list for each indicator in the query
         lst_values.append(univ)
 
-        # loop to generate Nan values for each column month doesn't match with the range of values 
+        # loop to generate Nan values for each column month doesn't match with the range of values
+        print("Lenght df: " + str(len(df_multivariate))) 
         for x in range(len(df_multivariate)):
             # for colums in list(df_multivariate.columns.values):
             for colums in ob:
@@ -521,4 +772,4 @@ def subsets_kha():
 if __name__ == "__main__":
 
     connect('indicatordb', host='dbmongotst01.cgiarad.org', port=27017)
-    app.run(threaded=True, host='0.0.0.0', port=8437, debug=False)
+    app.run(threaded=True, port=5001, debug=True)

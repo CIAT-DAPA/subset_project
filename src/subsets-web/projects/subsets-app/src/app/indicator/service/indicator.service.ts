@@ -8,8 +8,8 @@ import { map } from 'rxjs/operators';
 })
 export class IndicatorService {
   /* URL = 'http://localhost:8001/api/'; */
-  // URL = 'http://localhost:5001/api/v1/';
-  URL = 'https://subset-api.ciat.cgiar.org/api/v1/';
+  URL = 'http://localhost:5001/api/v1/';
+  // URL = 'https://subset-api.ciat.cgiar.org/api/v1/';
   headers = new HttpHeaders({
     'Content-Type': 'application/json'
   });
@@ -89,5 +89,36 @@ export class IndicatorService {
       parameters,
       { headers: this.headers }
     );
+  }
+
+  /* New way to get the results */
+  getSubsets(result: any): Observable<any> {
+    let parameters = {
+      data: result.data,
+      passport: result.passport,
+    };
+    return this.http.post(this.URL + `subset`, parameters, {
+      headers: this.headers,
+    });
+  }
+
+  getQuantile(result: any): Observable<any> {
+    let parameters = {
+      data: result.data,
+      passport: result.passport,
+    };
+    return this.http.post(this.URL + `quantile`, parameters, {
+      headers: this.headers,
+    });
+  }
+  getCluster(result: any): Observable<any> {
+    let parameters = {
+      data: result.data,
+      passport: result.passport,
+      analysis: result.analysis
+    };
+    return this.http.post(this.URL + `clusters`, parameters, {
+      headers: this.headers,
+    });
   }
 }

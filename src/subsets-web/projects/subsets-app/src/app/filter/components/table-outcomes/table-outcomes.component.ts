@@ -1,6 +1,7 @@
-import { Component, OnInit, AfterContentInit } from '@angular/core';
+import { Component, OnInit, AfterContentInit, Input, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SharedService } from '../../../core/service/shared.service';
+import { IndicatorService } from '../../../indicator/service/indicator.service';
 import { AccessionsDetailComponent } from '../../accessions-detail/accessions-detail.component';
 
 @Component({
@@ -8,15 +9,16 @@ import { AccessionsDetailComponent } from '../../accessions-detail/accessions-de
   templateUrl: './table-outcomes.component.html',
   styleUrls: ['./table-outcomes.component.scss'],
 })
-export class TableOutcomesComponent implements OnInit, AfterContentInit {
+export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChanges {
   indicatorValue$: any[];
   accessions$: any;
   lstAccessionsFiltered$: any[];
+  @Input() params:any[] = [];
   cellids:any;
   amountAccessionsFiltered :number;
   headers: string[];
   ActualPage: number;
-  constructor(private _sharedService: SharedService, public dialog: MatDialog) {
+  constructor(private _sharedService: SharedService, public dialog: MatDialog, private api: IndicatorService) {
     this.indicatorValue$ = [];
     this.lstAccessionsFiltered$ = [];
     this.amountAccessionsFiltered = 0;
@@ -26,13 +28,23 @@ export class TableOutcomesComponent implements OnInit, AfterContentInit {
     this.ActualPage = 1;
   }
 
+  ngOnChanges() {
+    if (this.params.length > 0) {
+      this.params.forEach((element:any) => {
+        this.indicatorValue$.push(element.cellid)
+      });
+      this.cellids = [...new Set(this.indicatorValue$)];
+      this.filterAccessionsByIndicator();
+    }
+  }
+
   ngAfterContentInit() {
     this._sharedService.sendSubsetObservable.subscribe((data) => {
       this.accessions$ = data;
       // console.log(data)
     });
 
-    this._sharedService.sendIndicatorsSummaryObservable.subscribe(
+    /* this._sharedService.sendIndicatorsSummaryObservable.subscribe(
       (res: any) => {
         res.forEach((element:any) => {
           this.indicatorValue$.push(element.cellid)
@@ -40,7 +52,7 @@ export class TableOutcomesComponent implements OnInit, AfterContentInit {
         this.cellids = [...new Set(this.indicatorValue$)];
         this.filterAccessionsByIndicator();
       }
-    );
+    ); */
   }
 
   downloadJsonFormat(data:any) {

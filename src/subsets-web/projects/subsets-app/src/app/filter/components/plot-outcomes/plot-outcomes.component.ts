@@ -31,12 +31,8 @@ import { ITS_JUST_ANGULAR } from '@angular/core/src/r3_symbols';
   styleUrls: ['./plot-outcomes.component.scss'],
   encapsulation: ViewEncapsulation.None,
 })
-export class PlotOutcomesComponent implements OnInit, AfterContentInit {
+export class PlotOutcomesComponent implements OnInit, AfterContentInit, OnChanges {
   /* New chart */
-  lineChartData: any = [
-    { data: [85, 72, 78, 75, 77, 75], label: 'Consecutive dry days' },
-  ];
-
   lineChartLabels: Label[] = [
     'January',
     'February',
@@ -85,10 +81,84 @@ export class PlotOutcomesComponent implements OnInit, AfterContentInit {
   maxValue$: any = [];
   minValue$: any = [];
   media: any[] = [];
+
+  @Input() quantileData: any[] = [];
   constructor(
     private sharedService: SharedService,
     public chartElem: ElementRef
   ) {}
+
+  ngOnChanges() {
+    if (this.quantileData.length > 0) {
+      console.log(this.quantileData);
+      let quantileDataObservable = of(this.quantileData);
+      console.log(quantileDataObservable);
+    this.indicatorsValue$ = quantileDataObservable
+    .pipe(
+      switchMap((data: any) =>
+        from(data).pipe(
+          groupBy((data: any) => data.indicator),
+          mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
+          map((arr: any) => {
+            const newArray = arr[1].map((obj: any) => {
+              const newObject: any = {};
+              const dataQuartile1: any[] = [];
+              const dataQuartile2: any[] = [];
+              const dataQuartile3: any[] = [];
+              // console.log(obj.data[0])
+              Object.keys(obj.data[0]).forEach((val: string) => {
+                if (val.includes('month')) {
+                  dataQuartile1.push(obj.data[0][val]);
+                  // console.log(dataQuartile1)
+                }
+              });
+              Object.keys(obj.data[1]).forEach((val: string) => {
+                if (val.includes('month')) {
+                  dataQuartile2.push(obj.data[1][val]);
+                  // console.log(dataQuartile1)
+                }
+              });
+              Object.keys(obj.data[2]).forEach((val: string) => {
+                if (val.includes('month')) {
+                  dataQuartile3.push(obj.data[2][val]);
+                  // console.log(dataQuartile1)
+                }
+              });
+              newObject.indicator = obj.indicator;
+              newObject.crop = obj.crop;
+              newObject.period = obj.period;
+              newObject.data = [
+                {
+                  data: dataQuartile1,
+                  label: 'Quartile 1',
+                  lineTension: 0,
+                  fill:false
+                },
+                {
+                  data: dataQuartile2,
+                  label: 'Quartile 2',
+                  lineTension: 0,
+                  fill:false
+                },
+                {
+                  data: dataQuartile3,
+                  label: 'Quartile 3',
+                  lineTension: 0,
+                  fill:false
+                },
+              ];
+              return newObject;
+            });
+            arr[1] = newArray;
+            return arr;
+          }),
+          toArray()
+        )
+      )
+    )
+
+    }
+  }
 
   ngAfterContentInit() {
     this.indicatorsValue$ = this.sharedService.sendIndicatorValueObservable

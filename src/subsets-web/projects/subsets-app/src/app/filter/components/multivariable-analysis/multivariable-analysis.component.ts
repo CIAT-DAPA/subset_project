@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterContentInit, Input } from '@angular/core';
+import { Component, OnInit, AfterContentInit, Input, OnChanges } from '@angular/core';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { combineLatest, forkJoin, from, Observable, of, zip } from 'rxjs';
 import { groupBy, map, mergeMap, switchMap, toArray } from 'rxjs/operators';
@@ -32,7 +32,7 @@ import { defaults as defaultCOntrols } from 'ol/control';
   styleUrls: ['./multivariable-analysis.component.scss'],
 })
 export class MultivariableAnalysisComponent
-  implements OnInit, AfterContentInit {
+  implements OnInit, AfterContentInit, OnChanges {
   latitude: number = 18.5204;
   longitude: number = 73.8567;
   namesResponse: String[] = [];
@@ -40,6 +40,7 @@ export class MultivariableAnalysisComponent
   cali: any;
   map: any;
   @Input('popup') popup!: any;
+  @Input() multivariable: any[] =[];
   vectorSource: any;
   vectorSourceT: any;
   vectorLayer: any;
@@ -47,7 +48,7 @@ export class MultivariableAnalysisComponent
   popupOverlay: any;
 
   accessions$: any = [];
-  multivariable$: any = [];
+  // multivariable$: any = [];
   lst: any = [];
   lstGrouped: any = [];
   headersTable_1: any[];
@@ -66,6 +67,90 @@ export class MultivariableAnalysisComponent
   constructor(private _sharedService: SharedService, public dialog: MatDialog) {
     this.headersTable_1 = ['Crop', 'Name', 'Number', 'Cluster'];
     this.headersTable_2 = ['Crop', 'Min', 'Max', 'Avg', 'Indicator', 'Cluster'];
+  }
+
+  ngOnChanges() {
+    if (this.multivariable.length > 0) {
+      this.seeVar();
+      this.namesResponse = Object.keys(this.multivariable[0]);
+      /* Combine */
+      /* const mergeById = (t: any, s: any) =>
+      t.map((p: any) =>
+        Object.assign(
+          {},
+          p,
+          s.find((q: any) => p.cellid == q.cellid)
+        )
+      );
+    combineLatest([of(this.multivariable$), of(this.accessions$)])
+      .pipe(map((res: any) => mergeById(res[0], res[1])))
+      .subscribe((prop: any) => {
+        console.log(this.accessions$)
+        console.log(prop)
+      }); */
+      this.multivariable.forEach((element: any) => {
+        this.namesResponse.forEach((prop: any) => {
+          if (prop.includes('slope')) {
+            let ind: any = prop.split('_');
+            if (ind.length == 2) {
+              this.lst.push({
+                cellid: element.cellid,
+                indicator: ind[1],
+                cluster: element.cluster_aggolmerative,
+                slope: element['slope_' + ind[1]],
+                mean: element['mean_' + ind[1]],
+                sd: element['sd_' + ind[1]],
+              });
+            }
+            if (ind.length == 3) {
+              this.lst.push({
+                cellid: element.cellid,
+                indicator: ind[1] + '_' + ind[2],
+                cluster: element.cluster_aggolmerative,
+                slope: element['slope_' + ind[1] + '_' + ind[2]],
+                mean: element['mean_' + ind[1] + '_' + ind[2]],
+                sd: element['sd_' + ind[1] + '_' + ind[2]],
+              });
+            }
+          }
+        });
+      });
+      // Grouped
+      this.lstGrouped = of(this.lst)
+        .pipe(
+          switchMap((data: any) =>
+            from(data).pipe(
+              groupBy((item: any) => item.cluster),
+              mergeMap((group) => {
+                return group.pipe(toArray());
+              }),
+              mergeMap((arr: any) => {
+                // Take each from above array and group each array by manDate
+                return from(arr).pipe(
+                  groupBy((val: any) => val.indicator),
+                  mergeMap((group) => {
+                    return group.pipe(toArray()); // return the group values as Arrays
+                  })
+                );
+              }),
+              /* map((val: any) => {
+                return {
+                  cellid: val[0].cellid,
+                  indicator: val[0].indicator,
+                  cluster: val[0].cluster,
+                  slope: val[0].slope,
+                  mean: val[0].mean,
+                  sd: val[0].sd,
+                };
+              }), */
+              groupBy((item: any) => item.indicator),
+              mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
+              toArray()
+            )
+          )
+        )
+        .subscribe((val: any) => console.log(val));
+    }
   }
 
   ngOnInit(): void {}
@@ -108,7 +193,7 @@ export class MultivariableAnalysisComponent
           s.find((q: any) => p.cellid == q.cellid)
         )
       );
-    combineLatest([of(this.multivariable$), of(this.accessions$)])
+    combineLatest([of(this.multivariable), of(this.accessions$)])
       .pipe(map((res: any) => mergeById(res[0], res[1])))
       .subscribe((res: any) => {
         this.resDbscan$ = res.sort((a:any,b:any) => a.cluster_dbscan - b.cluster_dbscan)
@@ -124,9 +209,9 @@ export class MultivariableAnalysisComponent
     });
 
     this._sharedService.sendMultivariableObservable.subscribe((res: any) => {
-      this.multivariable$ = res;
+      this.multivariable = res;
       this.seeVar();
-      this.namesResponse = Object.keys(this.multivariable$[0]);
+      this.namesResponse = Object.keys(this.multivariable[0]);
       /* Combine */
       /* const mergeById = (t: any, s: any) =>
       t.map((p: any) =>
@@ -142,7 +227,7 @@ export class MultivariableAnalysisComponent
         console.log(this.accessions$)
         console.log(prop)
       }); */
-      this.multivariable$.forEach((element: any) => {
+      this.multivariable.forEach((element: any) => {
         this.namesResponse.forEach((prop: any) => {
           if (prop.includes('slope')) {
             let ind: any = prop.split('_');
