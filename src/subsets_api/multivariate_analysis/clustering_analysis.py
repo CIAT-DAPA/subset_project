@@ -126,7 +126,10 @@ def clustering_analysis(algorithms, data, n_months, n_years, **kwargs):
             scaled_data["cluster_aggolmerative"] = agglo_labels     
 
         scaled_data["crop_name"] = crop
-        result = pd.concat([transformed_gr['cellid'], scaled_data], axis=1)
+        #return unscaled data
+        cluster_data = scaled_data.iloc[: , len(ind_data.columns):]
+        result = pd.concat([transformed_gr['cellid'], ind_data, cluster_data], axis=1)
+        
         analysis_res = analysis_res.append(result)
         analysis_res.reindex(columns=sorted(analysis_res.columns))
 
