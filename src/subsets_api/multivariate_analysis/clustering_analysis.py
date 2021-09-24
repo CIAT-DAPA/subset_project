@@ -66,7 +66,8 @@ def transform_data(data, n_months, n_years):
         if trnsformed_res.empty:
             trnsformed_res = df
         else:
-            trnsformed_res = pd.merge(trnsformed_res, df)
+            #inner merge on cellid
+            trnsformed_res = pd.merge(trnsformed_res, df, on = 'cellid')
 
     return trnsformed_res
 
