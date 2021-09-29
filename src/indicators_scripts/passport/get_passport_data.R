@@ -193,7 +193,11 @@ get_passport_data <- function(crop){
       
       # add longitude and latitude columns if not existing
       coord <- c("geo.latitude", "geo.longitude")
-      accessions[coord[!(coord %in% names(accessions))]] <- NA
+      coord.not.missing = TRUE
+      if(!(coord %in% names(accessions))){
+        coord.not.missing <- FALSE
+        accessions[coord[!(coord %in% names(accessions))]] <- NA
+      }
       
       #keep just columns included in fields
       accessions <- accessions %>% dplyr::select(any_of(fields))
@@ -204,11 +208,13 @@ get_passport_data <- function(crop){
       }
       
       #add country names based on coordinates
-      acc.with.rowname <- accessions %>% add_rownames
-      accessions = acc.with.rowname %>% dplyr::filter(!is.na(geo_lon) & !is.na(geo_lat)) %>%
+      if(coord.not.missing){
+        acc.with.rowname <- accessions %>% add_rownames
+        accessions = acc.with.rowname %>% dplyr::filter(!is.na(geo_lon) & !is.na(geo_lat)) %>%
         dplyr::mutate(country_name = ((.) %>% dplyr::select(geo_lon, geo_lat)) %>% coords2country()) %>%
         dplyr::bind_rows(., anti_join(acc.with.rowname, ., by = "rowname"))%>% dplyr::arrange(as.numeric(rowname))
-      accessions <- as.data.frame(accessions[,-1])
+        accessions <- as.data.frame(accessions[,-1])
+      }
       
       #get raster base file
       tmp_directory = tempdir()
