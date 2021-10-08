@@ -66,7 +66,8 @@ def transform_data(data, n_months, n_years):
         if trnsformed_res.empty:
             trnsformed_res = df
         else:
-            trnsformed_res = pd.merge(trnsformed_res, df)
+            #inner merge on cellid
+            trnsformed_res = pd.merge(trnsformed_res, df, on = 'cellid')
 
     return trnsformed_res
 
@@ -89,48 +90,75 @@ def hdbscan_func(scaled_data, min_cluster_size = 10):
     return labels
 
 
-def clustering_analysis(algorithms, data, n_months, n_years, **kwargs):
+# data: should contain indicators data. They can be the multi-year average of each specific month values, 
+# or the values of specific months in specifc years
+# algorithms: the list of the clustering algorithms to use. Three options can be provided: 'agglomerative' for HAC,
+# 'dbscan' for DBSCAN and 'hdbscan' for HDBSCAN
+# summary: if True data should be the multi-year average for each month.
+# n_months: if summary = True, n_months is None. If summary = False, n_months should be provided
+# n_years: if summary = True, n_years is None. If summary = False, n_years should be provided
+# **kwargs: parameters to pass to the clustering functions: dbscan_func, agglomerative_func and hdbscan_func;
+# to define custom values for their default parameters
+
+
+def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_months = None, n_years = None, **kwargs):
+    
     #flatten data to a dataframe
-    #indicators = [crop_str_to_arr(x) for x in data]
     df = pd.DataFrame([flatten(x) for x in data])
-    df.drop(labels=['indicator'], axis="columns", inplace=True)
+    
+    df = df.drop_duplicates()
+    df.drop(labels = ['indicator'], axis = "columns", inplace = True)
+    
+    #dataframe that will hold the analysis result
     analysis_res = pd.DataFrame([])
-    #group df by crop name
+
+    #perform clustering per crop
     crops = df['crop'].unique()
     for crop in crops:
         gr = (df.groupby(['crop'])).get_group(crop)
-        gr.drop(labels=['crop'], axis="columns", inplace=True)
+        gr.drop(labels = ['crop'], axis = "columns", inplace = True)
         
-        transformed_gr = transform_data(gr, n_months, n_years)
+        if summary:
+            gr = gr.pivot(index = 'cellid', columns = ['pref_indicator'])
+            gr = gr.swaplevel(0,1, axis = 1).sort_index(axis = 1)
+            gr = gr.reset_index()
+        
+        else:
+            gr['period'] = gr['period'].apply(str)
+            gr = transform_data(gr, n_months, n_years)
+        
         #indicators data without cellid
-        ind_data = transformed_gr.iloc[: , 1:] 
+        ind_data = gr.iloc[:, 1:]
+
         #scale indicators data
-        scaled_data = pd.DataFrame(StandardScaler().fit_transform(ind_data), columns=ind_data.columns)
+        scaled_data = pd.DataFrame(StandardScaler().fit_transform(ind_data), columns = ind_data.columns)
         
         if "dbscan" in algorithms:
             dbscan_args = [k for k, v in inspect.signature(dbscan_func).parameters.items()]
             dbscan_dict = {k: kwargs[k] for k in dict(kwargs) if k in dbscan_args}
+            
             dbscan_labels = dbscan_func(scaled_data, **dbscan_dict)
             scaled_data["cluster_dbscan"] = dbscan_labels
         
         if "hdbscan" in algorithms:
             hdbscan_args = [k for k, v in inspect.signature(hdbscan_func).parameters.items()]
             hdbscan_dict = {k: kwargs[k] for k in dict(kwargs) if k in hdbscan_args}
+
             hdbscan_labels = hdbscan_func(scaled_data, **hdbscan_dict)
             scaled_data["cluster_hdbscan"] = hdbscan_labels
         
         if "agglomerative" in algorithms:
             agglo_args = [k for k, v in inspect.signature(agglomerative_func).parameters.items()]
             agglo_dict = {k: kwargs[k] for k in dict(kwargs) if k in agglo_args}
+
             agglo_labels = agglomerative_func(scaled_data, **agglo_dict)
             scaled_data["cluster_aggolmerative"] = agglo_labels     
 
         scaled_data["crop_name"] = crop
+        
         #return unscaled data
         cluster_data = scaled_data.iloc[: , len(ind_data.columns):]
-        result = pd.concat([transformed_gr['cellid'], ind_data, cluster_data], axis=1)
-        
+        result = pd.concat([gr['cellid'], ind_data, cluster_data], axis=1)
         analysis_res = analysis_res.append(result)
-        analysis_res.reindex(columns=sorted(analysis_res.columns))
 
     return analysis_res
