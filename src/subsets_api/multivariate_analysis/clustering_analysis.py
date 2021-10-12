@@ -100,7 +100,6 @@ def hdbscan_func(scaled_data, min_cluster_size = 10):
 # **kwargs: parameters to pass to the clustering functions: dbscan_func, agglomerative_func and hdbscan_func;
 # to define custom values for their default parameters
 
-
 def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_months = None, n_years = None, **kwargs):
     
     #flatten data to a dataframe
@@ -120,8 +119,10 @@ def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_
         
         if summary:
             gr = gr.pivot(index = 'cellid', columns = ['pref_indicator'])
-            gr = gr.swaplevel(0,1, axis = 1).sort_index(axis = 1)
+            gr = gr.swaplevel(0, 1, axis = 1)
+            gr.columns = gr.columns.map('_'.join)
             gr = gr.reset_index()
+            gr.dropna(inplace=True)            
         
         else:
             gr['period'] = gr['period'].apply(str)
@@ -155,10 +156,11 @@ def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_
             scaled_data["cluster_aggolmerative"] = agglo_labels     
 
         scaled_data["crop_name"] = crop
-        
+
         #return unscaled data
         cluster_data = scaled_data.iloc[: , len(ind_data.columns):]
         result = pd.concat([gr['cellid'], ind_data, cluster_data], axis=1)
+        
         analysis_res = analysis_res.append(result)
 
     return analysis_res
