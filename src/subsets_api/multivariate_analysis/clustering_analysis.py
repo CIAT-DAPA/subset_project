@@ -7,6 +7,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import DBSCAN
 from sklearn.cluster import AgglomerativeClustering
 import hdbscan
+from sklearn.metrics import silhouette_score
+import numpy as np
 import inspect
 
 
@@ -77,10 +79,26 @@ def dbscan_func(scaled_data, eps = 20, minPts = 10):
     labels = db.labels_
     return labels
 
-def agglomerative_func(scaled_data, n_clusters = 5):
-    model = AgglomerativeClustering(n_clusters = n_clusters, affinity = 'euclidean', linkage = 'ward')
+def agglomerative_func(scaled_data, max_cluster, min_cluster = 2):
+    #apply silhouette method
+    range_n_clusters = list(range(min_cluster, max_cluster + 1))
+    avg_silhouette_values = []
+
+    for n_clusters in range_n_clusters:
+        model = AgglomerativeClustering(n_clusters = n_clusters, affinity = 'euclidean', linkage = 'ward')
+        labels = model.fit_predict(scaled_data)
+
+        # The silhouette_score gives the average value for all the samples
+        silhouette_avg = silhouette_score(scaled_data, labels)
+        avg_silhouette_values.append(silhouette_avg)
+
+    idx_max_avg = np.argmax(avg_silhouette_values)
+    n_optimum = range_n_clusters[idx_max_avg]
+    print(n_optimum)
+    model = AgglomerativeClustering(n_clusters = n_optimum, affinity = 'euclidean', linkage = 'ward')
     model.fit(scaled_data)
     labels = model.labels_
+    
     return labels
 
 def hdbscan_func(scaled_data, min_cluster_size = 10):
@@ -99,7 +117,6 @@ def hdbscan_func(scaled_data, min_cluster_size = 10):
 # n_years: if summary = True, n_years is None. If summary = False, n_years should be provided
 # **kwargs: parameters to pass to the clustering functions: dbscan_func, agglomerative_func and hdbscan_func;
 # to define custom values for their default parameters
-
 
 def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_months = None, n_years = None, **kwargs):
     
@@ -120,8 +137,10 @@ def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_
         
         if summary:
             gr = gr.pivot(index = 'cellid', columns = ['pref_indicator'])
-            gr = gr.swaplevel(0,1, axis = 1).sort_index(axis = 1)
+            gr = gr.swaplevel(0, 1, axis = 1)
+            gr.columns = gr.columns.map('_'.join)
             gr = gr.reset_index()
+            gr.dropna(inplace=True)            
         
         else:
             gr['period'] = gr['period'].apply(str)
@@ -158,6 +177,8 @@ def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_
         #return unscaled data
         cluster_data = scaled_data.iloc[: , len(ind_data.columns):]
         result = pd.concat([gr['cellid'], ind_data, cluster_data], axis=1)
+        
         analysis_res = analysis_res.append(result)
 
     return analysis_res
+    
