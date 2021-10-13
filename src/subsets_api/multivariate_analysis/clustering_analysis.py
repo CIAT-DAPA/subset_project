@@ -155,7 +155,6 @@ def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_
             scaled_data["cluster_aggolmerative"] = agglo_labels     
 
         scaled_data["crop_name"] = crop
-        
         #return unscaled data
         cluster_data = scaled_data.iloc[: , len(ind_data.columns):]
         result = pd.concat([gr['cellid'], ind_data, cluster_data], axis=1)
