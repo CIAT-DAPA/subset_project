@@ -6,6 +6,7 @@ import {
   AfterViewInit,
   Input,
   AfterContentInit,
+  OnChanges,
 } from '@angular/core';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 import { ThemePalette } from '@angular/material/core';
@@ -19,27 +20,13 @@ import {
   MatAutocomplete,
 } from '@angular/material/autocomplete';
 import { MatChipInputEvent } from '@angular/material/chips';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 import { CustomDataComponent } from '../custom-data/custom-data.component';
 
-/* Start Datepicker */
-import {
-  NgxMatMomentAdapter,
-  NgxMatMomentDateAdapterOptions,
-  NGX_MAT_MOMENT_DATE_ADAPTER_OPTIONS,
-} from '@angular-material-components/moment-adapter';
-import {
-  DateAdapter,
-  MAT_DATE_FORMATS,
-  MAT_DATE_LOCALE,
-} from '@angular/material/core';
-import { MatDatepicker } from '@angular/material/datepicker';
-
-import * as _moment from 'moment';
 import { defaultFormat as _rollupMoment, Moment } from 'moment';
-import { listLazyRoutes } from '@angular/compiler/src/aot/lazy_routes';
+
 import { NotificationService } from '../../../core/service/notification.service';
 
 @Component({
@@ -48,6 +35,7 @@ import { NotificationService } from '../../../core/service/notification.service'
   styleUrls: ['./form-indicator.component.scss'],
 })
 export class FormIndicatorComponent implements OnInit, AfterContentInit {
+  rangesValues$:any;
   buttonName: any = 'Show properties advanced';
   advanceproperties: boolean = true;
   params$: any;
@@ -57,8 +45,6 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   request$: any;
   multiv$: any = [];
   minAndMax: any;
-  indicatorsPerCrop$: any[] = [];
-
   /* Advance properties */
   dbscanCheck: boolean;
   hdbscanCheck: boolean;
@@ -88,6 +74,15 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   indicatorPeriods$: any = [];
   indicators$: any = [];
   parameters: any = {};
+  cropList: string[];
+  indicatorsPerCrop: any[];
+  // filteredPerCrop: Observable<any[]>;
+  perCrops: Array<string> = [];
+  perCropCtrl = new FormControl();
+  @ViewChild('perCropInput') perCropInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('perCropauto') perCropmatAutocomplete!: MatAutocomplete;
+  cropsAvailable: any[];
+  perCropValues: any[];
 
   minValue: number = 0;
   maxValue: number = 10;
@@ -96,7 +91,7 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     ceil: 300,
     showTicksValues: true,
     tickStep: 0.5,
-    tickValueStep: 30,
+    tickValueStep: 50,
     translate: (value: number, label: LabelType): string => {
       switch (label) {
         case LabelType.Low:
@@ -137,10 +132,15 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     this.monthFirt = 1;
     this.monthEnd = 12;
     this.listValues = [];
+    this.cropList = [];
+    this.indicatorsPerCrop = [];
+    this.cropsAvailable = [];
+    this.perCropValues = [];
+
     this.filteredFruits = this.fruitCtrl.valueChanges.pipe(
       startWith(null),
       map((fruit: string | null) =>
-        fruit ? this._filter(fruit) : this.allFruits.slice()
+        fruit ? this._filter(fruit, this.allFruits) : this.allFruits
       )
     );
 
@@ -155,20 +155,20 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
       minpts: 20,
       epsilon: 10,
       min_cluster_size: 10,
-      n_clusters: 5
+      n_clusters: 5,
     };
     this.algorithmsList = [];
   }
 
   addAlgorithmsToList() {
     if (this.agglomerativeCheck) {
-      this.algorithmsList.push("agglomerative");
+      this.algorithmsList.push('agglomerative');
     }
     if (this.dbscanCheck) {
-      this.algorithmsList.push("dbscan");
+      this.algorithmsList.push('dbscan');
     }
     if (this.hdbscanCheck) {
-      this.algorithmsList.push("hdbscan");
+      this.algorithmsList.push('hdbscan');
     }
   }
 
@@ -187,8 +187,6 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   }
 
   openDialog() {
-    let ind: String = this.filterIndicatorsById('Consecutive dry days');
-    console.log(this.filterIndicatorPeriodById(ind));
     const dialogRef = this.dialog.open(CustomDataComponent, {
       data: {
         animal: 'panda',
@@ -204,6 +202,17 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   }
 
   ngAfterContentInit() {
+    this.sharedService.sendCropsListObservable.subscribe((res: any) => {
+      this.cropList = res;
+    });
+    this.sharedService.sendRangeValuesObservable.subscribe((res:any) => {
+      this.rangesValues$ = res;
+    })
+    this.sharedService.sendIndicatorsListObservable.subscribe(
+      (ind: string[]) => {
+        this.fruits = ind;
+      }
+    );
   }
 
   getDate() {
@@ -239,9 +248,9 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
   }
 
   ngOnInit(): void {
-    this.sharedService.sendSubsetObservable.subscribe((data) => {
+    /* this.sharedService.sendSubsetObservable.subscribe((data) => {
       this.accessions$ = data;
-    });
+    }); */
     this.getIndicators();
     this.getIndicatorPeriods();
   }
@@ -250,9 +259,9 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     this.sharedService.sendSubsets(subsets);
   }
 
-  setDataIndicator(acce: any) {
+  /*  setDataIndicator(acce: any) {
     this.sharedService.sendAccession(acce);
-  }
+  } */
 
   sendIndicatorSummary(indSum: any) {
     this.sharedService.sendIndicatorSummary(indSum);
@@ -266,28 +275,69 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     this.sharedService.sendMultivariable(mul);
   }
 
+  setIndicatorsList(indicator: any) {
+    this.sharedService.sendIndicatorList(indicator);
+  }
+
   seIndicatorValue(indVal: any) {
     this.sharedService.sendIndicatorValue(indVal);
+  }
+
+  setTabIndex(indx: number) {
+    this.sharedService.setTabSelected(indx);
   }
 
   getIndicators = () => {
     this.api.getIndicators().subscribe(
       (data) => {
         this.indicators$ = data;
-        console.log(data);
         this.indicators$.forEach((element: any) => {
           if (element.indicator_type == 'generic') {
-            this.allFruits.push(element.name);
             this.allIndicatorsArray.push(element);
-          }
-          if (element.indicator_type == 'specific') {
-            this.indicatorsPerCrop$.push(element);
+            this.allFruits.push(element.name);
+          } else if (element.indicator_type == 'specific') {
+            this.cropsAvailable = element.crop;
+            this.indicatorsPerCrop.push(element.name);
           }
         });
       },
       (error) => console.log(error)
     );
   };
+
+  getIndicatorType(indicator: string): string {
+    let indicatorType = this.indicators$.filter(
+      (prop: any) => prop.name == indicator
+    );
+    return indicatorType[0].indicator_type;
+  }
+
+  /* Get Indicators by crop (indicators specific) */
+  getIndicatorsAllByCrop(crop: string) {
+    let indicatorsFiltered: any = this.indicators$.filter(
+      (prop: any) => prop.crop == crop
+    );
+    let lstIndicatorsByCrop: any = [];
+    let indicatorsByCropObservable$: Observable<any[]>;
+    indicatorsFiltered.forEach((element: any) => {
+      lstIndicatorsByCrop.push(element.name);
+    });
+    indicatorsByCropObservable$ = this.perCropCtrl.valueChanges.pipe(
+      startWith(null),
+      map((crop: string | null) =>
+        crop ? this._filter(crop, lstIndicatorsByCrop) : lstIndicatorsByCrop
+      )
+    );
+
+    return indicatorsByCropObservable$;
+  }
+
+  getIndicatorsByCrop(crop: string): any[] {
+    let indicatorsFiltered: any = this.indicators$.filter(
+      (prop: any) => prop.crop == crop
+    );
+    return indicatorsFiltered;
+  }
 
   /* Get indicator periods objects */
   getIndicatorPeriods = () => {
@@ -311,130 +361,82 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
     let obj: any = {};
     this.request$ = {};
     this.finalRequest = [];
-    /* this.algorithmsList = [];
-
-    this.addAlgorithmsToList() */
+    this.setIndicatorsList(this.fruits);
     this.periods = [this.periodMinValue, this.periodMaxValue];
-    let indicators: String[] = this.fruits;
-    indicators.forEach((props: any, index: any) => {
+    // let indicators: String[] = this.fruits;
+    this.listValues.forEach((props: any, index: any) => {
       obj = {
+        name: props.indicator,
         indicator: this.filterIndicatorPeriodById(
-          this.filterIndicatorsById(props)
+          this.filterIndicatorsById(props.indicator, props.crop, props.type), 'subsets'
         ),
       };
       for (let i = this.monthFirt; i <= this.monthEnd; i++) {
-        obj['month' + i] = [
-          this.listValues[index].minValue,
-          this.listValues[index].highValue,
-        ];
+        obj['month' + i] = [props.minValue, props.highValue];
       }
+      obj['type'] = props.type;
+      obj['crop'] = props.crop;
       obj['period'] = this.periods;
       this.finalRequest.push(obj);
     });
     this.request$ = {
       data: this.finalRequest,
       passport: this.passportParms,
-      /* analysis: {
-        algorithm: this.algorithmsList,
-        hyperparameter: this.hyperParameters,
-      }, */
     };
+    console.log(this.request$);
     this.sendIndicatorsParameters(this.request$);
-    /* this.api.getSubsetsOfAccessionTest(this.request$).subscribe(
-      (data) => {
-        if (data.data.length === 0) {
-          this.notifyService.showWarning(
-            "The system didn't find data with the entered parameters",
-            'Warning'
-          );
-          obj = {};
-          this.request$ = {};
-          this.finalRequest = [];
-          this.algorithmsList = [];
-        } else {
-          this.sendIndicatorSummary(data.data);
-          this.seIndicatorValue(data.quantile);
-          this.sendTime(data.times);
-        }
-        if (data.multivariety_analysis.length === 0) {
-          this.notifyService.showWarning(
-            "all the rows of the dataframe contain missing values and thus the clustering is not performed",
-            'Warning'
-          );
-          obj = {};
-          this.request$ = {};
-          this.finalRequest = [];
-          this.algorithmsList = [];
-        } else {
-          this.setMultivariableData(data.multivariety_analysis);
-          this.sendTime(data.times);
-        }
-      },
-      (error) => {
-        console.log(error);
-      }
-    ); */
+    this.setTabIndex(1);
   };
 
-  getSubsetsOfAccessionAutomatically = (prop: any) => {
-    console.log("Hello world");
-    this.sendIndicatorsParameters(prop);
-    this.api.getSubsetsOfAccessionTest(this.request$).subscribe(
-      (data) => {
-        if (data.data.length === 0) {
-          this.notifyService.showWarning(
-            "The system didn't find data with the entered parameters",
-            'Warning'
-          );
-          this.request$ = {};
-          this.finalRequest = [];
-          this.algorithmsList = [];
-        } else {
-          this.sendIndicatorSummary(data.data);
-          this.seIndicatorValue(data.quantile);
-          this.setMultivariableData(data.multivariety_analysis);
-        }
-
-        // this.filterMultivariableData();
-        this.request$ = {};
-        this.finalRequest = [];
-        this.algorithmsList = [];
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
-  };
-
-  filterIndicatorsById(indicators: String): String {
-    console.log(this.indicators$);
+  filterIndicatorsById(indicators: String, crop: string, typ: string): String {
     let indicatorSelected: String = '';
-    let indicatorsFind = this.indicators$.filter(
-      (prop: any) => prop.name == indicators
-    );
-    indicatorsFind.forEach((element: any) => {
-      if (!indicatorSelected.includes(element.id))
-        indicatorSelected = element.id;
-    });
-
+    let indicatorsFind: any = [];
+    if (typ === 'generic' || typ === 'extracted') {
+      indicatorsFind = this.indicators$.filter(
+        (prop: any) => prop.name == indicators
+      );
+      indicatorSelected = indicatorsFind[0].id;
+    } else if (typ === 'specific') {
+      indicatorsFind = this.indicators$.filter(
+        (prop: any) => prop.name == indicators && prop.crop == crop
+      );
+      indicatorSelected = indicatorsFind[0].id;
+    }
     return indicatorSelected;
   }
 
-  filterIndicatorPeriodById(indicators: String): String[] {
+  filterIndicatorPeriodById(indicators: String, filterBy:any): String[] {
     let indicatorPeriodSelected: String[] = [];
-    for (
-      let index = this.periodMinValue;
-      index <= this.periodMaxValue;
-      index++
-    ) {
+
+    if (filterBy === 'subsets') {
+
+      for (
+        let index = this.periodMinValue;
+        index <= this.periodMaxValue;
+        index++
+      ) {
+        let indicatorsFind = this.indicatorPeriods$.filter(
+          (prop: any) =>
+            prop.indicator == indicators && prop.period == index.toString()
+        );
+        indicatorsFind.forEach((element: any) => {
+          if (!indicatorPeriodSelected.includes(element.id))
+            indicatorPeriodSelected.push(element.id);
+        });
+    }
+    } else {
+      console.log('ranges')
+      let lstMinMax = ['min', 'max']
+      lstMinMax.forEach((element:any) => {
       let indicatorsFind = this.indicatorPeriods$.filter(
-        (prop: any) =>
-          prop.indicator == indicators && prop.period == index.toString()
-      );
-      indicatorsFind.forEach((element: any) => {
-        if (!indicatorPeriodSelected.includes(element.id))
-          indicatorPeriodSelected.push(element.id);
-      });
+          (prop: any) =>
+            prop.indicator == indicators && prop.period == element
+        );
+        indicatorsFind.forEach((element: any) => {
+          if (!indicatorPeriodSelected.includes(element.id))
+            indicatorPeriodSelected.push(element.id);
+        });  
+      })
     }
 
     return indicatorPeriodSelected;
@@ -455,50 +457,68 @@ export class FormIndicatorComponent implements OnInit, AfterContentInit {
 
   //chips autocomplete-methods
 
-  add(event: MatChipInputEvent): void {
+  add(event: MatChipInputEvent, addList: any, ctrl: any): void {
     const input = event.input;
     const value = event.value;
 
-    // Add our fruit
+    // Add our item
     if ((value || '').trim()) {
-      this.fruits.push(value.trim());
+      addList.push(value.trim());
     }
-
     // Reset the input value
     if (input) {
       input.value = '';
     }
-
-    this.fruitCtrl.setValue(null);
-
-    /*     this.fruits.forEach((vars:any) => {
-          this.listValues.push({value:0, highValue:1})
-        })
-        console.log(this.listValues); */
+    ctrl.setValue(null);
   }
 
-  remove(fruit: string): void {
-    const index = this.fruits.indexOf(fruit);
+  remove(fruit: string, addedList: any, valueList: any[]): void {
+    const index = addedList.indexOf(fruit);
 
     if (index >= 0) {
-      this.fruits.splice(index, 1);
-      this.listValues.splice(index, 1);
+      addedList.splice(index, 1);
+      valueList.splice(index, 1);
     }
-    console.log(this.fruits);
   }
 
   selected(event: MatAutocompleteSelectedEvent): void {
     this.fruits.push(event.option.viewValue);
     this.fruitInput.nativeElement.value = '';
     this.fruitCtrl.setValue(null);
-    this.listValues.push({ minValue: 0, highValue: 1 });
+    let typ = this.getIndicatorType(event.option.viewValue)
+    let minMax = this.rangesValues$.filter((prop:any) => prop.indicator == event.option.viewValue)
+
+        this.listValues.push({
+          minValue: minMax[0].min,
+          highValue: minMax[0].max,
+          type: typ,
+          indicator: event.option.viewValue,
+          floor: minMax[0].min,
+          ceil: minMax[0].max,
+        });
+        this.fruitInput.nativeElement.blur();
+
+  
   }
 
-  private _filter(value: string): string[] {
+  selectedPerCrop(event: MatAutocompleteSelectedEvent, crop: string): void {
+    this.fruits.push(event.option.viewValue);
+    this.perCropInput.nativeElement.value = '';
+    this.perCropCtrl.setValue(null);
+    this.listValues.push({
+      minValue: 0,
+      highValue: 1,
+      type: this.getIndicatorType(event.option.viewValue),
+      crop: crop,
+      indicator: event.option.viewValue,
+    });
+    this.fruitInput.nativeElement.blur();
+  }
+
+  private _filter(value: string, allitems: any): string[] {
     const filterValue = value.toLowerCase();
-    return this.allFruits.filter(
-      // (fruit) => fruit.toLowerCase().indexOf(filterValue) === 0
-      (fruit) => fruit.toLowerCase().includes(filterValue)
+    return allitems.filter((item: any) =>
+      item.toLowerCase().includes(filterValue)
     );
   }
 }

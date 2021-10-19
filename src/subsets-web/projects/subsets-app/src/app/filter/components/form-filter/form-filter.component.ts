@@ -25,7 +25,7 @@ import { HttpClient } from '@angular/common/http';
 import { saveAs } from 'file-saver';
 
 //chips
-import { COMMA, ENTER } from '@angular/cdk/keycodes';
+import { COMMA, ENTER, T } from '@angular/cdk/keycodes';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { AddPointMapComponent } from '../add-point-map/add-point-map.component';
 import { FormControl } from '@angular/forms';
@@ -62,12 +62,13 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   addOnBlur: boolean = false;
   separatorKeysCodes = [ENTER, COMMA];
   CropsCtrl = new FormControl();
-  filteredCrops: Observable<any[]>;
+  filteredCrops: Observable<string[]>;
   crops: Array<string> = [];
   allCrops: any = [];
   allCropsArray: any = [];
   @ViewChild('fruitInput') fruitInput!: ElementRef<HTMLInputElement>;
-  @ViewChild('auto') matAutocomplete!: MatAutocomplete;
+  @ViewChild('chipList') chipList!: ElementRef<HTMLInputElement>;
+  @ViewChild('auto') auto!: MatAutocomplete;
   /* Chips Autocomplete finish */
   /* Chips Autocomplete var */
   /* chips-autocomplete countries start */
@@ -95,6 +96,23 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   @ViewChild('instituteInput') instituteInput!: ElementRef<HTMLInputElement>;
   @ViewChild('instituteAuto') matAutocompleteInstitute!: MatAutocomplete;
   /* Taxon autocomplete end */
+
+  /* biological status autocomplete start */
+  biostatusCtrl = new FormControl();
+  filteredBioStatus: Observable<any[]>;
+  biologicalStatus: Array<string> = [];
+  allBiologicalStatus: Array<string> = [
+    'wild',
+    'natural',
+    'semi-natural/wild',
+    'semi-natural/sown',
+    'weedy',
+    'landrace',
+    'breeding',
+  ];
+  @ViewChild('bioStatusInput') bioStatusInput!: ElementRef<HTMLInputElement>;
+  @ViewChild('bioStatusAuto') matAutocompleteBioStatus!: MatAutocomplete;
+  /* biological status autocomplete end */
 
   longitudeAndLatitudeVisible: boolean = true;
   setTabsVisible: boolean = false;
@@ -139,7 +157,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     this.filteredCrops = this.CropsCtrl.valueChanges.pipe(
       startWith(null),
       map((fruit: string | null) =>
-        fruit ? this._filter(fruit, this.allCrops) : this.allCrops.slice()
+        fruit ? this._filter(fruit, this.allCrops) : this.allCrops
       )
     );
 
@@ -147,9 +165,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     this.filteredCountries = this.countriesCtrl.valueChanges.pipe(
       startWith(null),
       map((country: string | null) =>
-        country
-          ? this._filter(country, this.allCountries)
-          : this.allCountries.slice()
+        country ? this._filter(country, this.allCountries) : this.allCountries
       )
     );
 
@@ -157,18 +173,24 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     this.filteredTaxon = this.taxonCtrl.valueChanges.pipe(
       startWith(null),
       map((country: string | null) =>
-        country
-          ? this._filter(country, this.allTaxon)
-          : this.allTaxon.slice()
+        country ? this._filter(country, this.allTaxon) : this.allTaxon
       )
     );
     /* Autocomplete institute */
     this.filteredInstitute = this.instituteCtrl.valueChanges.pipe(
       startWith(null),
       map((inst: string | null) =>
+        inst ? this._filter(inst, this.allInstitutes) : this.allInstitutes
+      )
+    );
+
+    /* Autocomplete biological status */
+    this.filteredBioStatus = this.biostatusCtrl.valueChanges.pipe(
+      startWith(null),
+      map((inst: string | null) =>
         inst
-          ? this._filter(inst, this.allInstitutes)
-          : this.allInstitutes.slice()
+          ? this._filter(inst, this.allBiologicalStatus)
+          : this.allBiologicalStatus
       )
     );
 
@@ -205,8 +227,12 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   }
 
   sendIndicatorPar(pars: any) {
-    console.log(pars)
+    console.log(pars);
     this.sharedService.sendIndicatorsPar(pars);
+  }
+
+  setTabIndex(indx: number) {
+    this.sharedService.setTabSelected(indx);
   }
 
   ngAfterContentInit() {}
@@ -226,10 +252,8 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
       let paramsPassp: any = this.route.snapshot.paramMap.get('passport');
       let paramsInd: any = this.route.snapshot.paramMap.get('indicator');
       let jsonParamsPas = JSON.parse(paramsPassp);
-      if (paramsInd) {
-        let jsonParamsInd = JSON.parse(paramsInd);
+      let jsonParamsInd = JSON.parse(paramsInd);
         this.getAccessionsAutomatically(jsonParamsPas, jsonParamsInd);
-      }
     }
 
     this.getCountries();
@@ -255,20 +279,32 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     this.sharedService.sendIndicatorValue(indVal);
   }
 
-  drawTable(subsets: any) {
-    this.sharedService.sendSubsets(subsets);
+  setAccession(accession: any) {
+    this.sharedService.sendAccession(accession);
+  }
+
+  setCropList(crop: any) {
+    this.sharedService.sendCropList(crop);
+  }
+
+  setIndicatorsList(indicator: any) {
+    this.sharedService.sendIndicatorList(indicator);
   }
 
   setDataIndicator(acce: any) {
     this.sharedService.sendAccession(acce);
   }
 
+  setRangeValues(rv:any) {
+    this.sharedService.sendRangeValues(rv);
+  }
+
   setSummary(summ: any) {
     this.sharedService.sendSummary(summ);
   }
 
+
   sendPassportParameters(params: any) {
-    console.log(params)
     this.sharedService.sendPassport(params);
   }
 
@@ -276,8 +312,8 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     this.api.getCrops().subscribe(
       (data) => {
         this.crops$ = data.crops;
-        this.allTaxon = data.taxs
-        this.allInstitutes = data.institute
+        this.allTaxon = data.taxs;
+        this.allInstitutes = data.institute;
         this.crops$.forEach((prop: any) => {
           this.allCrops.push(prop.name);
           this.allCropsArray.push(prop);
@@ -297,11 +333,15 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   }
 
   getAccessions = () => {
-    this.passportParams.crop = this.filterCropsById(this.crops);
+    this.passportParams.crop = this.filterCrops(this.crops, 'name');
+    this.setCropList(this.crops);
     this.passportParams.country_name = this.countries;
     this.passportParams.institute_fullname = this.institutes;
     this.passportParams.taxonomy_taxon_name = this.taxon;
-
+    this.passportParams.samp_stat = this.filterBiologicalStatusByName(
+      this.biologicalStatus,
+      'name'
+    );
     this.sendPassportParameters(this.passportParams);
     this.api.getAccessions(this.passportParams).subscribe(
       (data) => {
@@ -311,10 +351,12 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
             'Warning'
           );
         } else {
-          this.accessions$ = data;
-          this.drawTable(data);
-          this.setDataIndicator(data);
+          this.accessions$ = data.accessions;
+          this.setAccession(data.accessions);
+          // this.setDataIndicator(data);
           this.setSummary(this.accessions$);
+          this.setRangeValues(data.min_max)
+          this.setTabIndex(0);
         }
       },
       (error) => console.log(error)
@@ -322,17 +364,21 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   };
 
   downloadFile(data: any) {
-    const replacer = (key:any, value:any) => value === null ? '' : value; // specify how you want to handle null values here
+    const replacer = (key: any, value: any) => (value === null ? '' : value); // specify how you want to handle null values here
     const header = Object.keys(data[0]);
-    let csv = data.map((row:any) => header.map(fieldName => JSON.stringify(row[fieldName], replacer)).join(','));
+    let csv = data.map((row: any) =>
+      header
+        .map((fieldName) => JSON.stringify(row[fieldName], replacer))
+        .join(',')
+    );
     csv.unshift(header.join(','));
     let csvArray = csv.join('\r\n');
 
-    var blob = new Blob([csvArray], {type: 'text/csv' })
-    saveAs(blob, "myFile.csv");
-}
+    var blob = new Blob([csvArray], { type: 'text/csv' });
+    saveAs(blob, 'myFile.csv');
+  }
 
-  getAccessionsAutomatically = (prop: any, ind: any) => {
+  getAccessionsAutomatically = (prop: any, ind:any) => {
     this.api.getAccessions(prop).subscribe(
       (data) => {
         if (data.length === 0) {
@@ -341,11 +387,29 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
             'Warning'
           );
         } else {
-          this.accessions$ = data;
-          this.drawTable(data);
-          this.setDataIndicator(data);
+          /* Props */
+          this.countries = prop.country_name;
+          console.log(this.filterCrops(prop.crop, 'id'))
+          this.crops = this.filterCrops(prop.crop, 'id');
+          this.taxon = prop.taxonomy_taxon_name;
+          this.institutes = prop.institute_fullname;
+          this.biologicalStatus = this.filterBiologicalStatusByName(
+            prop.samp_stat,
+            'id'
+          );
+          /* End props */
+          this.accessions$ = data.accessions;
+          this.setAccession(data.accessions);
           this.setSummary(this.accessions$);
-          this.getSubsetsOfAccessionAutomatically(ind)
+          this.setRangeValues(data.min_max)
+          if (ind) {
+            let lstIndicators: any = [];
+            ind.data.forEach((element:any) => {
+              lstIndicators.push(element.name)
+            });
+            this.setIndicatorsList(lstIndicators);
+            this.getSubsetsOfAccessionAutomatically(ind);
+          }
         }
       },
       (error) => console.log(error)
@@ -353,27 +417,14 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   };
 
   getSubsetsOfAccessionAutomatically = (prop: any) => {
-    console.log("Hello world");
-    this.api.getSubsetsOfAccessionTest(prop).subscribe(
-      (data) => {
-        if (data.data.length === 0) {
-          this.notifyService.showWarning(
-            "The system didn't find data with the entered parameters",
-            'Warning'
-          );
-
-        } else {
-          this.sendIndicatorSummary(data.data);
-          this.seIndicatorValue(data.quantile);
-          this.setMultivariableData(data.multivariety_analysis);
-        }
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
+    console.log(prop);
+    this.sendIndicatorsParameters(prop);
+    this.setTabIndex(1);
   };
 
+  sendIndicatorsParameters(params: any) {
+    this.sharedService.sendIndicators(params);
+  }
 
   filterAccessionsByIndicator() {
     this.subsets$.forEach((value: any) => {
@@ -385,22 +436,56 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
       }
     });
     this.accessions$ = this.accessionsFiltered$;
-    this.drawTable(this.accessions$);
+    this.setAccession(this.accessions$);
   }
 
-  filterCropsById(crops: String[]): String[] {
-    let cropSelected: String[] = [];
-    crops.forEach((value: any) => {
-      let cropsFind = this.allCropsArray.filter(
-        (prop: any) => prop.name == value
-      );
-      cropsFind.forEach((element: any) => {
-        if (!cropSelected.includes(element.id)) cropSelected.push(element.id);
+  filterBiologicalStatusByName(lst: any[], filterBy: string) {
+    let bioStatusFiltered: any = [];
+    if (filterBy === 'name') {
+      lst.forEach((element: any) => {
+        let filtered = this.mcpd.filter((prop: any) => prop.name == element);
+        filtered.forEach((res: any) => {
+          bioStatusFiltered.push(res.id);
+        });
       });
-    });
+    } else {
+      lst.forEach((element: any) => {
+        let filtered = this.mcpd.filter((prop: any) => prop.id == element);
+        filtered.forEach((res: any) => {
+          bioStatusFiltered.push(res.name);
+        });
+      });
+    }
+
+    return bioStatusFiltered;
+  }
+
+  filterCrops(crops: string[], filterBy: string): string[] {
+    console.log(this.allCropsArray)
+    console.log(crops)
+    let cropSelected: string[] = [];
+    if (filterBy === 'name') {
+      crops.forEach((value: any) => {
+        let cropsFind = this.allCropsArray.filter(
+          (prop: any) => prop.name == value
+        );
+        cropsFind.forEach((element: any) => {
+          if (!cropSelected.includes(element.id)) cropSelected.push(element.id);
+        });
+      });
+    } else {
+      crops.forEach((value: any) => {
+        let cropsFind = this.allCropsArray.filter(
+          (prop: any) => prop.id == value
+        );
+        cropsFind.forEach((element: any) => {
+          if (!cropSelected.includes(element.name))
+            cropSelected.push(element.name);
+        });
+      });
+    }
     return cropSelected;
   }
-
   add(event: MatChipInputEvent, addList: any, ctrl: any): void {
     const input = event.input;
     const value = event.value;
@@ -431,7 +516,8 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   ): void {
     addList.push(event.option.viewValue);
     this.fruitInput.nativeElement.value = '';
-    ctrl.setValue(null);
+    this.CropsCtrl.setValue(null);
+    this.fruitInput.nativeElement.blur();
   }
 
   selectedCountry(
@@ -442,6 +528,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     addList.push(event.option.viewValue);
     this.countryInput.nativeElement.value = '';
     ctrl.setValue(null);
+    this.countryInput.nativeElement.blur();
   }
 
   selectedTaxon(
@@ -452,6 +539,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     addList.push(event.option.viewValue);
     this.taxonInput.nativeElement.value = '';
     ctrl.setValue(null);
+    this.taxonInput.nativeElement.blur();
   }
 
   selectedInstitute(
@@ -462,12 +550,24 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     addList.push(event.option.viewValue);
     this.instituteInput.nativeElement.value = '';
     ctrl.setValue(null);
+    this.instituteInput.nativeElement.blur();
+  }
+
+  selectedBiologicalStatus(
+    event: MatAutocompleteSelectedEvent,
+    addList: any,
+    ctrl: any
+  ): void {
+    addList.push(event.option.viewValue);
+    this.bioStatusInput.nativeElement.value = '';
+    ctrl.setValue(null);
+    this.bioStatusInput.nativeElement.blur();
   }
 
   private _filter(value: string, allitems: any): string[] {
     const filterValue = value.toLowerCase();
-    return allitems.filter(
-      (item: any) => item.toLowerCase().includes(filterValue)
+    return allitems.filter((item: any) =>
+      item.toLowerCase().includes(filterValue)
     );
   }
 }

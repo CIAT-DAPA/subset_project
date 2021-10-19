@@ -1,8 +1,9 @@
-import { Component, OnInit, AfterContentInit, Input, OnChanges } from '@angular/core';
+import { Component, OnInit, AfterContentInit, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { SharedService } from '../../../core/service/shared.service';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 import { AccessionsDetailComponent } from '../../accessions-detail/accessions-detail.component';
+import { NotificationService } from '../../../core/service/notification.service';
 
 @Component({
   selector: 'table-outcomes',
@@ -13,12 +14,13 @@ export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChang
   indicatorValue$: any[];
   accessions$: any;
   lstAccessionsFiltered$: any[];
-  @Input() params:any[] = [];
+  @Input() params:any;
   cellids:any;
+  time:any;
   amountAccessionsFiltered :number;
   headers: string[];
   ActualPage: number;
-  constructor(private _sharedService: SharedService, public dialog: MatDialog, private api: IndicatorService) {
+  constructor(private _sharedService: SharedService, public dialog: MatDialog, private api: IndicatorService, private notifyService: NotificationService) {
     this.indicatorValue$ = [];
     this.lstAccessionsFiltered$ = [];
     this.amountAccessionsFiltered = 0;
@@ -26,23 +28,34 @@ export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChang
       "Number","Crop name", "Taxon","Action"
     ]
     this.ActualPage = 1;
+
   }
 
-  ngOnChanges() {
-    if (this.params.length > 0) {
-      this.params.forEach((element:any) => {
+  ngOnChanges(changes: SimpleChanges) {
+    console.log(changes.params.currentValue);
+    if (changes.params.currentValue != changes.params.previousValue) {
+      this.time = this.params.time;
+      this.lstAccessionsFiltered$ = this.params.data;
+      this.amountAccessionsFiltered = this.lstAccessionsFiltered$.length;
+    }
+  /*     data$.forEach((element:any) => {
         this.indicatorValue$.push(element.cellid)
       });
       this.cellids = [...new Set(this.indicatorValue$)];
       this.filterAccessionsByIndicator();
-    }
+    } *//*  else {
+      this.notifyService.showWarning(
+        "The system didn't find data with the entered parameters",
+        'Warning'
+      ); 
+    }*/
   }
 
   ngAfterContentInit() {
-    this._sharedService.sendSubsetObservable.subscribe((data) => {
+    /* this._sharedService.sendSubsetObservable.subscribe((data) => {
       this.accessions$ = data;
       // console.log(data)
-    });
+    }); */
 
     /* this._sharedService.sendIndicatorsSummaryObservable.subscribe(
       (res: any) => {
@@ -71,13 +84,13 @@ export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChang
     saveAs(blob, "accessions.csv");
 }
 
-  filterAccessionsByIndicator() {
+/*   filterAccessionsByIndicator() {
     this.cellids.forEach((element:any) => {
       let accessionsFiltered = this.accessions$.filter((prop:any) => prop.cellid == element);
       this.lstAccessionsFiltered$.push(...accessionsFiltered);
     });
     this.amountAccessionsFiltered = this.lstAccessionsFiltered$.length
-  }
+  } */
 
   openAccessionDetail(object:any) {
     const dialogRef = this.dialog.open(AccessionsDetailComponent, {
@@ -88,5 +101,6 @@ export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChang
     });
   }
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+  }
 }

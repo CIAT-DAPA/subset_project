@@ -1,1 +1,165 @@
-<p>methodology works!</p>
+<div class="banner mb-3">
+  <div
+    class="jumbotron bg-transparent  mb-4"
+    style="width: 80%; height: 400px; margin-top: 5%"
+  >
+    <h1
+      class="display-4"
+      style="
+        text-align: justify;
+        font-size: 50px;
+        font-family: Raleway, sans-serif !important;
+      "
+    >
+      Methodologies
+    </h1>
+    <p
+      class=""
+      style="text-align: justify; font-family: Roboto, sans-serif !important"
+    >
+      For the multivariate analysis, we have used three clustering algorithms:
+      <br /><br />
+    </p>
+    <div class="background">
+      <div class="content">
+        <p
+          class=""
+          style="
+            text-align: justify;
+            font-family: Roboto, sans-serif !important;
+          "
+        >
+          1.
+          <strong
+            >DBSCAN - Density-Based Spatial Clustering of Applications with
+            Noise</strong
+          >: This technique is used to find arbitrary shaped clusters and to
+          detect outliers (i.e. clusters with noise). DBSCAN requires two key
+          parameters:
+        </p>
+        <ul>
+          <li>
+            <strong>eps: </strong> Specifies how close points should be to each
+            other to be considered neighbors and a part of a cluster. If the
+            distance between two points is lower or equal to eps, these two
+            points are considered neighbors.
+          </li>
+          <br />
+          <li>
+            <strong>minPts: </strong> This parameter specifies the minimum
+            number of data points to form a dense region and, thus, a cluster..
+          </li>
+        </ul>
+        <p
+          style="
+            text-align: justify;
+            font-family: Roboto, sans-serif !important;
+          "
+        >
+          Points that are in low-density regions are marked as outliers.
+        </p>
+      </div>
+      <div class="image-center">
+        <img
+          src="../../../../assets/images/dbscan.png"
+          alt="dbscan clustering"
+          width="250px"
+          height="250px"
+        />
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="background">
+      <div class="image-center">
+        <img
+          src="../../../../assets/images/hdbscan.png"
+          alt="dbscan clustering"
+          width="250px"
+          height="250px"
+        />
+      </div>
+      <div class="content">
+        <p
+          class=""
+          style="
+            text-align: justify;
+            font-family: Roboto, sans-serif !important;
+          "
+        >
+          2.
+          <strong
+            >HDBSCAN - Hierarchical Density-Based Spatial Clustering of
+            Applications with Noise</strong
+          >
+          : This algorithm extends DBSCAN by converting it into a hierarchical
+          clustering algorithm. The parameter that should be defined for our
+          implementation is <strong>min_cluster_size</strong> , which specifies
+          the minimum number of points that a cluster should have. By default,
+          this parameter is set to <strong>10</strong>.
+        </p>
+      </div>
+    </div>
+
+    <hr />
+
+    <div class="background">
+      <div class="content">
+        <p
+          class=""
+          style="
+            text-align: justify;
+            font-family: Roboto, sans-serif !important;
+          "
+        >
+          3. <strong>HAC - Hierarchical Agglomerative Clustering </strong>: HAC
+          uses a bottom-up approach to form clusters. It starts by considering
+          each point as a cluster, and merges pairs of clusters as moving up the
+          hierarchy. The algorithm keeps merging until reaching the desired
+          number of clusters set by the user via the parameter
+          <strong>n_clusters</strong>. By default, this parameter is set to
+          <strong>5</strong>.
+        </p>
+      </div>
+      <div class="image-center">
+        <img
+          src="../../../../assets/images/agglomerative.png"
+          alt="dbscan clustering"
+          width="250px"
+          height="250px"
+        />
+      </div>
+    </div>
+  <!--   <hr>
+    <div class="background">
+      <div class="image-center">
+        <img
+          src="../../../../assets/images/custom_indicator.png"
+          alt="dbscan clustering"
+          width="550px"
+          height="250px"
+        />
+      </div>
+      <div class="content">
+        <p
+          class=""
+          style="
+            text-align: justify;
+            font-family: Roboto, sans-serif !important;
+          "
+        >
+          Lorem Ipsum is simply dummy text of the printing and typesetting
+          industry. Lorem Ipsum has been the industry's standard dummy text ever
+          since the 1500s, when an unknown printer took a galley of type and
+          scrambled it to make a type specimen book. It has survived not only
+          five centuries, but also the leap into electronic typesetting,
+          remaining essentially unchanged. It was popularised in the 1960s with
+          the release of Letraset sheets containing Lorem Ipsum passages, and
+          more recently with desktop publishing software like Aldus PageMaker
+          including versions of Lorem Ipsum.
+        </p>
+      </div>
+    </div> -->
+  </div>
+</div>

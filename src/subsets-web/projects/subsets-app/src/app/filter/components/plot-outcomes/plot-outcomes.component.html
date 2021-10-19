@@ -1,31 +1,7 @@
-<div class="container" style="text-align: center;">
-
- <br>
- <mat-tab-group mat-align-tabs="center">
-  <mat-tab *ngFor="let item of indicatorsValue$ | async" label="{{item[0]}}">
-    <div class="container-plot">
-
-      <div class="chart-wrapper" *ngFor="let user of item[1]; let i = index">
-        <mat-card class="example-card mt-3 mb-3">
-          <mat-card-header>
-            <div mat-card-avatar class="example-header-image"></div>
-            <mat-card-title>{{user.crop}}</mat-card-title>
-            <mat-card-subtitle>{{user.period}}</mat-card-subtitle>
-          </mat-card-header>
-          <mat-card-content>
-        <canvas baseChart id="chart{{i}}"   style="width: 450px !important;" 
-        [datasets]="user.data" 
-            [labels]="lineChartLabels" 
-            [options]="{responsive:true, scales: {yAxes: [{scaleLabel: {display: true,labelString: user.indicator}}]}}"
-            [colors]="lineChartColors" 
-            [legend]="lineChartLegend" 
-            [chartType]="lineChartType" 
-            [plugins]="lineChartPlugins">
-          </canvas>
-          </mat-card-content>
-        </mat-card>
-        </div>
-      </div>
-  </mat-tab>
-</mat-tab-group>
-  </div>
+<div class="container mt-3">
+  <label for="indicator-selected">Select a indicator</label>
+  <select [(ngModel)]="indicatorSelected" style="width: 30%;" (ngModelChange)="drawPlot()" class="form-control" id="">
+    <option *ngFor="let x of indicatorList" value="{{x.indicator}}">{{x.indicator}}</option>
+  </select>
+  <div class="mt-3" #plots></div>
+</div>

@@ -21,6 +21,7 @@ const routes: Routes = [
       { path: 'about-us', loadChildren: () => import('./about-us/about-us.module').then(m => m.AboutUsModule) },
       { path: 'glosary', loadChildren: () => import('./glosary/glosary.module').then(m => m.GlosaryModule) },
       { path: 'profile', loadChildren: () => import('./auth/auth.module').then(m => m.AuthModule) },
+      { path: 'methodology', loadChildren: () => import('./methodology/methodology.module').then(m => m.MethodologyModule) },
     ]
   },
 ]

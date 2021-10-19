@@ -1,4 +1,4 @@
-<mat-tab-group mat-align-tabs="start">
+<mat-tab-group mat-align-tabs="start" [selectedIndex]='selectdIndex'>
   <mat-tab label="General">
     <!-- <mat-progress-bar mode="determinate" value="40"></mat-progress-bar> -->
     <div *ngIf="accessions$.length > 0" class="container">
@@ -41,7 +41,7 @@
             <tr
               *ngFor="
                 let value of accessions$
-                  | paginate: { itemsPerPage: 5, currentPage: ActualPage }
+                  | paginate: { itemsPerPage: 5, currentPage: ActualPage, id: 'table-accessions' }
               "
               style="cursor: pointer; cursor: hand; text-align: center;"
               (click)="openAccessionDetail(value)"
@@ -53,7 +53,7 @@
             </tr>
           </tbody>
         </table>
-        <pagination-controls (pageChange)="ActualPage = $event">
+        <pagination-controls id='table-accessions' (pageChange)="ActualPage = $event">
         </pagination-controls>
         <!-- <div class="page-buttons">
         <button class="btn prev" (click)="fetchPrevious()">Prev
@@ -75,70 +75,77 @@
       </mat-card>
     </div>
   </mat-tab>
-  <mat-tab>
-    <ng-template mat-tab-label>
-      <span (click)="buildSubsets()" >Subsets</span>
-    </ng-template>
+  <mat-tab label="Subsets" *ngIf="expertNormalMode$">
+<mat-tab-group mat-align-tabs="start">
+  <mat-tab label="Subsets">
     <table-outcomes [params]="subsets"></table-outcomes>
   </mat-tab>
-<!--   <mat-tab label="Accessions">
-    <table-outcomes [params]="params"></table-outcomes>
-  </mat-tab> -->
-  <mat-tab>
-    <ng-template mat-tab-label>
-      <span (click)="buildQuantilePlots()">Plots</span>
-    </ng-template>
+  <mat-tab label="Plots">
     <app-plot-outcomes [quantileData]="quantileData"></app-plot-outcomes>
+  </mat-tab>
+  <mat-tab label="Map">
+    <advanced-subset-map [data]="subsets"></advanced-subset-map>
+  </mat-tab>
+    </mat-tab-group>
   </mat-tab>
   <mat-tab>
     <ng-template mat-tab-label>
       <span >Cluster</span>
     </ng-template>
-    <div style="width: 100%" class="mt-2 mr-2 advance-properties">
-      <mat-card>
-      <div class="" style="width: 48%">
-        <mat-checkbox class="example-margin" [checked]="dbscanCheck" [(ngModel)]="dbscanCheck"  color="primary"> Dbscan method <i matTooltip="Info about the action" class="fas fa-question-circle"></i></mat-checkbox>
-      </div>
-      <div class="" style="display: flex; width: 100%" [hidden]="!dbscanCheck">
-        <div style="width: 48%">
-          <label for="minpts">MinPts</label>
-          <input type="number" class="form-control" [ngModel]="hyperParameters.minpts"/>
-        </div>
-        <div class="ml-2" style="width: 48%">
-          <label for="eps">Epsilon</label>
-          <input type="number" class="form-control" [ngModel]="hyperParameters.epsilon" />
-        </div>
-      </div>
-    </mat-card>
-    <mat-card class="mt-3">
-      <div  style="width: 48%">
-        <mat-checkbox  class="example-margin" [checked]="hdbscanCheck" [(ngModel)]="hdbscanCheck" color="primary">Hdbscan method <i matTooltip="Info about the action" class="fas fa-question-circle"></i></mat-checkbox>
-      </div>
-      <div class="" style="display: flex; width: 100%" [hidden]="!hdbscanCheck">
-        <div style="width: 90%">
-          <label for="min-cluster-size">Minimum cluster size</label>
-          <input type="number" class="form-control" [ngModel]="hyperParameters.min_cluster_size"/>
-        </div>
-      </div>
-    </mat-card>
-    <mat-card class="mt-3">
-      <div  style="width: 48%">
-        <mat-checkbox class="example-margin" [checked]="agglomerativeCheck" [(ngModel)]="agglomerativeCheck" color="primary">Agglomerative method <i matTooltip="Info about the action" class="fas fa-question-circle"></i></mat-checkbox>
-      </div>
-      <div class="" style="display: flex; width: 100%" [hidden]="!agglomerativeCheck">
-        <div style="width: 100%">
-          <label for="n-clusters">Numbers of clusters</label>
-          <input type="number" class="form-control" [ngModel]="hyperParameters.n_clusters" />
-        </div>
-      </div>
-    </mat-card>
+ <div *ngIf="expertNormalMode$">
+  <div style="width: 100%" class="mt-2 mr-2 advance-properties">
+    <mat-card>
+    <div class="" style="width: 48%">
+      <mat-checkbox class="example-margin" [checked]="dbscanCheck" [(ngModel)]="dbscanCheck"  color="primary"> Dbscan method <i matTooltip="Info about the action" class="fas fa-question-circle"></i></mat-checkbox>
     </div>
-    <button class="btn btn-green mt-3" (click)="buildClusters()">
-      Generate clusters
+    <div class="" style="display: flex; width: 100%" [hidden]="!dbscanCheck">
+      <div style="width: 48%">
+        <label for="minpts">MinPts</label>
+        <input type="number" class="form-control" [(ngModel)]="hyperParameters.minpts"/>
+      </div>
+      <div class="ml-2" style="width: 48%">
+        <label for="eps">Epsilon</label>
+        <input type="number" class="form-control" [(ngModel)]="hyperParameters.epsilon" />
+      </div>
+    </div>
+  </mat-card>
+  <mat-card class="mt-3">
+    <div  style="width: 48%">
+      <mat-checkbox  class="example-margin" [checked]="hdbscanCheck" [(ngModel)]="hdbscanCheck" color="primary">Hdbscan method <i matTooltip="Info about the action" class="fas fa-question-circle"></i></mat-checkbox>
+    </div>
+    <div class="" style="display: flex; width: 100%" [hidden]="!hdbscanCheck">
+      <div style="width: 90%">
+        <label for="min-cluster-size">Minimum cluster size</label>
+        <input type="number" class="form-control" [(ngModel)]="hyperParameters.min_cluster_size"/>
+      </div>
+    </div>
+  </mat-card>
+  <mat-card class="mt-3">
+    <div  style="width: 48%">
+      <mat-checkbox class="example-margin" [checked]="agglomerativeCheck" [(ngModel)]="agglomerativeCheck" color="primary">Agglomerative method <i matTooltip="Info about the action" class="fas fa-question-circle"></i></mat-checkbox>
+    </div>
+    <div class="" style="display: flex; width: 100%" [hidden]="!agglomerativeCheck">
+      <div style="width: 100%">
+        <label for="n-clusters">Numbers of clusters</label>
+        <input type="number" class="form-control" [(ngModel)]="hyperParameters.n_clusters" />
+      </div>
+    </div>
+  </mat-card>
+  </div>
+  <button class="btn btn-green mt-3" (click)="buildClusters()">
+    Generate clusters
+  </button>
+  <div *ngIf="!clusterData" class="alert alert-warning alert-dismissible fade show mt-3" role="alert">
+    The system did not find matchs
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
     </button>
-    <app-multivariable-analysis [multivariable]="clusterData"></app-multivariable-analysis>
+  </div>
+  <app-multivariable-analysis *ngIf="clusterData" [res$]="minMaxMeanData" [timeMultiAna]="timeMultiAna" [multivariable]="clusterData"></app-multivariable-analysis>
+ </div>
+    <beginner-cluster *ngIf="!expertNormalMode$"></beginner-cluster>
   </mat-tab>
   <mat-tab label="Summary">
-    <app-summary></app-summary>
+    <app-summary [namesResponse]="algorithmsList"></app-summary>
   </mat-tab>
 </mat-tab-group>

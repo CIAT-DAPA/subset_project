@@ -1,0 +1,8 @@
+<div class="container mt-2">
+    <div style="display: flex" class="">
+      <h3 class="mr-2 mb-2">Normal</h3>
+      <mat-slide-toggle [(ngModel)]="isChecked" (change)="setExpertNormalMode($event.checked)" color="primary">Expert</mat-slide-toggle>
+    </div>
+</div>
+<beginner-form [passportParms]="passportParms" [indicatorPeriods$]="indicatorPeriods$" [indicators$]="indicators$" *ngIf="!isChecked"></beginner-form>
+<advanced-form [passportParms]="passportParms" [rangesValues$]="rangesValues$" [indicatorPeriods]="indicatorPeriods$" [indicators]="indicators$" *ngIf="isChecked"></advanced-form>

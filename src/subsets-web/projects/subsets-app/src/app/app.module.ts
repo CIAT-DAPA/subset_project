@@ -17,6 +17,7 @@ import { NgxSliderModule } from '@angular-slider/ngx-slider';
 import {NgTinyUrlModule} from 'ng-tiny-url';
 
 import { FilterModule } from './filter/filter.module';
+import { MethodologyModule } from './methodology/methodology.module'
 import { AuthModule } from './auth/auth.module';
 import { SharedModule } from './shared/shared.module';
 import { MaterialModule } from './material/material.module';
@@ -33,7 +34,7 @@ import {
 } from './core/service/auth.service';
 import { InterceptorService } from './core/service/interceptor.service';
 import { MaxPipePipe } from './max-pipe.pipe';
-import { MethodologyComponent } from './methodology/components/methodology/methodology.component';
+// import { MethodologyComponent } from './methodology/components/methodology/methodology.component';
 
 @NgModule({
   declarations: [
@@ -43,7 +44,6 @@ import { MethodologyComponent } from './methodology/components/methodology/metho
     IndicatorComponent,
     //TabsComponent,
     LayoutComponent,
-    MethodologyComponent,
   ],
   imports: [
     CoreModule,
@@ -67,7 +67,8 @@ import { MethodologyComponent } from './methodology/components/methodology/metho
       closeButton: true}
     ),
     NgxSpinnerModule,
-    NgTinyUrlModule
+    NgTinyUrlModule,
+    MethodologyModule
   ],
   providers: [
     {provide: HTTP_INTERCEPTORS, useClass: InterceptorService, multi: true},

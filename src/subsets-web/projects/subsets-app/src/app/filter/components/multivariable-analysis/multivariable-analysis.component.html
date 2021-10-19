@@ -3,8 +3,10 @@
   <mat-tab-group mat-align-tabs="center">
     <mat-tab
       *ngIf="namesResponse.includes('cluster_dbscan')"
-      label="Dbscan Analysis"
     >
+    <ng-template mat-tab-label>
+      <span (click)="getSummaryMethodology('dbscan')">Dbscan Analysis</span>
+    </ng-template>
     <div
     class=""
     style="width: 100%; display: flex; justify-content: flex-end"
@@ -42,7 +44,7 @@
             <ng-container
               *ngFor="
                 let value of resDbscan$
-                  | paginate: { itemsPerPage: 5, currentPage: actualPageDbscan }
+                  | paginate: { itemsPerPage: 5, currentPage: actualPageDbscan, id: 'table4' }
               "
             >
               <tr
@@ -57,13 +59,15 @@
             </ng-container>
           </tbody>
         </table>
-        <pagination-controls (pageChange)="actualPageDbscan = $event">
+        <pagination-controls id='table4' (pageChange)="actualPageDbscan = $event">
         </pagination-controls>
       </div>
     </mat-tab>
     <mat-tab
-      *ngIf="namesResponse.includes('cluster_hdbscan')"
-      label="Hdbscan Analysis">
+      *ngIf="namesResponse.includes('cluster_hdbscan')">
+      <ng-template mat-tab-label>
+        <span (click)="getSummaryMethodology('hdbscan')">Hdbscan Analysis</span>
+      </ng-template>
       <div
       class=""
       style="width: 100%; display: flex; justify-content: flex-end"
@@ -103,7 +107,7 @@
               *ngFor="
                 let value of resHdbscan$
                   | paginate
-                    : { itemsPerPage: 5, currentPage: actualPageHdbscan }
+                    : { itemsPerPage: 5, currentPage: actualPageHdbscan, id: 'table3' }
               "
             >
               <tr
@@ -118,14 +122,16 @@
             </ng-container>
           </tbody>
         </table>
-        <pagination-controls (pageChange)="actualPageHdbscan = $event">
+        <pagination-controls id='table3' (pageChange)="actualPageHdbscan = $event">
         </pagination-controls>
       </div>
     </mat-tab>
     <mat-tab
       *ngIf="namesResponse.includes('cluster_aggolmerative')"
-      label="Agglomerative Analysis"
     >
+    <ng-template mat-tab-label>
+      <span (click)="getSummaryMethodology('aggolmerative')">Agglomerative Analysis</span>
+    </ng-template>
     <div
     class=""
     style="width: 100%; display: flex; justify-content: flex-end"
@@ -164,7 +170,7 @@
               *ngFor="
                 let value of resAgglomerative$
                   | paginate
-                    : { itemsPerPage: 5, currentPage: actualPageAgglomerative }
+                    : { itemsPerPage: 5, currentPage: actualPageAgglomerative, id: 'table2' }
               "
             >
               <tr
@@ -179,14 +185,17 @@
             </ng-container>
           </tbody>
         </table>
-        <pagination-controls (pageChange)="actualPageAgglomerative = $event">
+        <pagination-controls id='table2'  (pageChange)="actualPageAgglomerative = $event">
         </pagination-controls>
       </div>
     </mat-tab>
   </mat-tab-group>
+  <p *ngIf="multivariable.length > 0" style="text-align: left">
+  Clusters generated in {{timeMultiAna | number: '0.'}} seconds.
+  </p>
 
-  <!-- 
-  <table class="table table-striped mt-4">
+  
+  <table *ngIf="multivariable.length > 0" class="table table-striped mt-4">
     <thead>
       <tr>
         <th
@@ -202,24 +211,25 @@
     <tbody>
       <tr
         *ngFor="
-          let value of res$
-            | paginate: { itemsPerPage: 5, currentPage: actualPageT1 }
+          let value of summaryReduced
+            | paginate: { itemsPerPage: 5, currentPage: actualPageT2, id: 'table-summary' }
         "
         style="text-align: center; cursor: pointer; cursor: hand"
       >
-        <td>{{value.crop.name}}</td>
-        <td>{{value.slope}}</td>
-        <td>{{value.mean}}</td>
-        <td>{{value.sd}}</td>
-        <td>{{value.indicator}}</td>
-        <td>{{value.cluster}}</td>
+        <td>{{getIndicatorName(value.indicator)}}</td>
+        <td>{{value.crop}}</td>
+        <td>{{value.slp_med | number: '0.'}}</td>
+        <td>{{value.mean_med | number: '0.'}}</td>
+        <td>{{value.sd_med | number: '0.'}}</td>
+        <td>{{value.cluster | number: '0.'}}</td>
+        <td>{{value.method}}</td>
       </tr>
     </tbody>
+    <pagination-controls id="table-summary" *ngIf="multivariable.length > 0" (pageChange)="actualPageT2 = $event">
+    </pagination-controls>
   </table>
-  <pagination-controls (pageChange)="actualPageT1 = $event">
-  </pagination-controls>
 
-  <hr> -->
+  <hr>
 
   <!--   <div class="row">
     <div id="maps"></div>
@@ -229,3 +239,4 @@
       </div>
 </div> -->
 </div>
+

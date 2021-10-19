@@ -26,13 +26,22 @@ import { MultivariableAnalysisComponent } from './components/multivariable-analy
 import { FormSubsetComponent } from './components/form-subset/form-subset.component';
 import { MaxPipePipe } from '../max-pipe.pipe';
 import { FormSpecifcPerCropComponent } from './components/form-specifc-per-crop/form-specifc-per-crop.component';
+import { BeginnerFormComponent } from './components/beginner-form/beginner-form.component';
+import { BeginnerClusterComponent } from './components/beginner-cluster/beginner-cluster.component';
+import { BeginnerClusterAccessionComponent } from './components/beginner-cluster-accession/beginner-cluster-accession.component';
+import { AdvancedFormComponent } from './components/advanced-form/advanced-form.component';
+import { SwitchToggleComponent } from './components/switch-toggle/switch-toggle.component';
+import { BeginnerClusterLinePlotComponent } from './components/beginner-cluster-line-plot/beginner-cluster-line-plot.component';
+import { BeginnerClusterBoxPlotComponent } from './components/beginner-cluster-box-plot/beginner-cluster-box-plot.component';
+import { BeginnerClusterMapComponent } from './components/beginner-cluster-map/beginner-cluster-map.component';
+import { AdvancedSubsetMapComponent } from './components/advanced-subset-map/advanced-subset-map.component';
  
 // d3 and nvd3 should be included somewhere
 
 
 
 @NgModule({
-  declarations: [FormFilterComponent, MapOutcomesComponent, PlotOutcomesComponent, TableOutcomesComponent, FormIndicatorComponent, TabsComponent, DensityChartComponent, AddPointMapComponent, CustomDataComponent, AccessionsDetailComponent, SummaryComponent, MultivariableAnalysisComponent, FormSubsetComponent, MaxPipePipe, FormSpecifcPerCropComponent],
+  declarations: [FormFilterComponent, MapOutcomesComponent, PlotOutcomesComponent, TableOutcomesComponent, FormIndicatorComponent, TabsComponent, DensityChartComponent, AddPointMapComponent, CustomDataComponent, AccessionsDetailComponent, SummaryComponent, MultivariableAnalysisComponent, FormSubsetComponent, MaxPipePipe, FormSpecifcPerCropComponent, BeginnerFormComponent, BeginnerClusterComponent, BeginnerClusterAccessionComponent, AdvancedFormComponent, SwitchToggleComponent, BeginnerClusterLinePlotComponent, BeginnerClusterBoxPlotComponent, BeginnerClusterMapComponent, AdvancedSubsetMapComponent],
   imports: [
     CommonModule,
     FilterRoutingModule,
