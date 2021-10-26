@@ -36,6 +36,7 @@ export class TabsComponent implements OnInit, AfterContentInit {
   dbscanCheck: boolean;
   hdbscanCheck: boolean;
   agglomerativeCheck: boolean;
+  showAdvancedMap = false;
   selectdIndex: number = 0;
   @Input() activeTabs: boolean;
   constructor(
@@ -88,6 +89,13 @@ export class TabsComponent implements OnInit, AfterContentInit {
         }
       }
     ); */
+  }
+
+  tabClick(tab:any) {
+    if (tab.index === 2) {
+      this.showAdvancedMap = true;
+      console.log(this.showAdvancedMap)
+    }
   }
 
   sendIndicatorSummary(indSum: any) {
@@ -172,7 +180,7 @@ export class TabsComponent implements OnInit, AfterContentInit {
       this.subsets = res.univariate;
       this.setSubsets(this.subsets)
       this.quantileData = res.quantile;
-      this.sendIndicatorSummary(this.subsets.data)
+      // this.sendIndicatorSummary(this.subsets.data)
     });
   };
 
@@ -190,9 +198,10 @@ export class TabsComponent implements OnInit, AfterContentInit {
     this.params['analysis'] = {
       algorithm: this.algorithmsList,
       hyperparameter: this.hyperParameters,
+      summary: false
     };
     console.log(this.params);
-    this.api.getCluster(this.params).subscribe((res: any) => {
+    this.api.generateCluster(this.params).subscribe((res: any) => {
       this.clusterData = res.data;
       this.timeMultiAna = res.time
       this.minMaxMeanData = res.calculate

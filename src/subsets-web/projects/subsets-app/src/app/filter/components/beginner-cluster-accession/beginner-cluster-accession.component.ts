@@ -86,7 +86,26 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
     });
   }
 
+  downloadJsonFormat(data: any) {
+    const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+    saveAs(blob, 'accessions.json');
+  }
 
+  downloadCsvFormat(data: any) {
+    const replacer = (key: any, value: any) => (value === null ? '' : value); // specify how you want to handle null values here
+    const header = Object.keys(data[0]);
+    let csv = data.map((row: any) =>
+      header
+        .map((fieldName) => JSON.stringify(row[fieldName], replacer))
+        .join(',')
+    );
+    csv.unshift(header.join(','));
+    let csvArray = csv.join('\r\n');
+
+    var blob = new Blob([csvArray], { type: 'text/csv' });
+    saveAs(blob, 'accessions.csv');
+  }
+  
   ngOnInit(): void {
 
   }

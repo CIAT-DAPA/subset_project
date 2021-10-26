@@ -7,6 +7,8 @@ import { CustomDataComponent } from './components/custom-data/custom-data.compon
 import { AccessionsDetailComponent } from './accessions-detail/accessions-detail.component';
 import { BeginnerFormComponent } from './components/beginner-form/beginner-form.component';
 import { BeginnerClusterMapComponent } from './components/beginner-cluster-map/beginner-cluster-map.component';
+import { MapTestComponent } from './components/map-test/map-test.component';
+import { MapOutcomesComponent } from './components/map-outcomes/map-outcomes.component';
 
 
 const routes: Routes = [

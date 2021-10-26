@@ -2,6 +2,7 @@ import { Component, Input, OnInit } from '@angular/core';
 import { SharedService } from '../../../core/service/shared.service';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 import { distinctUntilChanged } from 'rxjs/operators';
+import { Options } from '@angular-slider/ngx-slider';
 
 @Component({
   selector: 'beginner-form',
@@ -11,6 +12,7 @@ import { distinctUntilChanged } from 'rxjs/operators';
 export class BeginnerFormComponent implements OnInit {
   // Observable with the indicators format
   @Input() indicators$: any;
+  @Input() cropList: any = [];
   // Observable with the indicators period format
   @Input() indicatorPeriods$: any;
   // Var to check all complete
@@ -19,12 +21,21 @@ export class BeginnerFormComponent implements OnInit {
   @Input() passportParms: any;
   // Max numbers of clusters
   maxCluster: number;
+  minCluster: number;
+  clusterSliderOption: Options = {
+    floor: 0,
+    ceil: 100,
+    showTicksValues: true,
+    tickStep: 1,
+    tickValueStep: 30,
+  };
 
   constructor(
     private _sharedService: SharedService,
     private api: IndicatorService
   ) {
     this.maxCluster = 5;
+    this.minCluster = 2;
   }
 
   ngOnInit(): void {}
@@ -107,7 +118,8 @@ export class BeginnerFormComponent implements OnInit {
       passport: this.passportParms,
       analysis: {
         algorithm: ['agglomerative'],
-        hyperparameter: { n_clusters: this.maxCluster },
+        hyperparameter: { n_clusters: this.maxCluster, min_cluster: this.minCluster },
+        summary: true
       },
     };
     console.log(request);

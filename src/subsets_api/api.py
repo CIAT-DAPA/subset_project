@@ -361,69 +361,45 @@ def subset():
             .apply(lambda x: x.to_dict('r'))
             .reset_index(name='data')
             .to_json(orient='records'))
-            
-            quantiles_grouped = []
-            obj = {}
-            lst_final = []
+
+            df_grouped_indicator = df.groupby(['indicator', 'period', 'crop'])
+            lst_box_data = []
+            for group in df_grouped_indicator:
+                for month in ob:
+                      # indicator_month = indicator + "_month1"
+                        df_groupby = group[1][[month]].quantile([0.25,0.5,0.75])
+                        # Whisker low
+                        whisker_low = group[1][[month]].min()
+                        # Whisker low
+                        whisker_high = group[1][[month]].max()
+                        # convert quantile index to quantile column
+                        df_groupby.reset_index(inplace=True)
+                        # df_groupby_indicator.rename(columns={'level_1': 'quantile'}, inplace=True)
+                        df_groupby.columns = ['quantile', month]
+
+                        quantile_list = list(df_groupby_indicator[month].tolist())
+                        obj = {'Q1': quantile_list[0], 'Q2': quantile_list[1], 'Q3': quantile_list[2], 'month': month, 'indicator': group[0][0],
+                        'period':group[0][1], 'crop':group[0][2], 'whisker_low': whisker_low[0], 'whisker_high': whisker_high[0]}
+                        lst_box_data.append(obj)
+
+            df_quantiles = pd.DataFrame([s for s in lst_box_data])
+            lst_field_quantiles = ['Q1', 'Q2', 'Q3', 'month', 'whisker_low', 'whisker_high']
+            df_quantiles_grouped = (df_quantiles.groupby(['indicator','period', 'crop'])[lst_field_quantiles]
+            .apply(lambda x: x.to_dict('r'))
+            .reset_index(name='data')
+            .to_json(orient='records'))
+            # dicti = df_multivariate.pivot('indicator','operator').to_dict('index')
+            quantile_data = json.loads(df_quantiles_grouped)
+            print(quantile_data)
+
             quantiles = json.loads(df_to_json)
-            """ for key, value in groupby(quantiles, key_func):
-                ls = {"crop": key, "indicators": list(value)}
-                quantiles_grouped.append(ls)
-            for res in quantiles_grouped:
-                for prop in res['indicators']:
-                    lst_obj = []
-                    obj = {"name": prop["indicator"], "period": prop["period"], "data": prop["data"]}
-                    lst_obj.append(obj)
-                lst_final.append({"crop": res["crop"], "indicators":lst_obj})
-
-            print(lst_final) """
-            """ quantiles_list = []
-            quantiles_grouped = []
-            for x in quantiles:
-                quantil_first = []
-                quantil_second = []
-                quantil_third = []
-                data = x['data']
-                quantil_first.extend({'x':indx, 'y':data[0][k], 'serie':0} for indx,k in enumerate(data[0]) if 'month' in str(k))
-                quantil_second.extend({'x':indx, 'y':data[1][k], 'serie':0} for indx,k in enumerate(data[1]) if 'month' in str(k))
-                quantil_third.extend({'x':indx, 'y':data[2][k], 'serie':0} for indx,k in enumerate(data[2]) if 'month' in str(k))
-                new_obj = {'indicator': x['indicator'],
-                            'crop': x['crop'],
-                            'period':x['period'], 
-                            'data': [ {'values': quantil_first, 'key': 0.25},
-                                        {'values': quantil_second, 'key': 0.50},
-                                        {'values': quantil_third, 'key': 0.75}]}
-                quantiles_list.append(new_obj)
-
-            quantiles_list = sorted(quantiles_list, key=key_func)
-
-            for key, value in groupby(quantiles_list, key_func):
-                ls = [key, list(value)]
-                quantiles_grouped.append(ls)
-            print(quantiles_grouped) """
-            """ quantil_second.extend(data[1][k] for k in data[1] if 'month' in str(k))
-                quantil_third.extend(data[2][k] for k in data[2] if 'month' in str(k))
-                new_obj = {'indicator': x['indicator'],
-                            'crop': x['crop'],
-                            'period':x['period'], 
-                            'data': [ {'data': quantil_first, 'label': 'First Quantile', 'lineTension':0, 'fill': False},
-                                        {'data': quantil_second, 'label': 'Second Quantile', 'lineTension':0, 'fill': False},
-                                        {'data': quantil_third, 'label': 'Third Quantile', 'lineTension':0, 'fill': False}]}
-                quantiles_list.append(new_obj)
-
-            
-            quantiles_list = sorted(quantiles_list, key=key_func)
-
-            for key, value in groupby(quantiles_list, key_func):
-                ls = [key, list(value)]
-                quantiles_grouped.append(ls) """
-
+            # print(quantiles)
             end_time_quantile = time.time()
             total_time_quantile = end_time_quantile - start_time_quantile
 
             content = {
                 'univariate': {'data': accessions_list, 'time': total_time_subsets},
-                'quantile': quantiles
+                'quantile': quantile_data
                 # 'quantile': {'data': quantiles_list, 'time': total_time_quantile},
             }
 
@@ -448,46 +424,74 @@ def generate_clusters():
     algorithms = analysis_params['algorithm']
     # hyperparameters to the multivariate analysis
     hyperparameters = analysis_params['hyperparameter']
-
-    nYears = (period[1]+1) - period[0]
-    # Months list calculated
-    # ob = [k for k in indicators_params[0] if "month" in str(k)]
-    # months number calculated
-    nMonths = 12
-    content = {}
-
-    #Get crops
-    crops = Crop.objects(Q(id__in = passport_params['crop']))
-    result_crops = [{"id":x.id,"name": x.name} for x in crops]
+    setSummary = analysis_params['summary']
     
-    # Filter clauses to get accessions in order to parameters
-    filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
-                      for filter in passport_params if len(passport_params[filter]) > 0]
-    # Query to get accessions
-    accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
+    if setSummary:
 
-    # Cellids found in the accessions objects
-    cell_ids = [x.cellid for x in accessions if x.cellid]
-    # Reduce cellid list
-    cell_ids = list(set(cell_ids))
+        nYears = (period[1]+1) - period[0]
+        # Months list calculated
+        # ob = [k for k in indicators_params[0] if "month" in str(k)]
+        # months number calculated
+        nMonths = 12
+        content = {}
 
-    multivariate_values = []
-    for indicator in indicators_params:
-        # Indicator periods ids
-        periods_ids = indicator["indicator"]
-        # Clauses to get data for multivariate analysis
-        if indicator['type'] == 'generic':
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
-                # Filtering values of indicator to multivariate analysis
-            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
-            # loop for each crop present in the query
-            for crop in crops:
-                cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
-                # cellid list from crop
-                cell_id_crop = list(set(cell_id_crop))
+        #Get crops
+        crops = Crop.objects(Q(id__in = passport_params['crop']))
+        result_crops = [{"id":x.id,"name": x.name} for x in crops]
+        
+        # Filter clauses to get accessions in order to parameters
+        filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
+                        for filter in passport_params if len(passport_params[filter]) > 0]
+        # Query to get accessions
+        accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
+
+        # Cellids found in the accessions objects
+        cell_ids = [x.cellid for x in accessions if x.cellid]
+        # Reduce cellid list
+        cell_ids = list(set(cell_ids))
+
+        multivariate_values = []
+        for indicator in indicators_params:
+            # Indicator periods ids
+            periods_ids = indicator["indicator"]
+            # Clauses to get data for multivariate analysis
+            if indicator['type'] == 'generic':
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+                    # Filtering values of indicator to multivariate analysis
+                indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+                # loop for each crop present in the query
+                for crop in crops:
+                    cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
+                    # cellid list from crop
+                    cell_id_crop = list(set(cell_id_crop))
+                    # Dict to multivariate analysis
+                    multivariate_values.extend([{
+                        "crop": crop['name'],
+                        "pref_indicator": x.indicator_period.indicator.pref,
+                        "indicator": x.indicator_period.indicator.name,
+                        "cellid": x.cellid,
+                        "month1": x.month1,
+                        "month2": x.month2,
+                        "month3": x.month3,
+                        "month4": x.month4,
+                        "month5": x.month5,
+                        "month6": x.month6,
+                        "month7": x.month7,
+                        "month8": x.month8,
+                        "month9": x.month9,
+                        "month10": x.month10,
+                        "month11": x.month11,
+                        "month12": x.month12}
+                        for x in indicator_periods_values if  x.cellid in cell_id_crop])
+            elif indicator['type'] == 'specific':
+                print(indicator['crop'])
+                cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
+
+                indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
                 # Dict to multivariate analysis
                 multivariate_values.extend([{
-                    "crop": crop['name'],
+                    "crop": indicator['crop'],
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid,
@@ -504,159 +508,291 @@ def generate_clusters():
                     "month11": x.month11,
                     "month12": x.month12}
                     for x in indicator_periods_values if  x.cellid in cell_id_crop])
-        elif indicator['type'] == 'specific':
-            print(indicator['crop'])
-            cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
+            # Create a df from multivariate analysis dict
+        if multivariate_values:
+            try:
+                lst_calculates = []
+                lst_indicators = []
+                lst_months = []
+                others_columns = []
+                analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, max_cluster=hyperparameters['n_clusters'])
 
-            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
-            # Dict to multivariate analysis
-            multivariate_values.extend([{
-                "crop": indicator['crop'],
-                "pref_indicator": x.indicator_period.indicator.pref,
-                "indicator": x.indicator_period.indicator.name,
-                "cellid": x.cellid,
-                "month1": x.month1,
-                "month2": x.month2,
-                "month3": x.month3,
-                "month4": x.month4,
-                "month5": x.month5,
-                "month6": x.month6,
-                "month7": x.month7,
-                "month8": x.month8,
-                "month9": x.month9,
-                "month10": x.month10,
-                "month11": x.month11,
-                "month12": x.month12}
-                for x in indicator_periods_values if  x.cellid in cell_id_crop])
-        # Create a df from multivariate analysis dict
-    if multivariate_values:
-        try:
-            lst_calculates = []
-            lst_indicators = []
-            lst_months = []
-            others_columns = []
-            analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, n_clusters=hyperparameters['n_clusters'])
+                # from df to dict
+                response_analysis = analysis.to_json(orient='records')
 
-            # from df to dict
-            response_analysis = analysis.to_json(orient='records')
+                for k,col in enumerate(analysis.columns):
+                    """  """
+                    if 'month' in col:
+                        fields = col.split('_')
+                        if len(fields) >= 3:
+                            lst_indicators.append(fields[0] + '_' + fields[1])
+                            lst_months.append(fields[2])
+                        else:
+                            lst_indicators.append(fields[0])
+                            lst_months.append(fields[1])
+                    elif 'cluster' in col:
+                        others_columns.append(col)
+                lst_indicators = list(set(lst_indicators))
+                lst_months = list(set(lst_months))
+                lst_months_quantiles = list(set(lst_months))
+                lst_months.sort()
+                print(others_columns)
             
-            # Columns to months
-            new_cols_months = dict(zip(analysis.columns[1:len(analysis.columns) - 2], 
-            [x[0] + "_" + x[1] for x in analysis.columns[1:len(analysis.columns) - 2]]))
-            # Columns to others items
-            new_cols = dict(zip(analysis.columns[len(analysis.columns) - 2:len(analysis.columns) ], 
-            [x[0] for x in analysis.columns[len(analysis.columns) - 2:len(analysis.columns)]]))
-            # Assing columns
-            analysis.rename(columns=new_cols_months, inplace=True)
-            analysis.rename(columns=new_cols, inplace=True)
 
-            for k,col in enumerate(analysis.columns):
-                """  """
-                if 'month' in col:
-                    fields = col.split('_')
-                    if len(fields) >= 3:
-                        lst_indicators.append(fields[0] + '_' + fields[1])
-                        lst_months.append(fields[2])
-                    else:
-                        lst_indicators.append(fields[0])
-                        lst_months.append(fields[1])
-                else:
-                    others_columns.append(col)
-            lst_indicators = list(set(lst_indicators))
-            lst_months = list(set(lst_months))
-            lst_months.sort()
-           
-            print(others_columns)
-            df = analysis.groupby([others_columns[1]])
-            for group in df:
+                # Calculate Min Max Mean and Sd
+                for methd in others_columns:
+                    df = analysis.groupby([methd])
+                    methds = methd.split('_')
+                    for group in df:
+                        for indicator in lst_indicators:
+                            # Get min
+                            # getNameIndicatorByPref(indicator)
+                            mini = group[1][[indicator +  '_' + x for x in lst_months]].min()
+                            obj_min = {x: mini[i] for i,x in enumerate(lst_months)}
+                            obj_min['operator'] = 'min'
+                            obj_min['cluster'] = group[0]
+                            obj_min['indicator'] = indicator
+                            obj_min['methd'] = methds[1]
+                            lst_calculates.append(obj_min)
+                            # Get max
+                            maxi = group[1][[indicator +  '_' + x for x in lst_months]].max()
+                            obj_max = {x: maxi[i] for i,x in enumerate(lst_months)}
+                            obj_max['operator'] = 'max'
+                            obj_max['cluster'] = group[0]
+                            obj_max['indicator'] = indicator
+                            obj_max['methd'] = methds[1]
+                            lst_calculates.append(obj_max)
+                            # Get mean
+                            mean = group[1][[indicator +  '_' + x for x in lst_months]].mean()
+                            obj_mean = {x: mean[i] for i,x in enumerate(lst_months)}
+                            obj_mean['operator'] = 'mean'
+                            obj_mean['cluster'] = group[0]
+                            obj_mean['indicator'] = indicator
+                            obj_mean['methd'] = methds[1]
+                            lst_calculates.append(obj_mean)
+                            # Get sd
+                            sd = group[1][[indicator +  '_' + x for x in lst_months]].std()
+                            obj_sd = {x: sd[i] for i,x in enumerate(lst_months)}
+                            obj_sd['operator'] = 'sd'
+                            obj_sd['cluster'] = group[0]
+                            obj_sd['indicator'] = indicator
+                            obj_sd['methd'] = methds[1]
+                            lst_calculates.append(obj_sd)
+                # print(lst_calculates)
+                df_multivariate = pd.DataFrame([s for s in lst_calculates])
+                lst_months_grouped = lst_months
+                lst_months_grouped.append('cluster')
+                df_multivariate = df_multivariate[['indicator', 'cluster', 'operator', 'methd','month1', 'month2', 'month3', 'month4', 'month5', 'month6',
+                                                    'month7','month8','month9','month10','month11','month12']]
+                # print(df_multivariate)
+                df_calculate = (df_multivariate.groupby(['indicator','operator', 'methd'])[lst_months_grouped]
+                .apply(lambda x: x.to_dict('r'))
+                .reset_index(name='data')
+                .to_json(orient='records'))
+                # # dicti = df_multivariate.pivot('indicator','operator').to_dict('index')
+                min_max_mean_sd = json.loads(df_calculate)
+                response_analysis_json = json.loads(response_analysis)
+                # # # Calculate quantiles by month
+                obj_list_quantiles = []
+                for methd in others_columns:
+                    df = analysis.groupby([methd])
+                    methds = methd.split('_')
+                    for group in df:
+                        for indicator in lst_indicators:
+                            for month in lst_months_quantiles:
+                                # indicator_month = indicator + "_month1"
+                                df_groupby_indicator = group[1][[indicator + "_" + month]].quantile([0.25,0.5,0.75])
+                                # Whisker low
+                                whisker_low = group[1][[indicator + "_" + month]].min()
+                                # Whisker low
+                                whisker_high = group[1][[indicator + "_" + month]].max()
+                                # convert quantile index to quantile column
+                                df_groupby_indicator.reset_index(inplace=True)
+                                # df_groupby_indicator.rename(columns={'level_1': 'quantile'}, inplace=True)
+                                df_groupby_indicator.columns = ['quantile', month]
+
+                                quantile_list = list(df_groupby_indicator[month].tolist())
+                                obj = {'Q1': quantile_list[0], 'Q2': quantile_list[1], 'Q3': quantile_list[2], 'month': month, 'indicator': indicator,
+                                'cluster': group[0], 'whisker_low': whisker_low[0], 'whisker_high': whisker_high[0], 'methd': methds[1]}
+
+                                obj_list_quantiles.append(obj)
+
+                df_quantiles = pd.DataFrame([s for s in obj_list_quantiles])
+                lst_field_quantiles = ['Q1', 'Q2', 'Q3', 'month', 'whisker_low', 'whisker_high']
+                df_quantiles_grouped = (df_quantiles.groupby(['indicator','cluster', 'methd'])[lst_field_quantiles]
+                .apply(lambda x: x.to_dict('r'))
+                .reset_index(name='data')
+                .to_json(orient='records'))
+                # dicti = df_multivariate.pivot('indicator','operator').to_dict('index')
+                quantile_data = json.loads(df_quantiles_grouped)
+            
+                # total_time_multi_ana = end_time_multi_ana - start_time_multi_ana
+                content = {
+                    'data': response_analysis_json,
+                    # 'time': total_time_multi_ana,
+                    'calculate': min_max_mean_sd,
+                    'quantile': quantile_data
+                }
+            except ValueError as ve:
+                print(str(ve))
+                print("Exception")
+    else:
+
+        lst_df_multivariate = []
+        nYears = (period[1]+1) - period[0]
+        # Months list calculated
+        ob = [k for k in indicators_params[0] if "month" in str(k)]
+        # months number calculated
+        nMonths = len(ob)
+        content = {}
+
+        #Get crops
+        crops = Crop.objects(Q(id__in = passport_params['crop']))
+        result_crops = [{"id":x.id,"name": x.name} for x in crops]
+
+        # Filter clauses to get accessions in order to parameters
+        filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
+                        for filter in passport_params if len(passport_params[filter]) > 0]
+        # Query to get accessions
+        accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
+
+        # Cellids found in the accessions objects
+        cell_ids = [x.cellid for x in accessions if x.cellid]
+        # Reduce cellid list
+        cell_ids = list(set(cell_ids))
+
+        for indicator in indicators_params:
+            # Indicator periods ids
+            periods_ids = indicator["indicator"]
+            multivariate_values = []
+            # Clauses to get data for multivariate analysis
+            if indicator['type'] == 'generic':
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+                    # Filtering values of indicator to multivariate analysis
+                indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+                print(str(len(indicator_periods_values)))
+                # loop for each crop present in the query
+                for crop in crops:
+                    cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
+                    # cellid list from crop
+                    cell_id_crop = list(set(cell_id_crop))
+                    # Dict to multivariate analysis
+                    multivariate_values.extend([{
+                        "crop": crop['name'],
+                        "pref_indicator": x.indicator_period.indicator.pref,
+                        "indicator": x.indicator_period.indicator.name,
+                        "cellid": x.cellid,
+                        "month1": x.month1,
+                        "month2": x.month2,
+                        "month3": x.month3,
+                        "month4": x.month4,
+                        "month5": x.month5,
+                        "month6": x.month6,
+                        "month7": x.month7,
+                        "month8": x.month8,
+                        "month9": x.month9,
+                        "month10": x.month10,
+                        "month11": x.month11,
+                        "month12": x.month12,
+                        "period": x.indicator_period.period
+                        }
+                        for x in indicator_periods_values if  x.cellid in cell_id_crop])
+            elif indicator['type'] == 'specific':
+                print(indicator['crop'])
+                cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
+
+                indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+                # Dict to multivariate analysis
+                multivariate_values.extend([{
+                    "crop": indicator['crop'],
+                    "pref_indicator": x.indicator_period.indicator.pref,
+                    "indicator": x.indicator_period.indicator.name,
+                    "cellid": x.cellid,
+                    "month1": x.month1,
+                    "month2": x.month2,
+                    "month3": x.month3,
+                    "month4": x.month4,
+                    "month5": x.month5,
+                    "month6": x.month6,
+                    "month7": x.month7,
+                    "month8": x.month8,
+                    "month9": x.month9,
+                    "month10": x.month10,
+                    "month11": x.month11,
+                    "month12": x.month12,
+                    "period": x.indicator_period.period}
+                    for x in indicator_periods_values if  x.cellid in cell_id_crop])
+            # Create a df from multivariate analysis dict
+            df_multivariate = pd.DataFrame([s for s in multivariate_values])
+            for x in range(len(df_multivariate)):
+                # for colums in list(df_multivariate.columns.values):
+                for colums in ob:
+                    if indicator[colums][1] < df_multivariate.loc[x, colums] or df_multivariate.loc[x, colums] < indicator[colums][0]:
+                            df_multivariate.loc[x, colums] = np.nan
+
+            print(df_multivariate)
+            lst_df_multivariate.append(df_multivariate)
+
+        # Data parsed    
+        multi_na_data = pd.concat(lst_df_multivariate)
+        multi_na_result = multi_na_data.to_json(orient = "records")
+        multi_na_parsed = json.loads(multi_na_result)
+
+        if multi_na_parsed:
+            try:
+                lst_calculates = []
+                start_time_multi_ana = time.time()
+                analysis = clustering_analysis(algorithms=algorithms,data=multi_na_parsed, summary=setSummary,n_months=nMonths, n_years=nYears,minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
+                                            max_cluster=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
+                # analysis = clustering_analysis(algorithms, multi_na_parsed, nMonths, nYears, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
+                #                             max_cluster=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
+                print(analysis)
+                lst_indicators = [col for col in analysis.columns if 'mean' or 'slope' or 'sd' in str(col)]
+
+                lst_indicators = []
+                for k,col in enumerate(analysis.columns):
+                    """  """
+                    if 'slope' in col:
+                        lst_calc = [col, analysis.columns[k+1], analysis.columns[k+2]]
+                        lst_indicators.append(lst_calc)
+                lst_methds = [col for col in analysis.columns if 'cluster' in str(col)]
+                print(lst_indicators)
                 for indicator in lst_indicators:
-                    # Get min
-                    # getNameIndicatorByPref(indicator)
-                    mini = group[1][[indicator +  '_' + x for x in lst_months]].min()
-                    obj_min = {x: mini[i] for i,x in enumerate(lst_months)}
-                    obj_min['operator'] = 'min'
-                    obj_min['cluster'] = group[0]
-                    obj_min['indicator'] = indicator
-                    lst_calculates.append(obj_min)
-                    # Get max
-                    maxi = group[1][[indicator +  '_' + x for x in lst_months]].max()
-                    obj_max = {x: maxi[i] for i,x in enumerate(lst_months)}
-                    obj_max['operator'] = 'max'
-                    obj_max['cluster'] = group[0]
-                    obj_max['indicator'] = indicator
-                    lst_calculates.append(obj_max)
-                    # Get mean
-                    mean = group[1][[indicator +  '_' + x for x in lst_months]].mean()
-                    obj_mean = {x: mean[i] for i,x in enumerate(lst_months)}
-                    obj_mean['operator'] = 'mean'
-                    obj_mean['cluster'] = group[0]
-                    obj_mean['indicator'] = indicator
-                    lst_calculates.append(obj_mean)
-                    # Get sd
-                    sd = group[1][[indicator +  '_' + x for x in lst_months]].std()
-                    obj_sd = {x: sd[i] for i,x in enumerate(lst_months)}
-                    obj_sd['operator'] = 'sd'
-                    obj_sd['cluster'] = group[0]
-                    obj_sd['indicator'] = indicator
-                    lst_calculates.append(obj_sd)
-            # print(lst_calculates)
-            df_multivariate = pd.DataFrame([s for s in lst_calculates])
-            lst_months_grouped = lst_months
-            lst_months_grouped.append('cluster')
-            df_multivariate = df_multivariate[['indicator', 'cluster', 'operator', 'month1', 'month2', 'month3', 'month4', 'month5', 'month6',
-                                                'month7','month8','month9','month10','month11','month12']]
-            # print(df_multivariate)
-            df = (df_multivariate.groupby(['indicator','operator'])[lst_months_grouped]
-            .apply(lambda x: x.to_dict('r'))
-            .reset_index(name='data')
-            .to_json(orient='records'))
-            # dicti = df_multivariate.pivot('indicator','operator').to_dict('index')
-            min_max_mean_sd = json.loads(df)
-            response_analysis_json = json.loads(response_analysis)
-            print(df)
+                    for methd in lst_methds:
+                        print(methd)
+                        print(str(indicator[0]))
+                        indicator_split = indicator[0].split("_")
+                        methd_split = methd.split("_")
+                        resultado =  analysis.groupby(['crop_name', str(methd)]).median()[indicator]
+                        if len(indicator_split) == 3:
+                            resultado['indicator'] = indicator_split[1] + '_' + indicator_split[2]
+                        else:
+                            resultado['indicator'] = indicator_split[1]
+                        resultado['method'] = methd_split[1]
+                        resultado.reset_index(inplace=True)
+                        resultado.columns = ['crop', 'cluster', 'slp_med', 'mean_med', 'sd_med', 'indicator', 'method']
+                        print(resultado)
+                        lst_calculates.append(resultado)
 
-            """ lst_indicators = []
-            for k,col in enumerate(analysis.columns):
-                """  """
-                if 'slope' in col:
-                    lst_calc = [col, analysis.columns[k+1], analysis.columns[k+2]]
-                    lst_indicators.append(lst_calc)
-            lst_methds = [col for col in analysis.columns if 'cluster' in str(col)]
-            for indicator in lst_indicators:
-                for methd in lst_methds:
-                    print(methd)
-                    print(str(indicator[0]))
-                    indicator_split = indicator[0].split("_")
-                    methd_split = methd.split("_")
-                    resultado =  analysis.groupby(['crop_name', str(methd)]).median()[indicator]
-                    if len(indicator_split) == 3:
-                        resultado['indicator'] = indicator_split[1] + '_' + indicator_split[2]
-                    else:
-                        resultado['indicator'] = indicator_split[1]
-                    resultado['method'] = methd_split[1]
-                    resultado.reset_index(inplace=True)
-                    resultado.columns = ['crop', 'cluster', 'slp_med', 'mean_med', 'sd_med', 'indicator', 'method']
-                    lst_calculates.append(resultado)
+                print(lst_calculates)
+                min_max_mean_data = pd.concat(lst_calculates)
+                min_max_mean_result = min_max_mean_data.to_json(orient = "records")
+                min_max_mean_parsed = json.loads(min_max_mean_result)
+                
+                results = analysis.to_json(orient = "records")
+                parsed = json.loads(results)
+                end_time_multi_ana = time.time()
+                total_time_multi_ana = end_time_multi_ana - start_time_multi_ana
+                content = {
+                    'data': parsed,
+                    'time': total_time_multi_ana,
+                    'calculate': min_max_mean_parsed
+                }
+            except ValueError as ve:
+                print(str(ve))
+                print("Exception")
 
-            print(lst_calculates)
-            min_max_mean_data = pd.concat(lst_calculates)
-            min_max_mean_result = min_max_mean_data.to_json(orient = "records")
-            min_max_mean_parsed = json.loads(min_max_mean_result)
-            
-            results = analysis.to_json(orient = "records")
-            parsed = json.loads(results)
-            end_time_multi_ana = time.time() """
-            # total_time_multi_ana = end_time_multi_ana - start_time_multi_ana
-            content = {
-                'data': response_analysis_json,
-                # 'time': total_time_multi_ana,
-                'calculate': min_max_mean_sd,
-                # 'summary': multivariate_values
-            }
-        except ValueError as ve:
-            print(str(ve))
-            print("Exception")
         
     return (content)
 
@@ -712,6 +848,7 @@ def clusters():
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
                 # Filtering values of indicator to multivariate analysis
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+            print(str(len(indicator_periods_values)))
             # loop for each crop present in the query
             for crop in crops:
                 cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
@@ -735,7 +872,8 @@ def clusters():
                     "month10": x.month10,
                     "month11": x.month11,
                     "month12": x.month12,
-                    "period": x.indicator_period.period}
+                    # "period": x.indicator_period.period
+                    }
                     for x in indicator_periods_values if  x.cellid in cell_id_crop])
         elif indicator['type'] == 'specific':
             print(indicator['crop'])
@@ -784,10 +922,13 @@ def clusters():
         try:
             lst_calculates = []
             start_time_multi_ana = time.time()
-            analysis = clustering_analysis(algorithms, multi_na_parsed, nMonths, nYears, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
-                                        n_clusters=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
+            analysis = clustering_analysis(algorithms=algorithms,data=multi_na_parsed, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
+                                        max_cluster=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
+            # analysis = clustering_analysis(algorithms, multi_na_parsed, nMonths, nYears, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
+            #                             max_cluster=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
             print(analysis)
-            # lst_indicators = [col for col in analysis.columns if 'mean' or 'slope' or 'sd' in str(col)]
+            lst_indicators = [col for col in analysis.columns if 'mean' or 'slope' or 'sd' in str(col)]
+
             lst_indicators = []
             for k,col in enumerate(analysis.columns):
                 """  """
@@ -1332,5 +1473,5 @@ def subsets_kha():
 if __name__ == "__main__":
 
     connect('indicatordb', host='dbmongotst01.cgiarad.org', port=27017)
-    app.run(threaded=True, host='0.0.0.0', port=8437, debug=False)
-    # app.run(threaded=True, port=5001, debug=True)
+    # app.run(threaded=True, host='0.0.0.0', port=8437, debug=False)
+    app.run(threaded=True, port=5001, debug=True)

@@ -3,9 +3,28 @@
     <h3 class="mr-2 mb-2">Normal</h3>
     <mat-slide-toggle color="primary">Expert</mat-slide-toggle>
   </div> -->
-  <mat-card style="width: 100%;">
+  <!-- <mat-card style="width: 100%;"> -->
   <ng-container *ngFor="let x of indicators$">
     <section *ngIf="x.category != 'Other'">
+      <p>
+        <mat-checkbox
+        id="{{x.category}} + 'beginner'"
+          color="primary"
+          [checked]="x.checked"
+          [indeterminate]="someComplete(x)"
+          (change)="setAll($event.checked, x)"
+          >{{ x.category }}</mat-checkbox
+        >
+      </p>
+      <section class="ml-3" *ngFor="let y of x.indicators">
+        <p>
+          <mat-checkbox id="{{y.name}} + 'beginner'" color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{ y.name }}</mat-checkbox>
+        </p>
+      </section>
+    </section>
+  </ng-container>
+  <ng-container *ngFor="let x of indicators$">
+    <section *ngIf="x.category == 'Other'">
       <p>
         <mat-checkbox
           color="primary"
@@ -16,35 +35,28 @@
         >
       </p>
       <section class="ml-3" *ngFor="let y of x.indicators">
+        <ng-container *ngIf="cropList.includes(y.crop)">
         <p>
-          <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{ y.name }}</mat-checkbox>
+          <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{ y.name }} -- {{y.crop}}</mat-checkbox>
         </p>
+      </ng-container>
       </section>
     </section>
   </ng-container>
   <ngx-spinner></ngx-spinner>
-</mat-card>
+<!-- </mat-card> -->
 
-<mat-card class="mt-3">
-  <div class="" style="display: flex; width: 100%">
-    <div style="width: 100%">
-      <label for="n-clusters">Number maximum of clusters</label>
-      <input type="number" class="form-control" [(ngModel)]="maxCluster"/>
-    </div>
-  </div>
-  <button class="btn btn-green mt-3" (click)="buildSubsets()">
+<mat-card class="mt-3 mb-3">
+  <label for="period" class="form-label">Add a range of number of clusters</label>
+  <ngx-slider
+    [(value)]="minCluster"
+    id="period"
+    [(highValue)]="maxCluster"
+    [options]="clusterSliderOption"
+  >
+  </ngx-slider>
+  <button class="btn btn-green mt-4" (click)="buildSubsets()">
     Get Filter
   </button>
 </mat-card>
-<!-- <mat-card >
-<ul>
-  <ng-container *ngFor="let x of indicators$">
-    <ng-container *ngFor="let y of x.indicators">
-      <ng-container *ngIf="y.checked">
-        <li>{{y.name}}</li>
-      </ng-container>
-    </ng-container>
-  </ng-container>
-</ul>
-</mat-card> -->
 </div>

@@ -56,7 +56,7 @@ export class MultivariableAnalysisComponent
   rasterLayer: any;
   popupOverlay: any;
 
-  accessions$: any = [];
+  @Input() accessions: any = [];
   // multivariable$: any = [];
   lst: any = [];
   lstGrouped: any = [];
@@ -71,7 +71,8 @@ export class MultivariableAnalysisComponent
   resAgglomerative$: any;
   resMap$: any;
   summaryReduced: any;
-  indicators$: any;
+  indicators$: any = [];
+  accessionsCombined:any = [];
 
   constructor(
     private _sharedService: SharedService,
@@ -100,6 +101,8 @@ export class MultivariableAnalysisComponent
       } else {
         this.getSummaryMethodology('aggolmerative');
       }
+      console.log(this.multivariable);
+      console.log(this.accessions);
       this.seeVar();
     }
   }
@@ -121,14 +124,19 @@ export class MultivariableAnalysisComponent
           s.find((q: any) => p.cellid == q.cellid)
         )
       );
-    combineLatest([of(this.accessions$), of(this.multivariable)])
+    combineLatest([of(this.accessions), of(this.multivariable)])
       .pipe(map((res: any) => mergeById(res[0], res[1])))
       .subscribe((res: any) => {
-        console.log("Hello")
+        res.forEach((element:any) => {
+          if (element.cluster_aggolmerative >= -1 || element.cluster_dbscan >= -1 ||element.cluster_hdbscan >= -1) {
+            this.accessionsCombined.push(element)
+          }
+        });
+        console.log(this.accessionsCombined)
 
-        let dbscan = res.filter((prop: any) => prop.cluster_dbscan >= 0);
-        let hdbscan = res.filter((prop: any) => prop.cluster_hdbscan >= 0);
-        let agglomerative = res.filter(
+        let dbscan = this.accessionsCombined.filter((prop: any) => prop.cluster_dbscan >= 0);
+        let hdbscan = this.accessionsCombined.filter((prop: any) => prop.cluster_hdbscan >= 0);
+        let agglomerative = this.accessionsCombined.filter(
           (prop: any) => prop.cluster_aggolmerative >= 0
         );
         this.resDbscan$ = dbscan.sort(
@@ -140,25 +148,27 @@ export class MultivariableAnalysisComponent
         this.resAgglomerative$ = agglomerative.sort(
           (a: any, b: any) => a.cluster_aggolmerative - b.cluster_aggolmerative
         );
-        console.log(res);
-        this.setMultivariableData(res);
-        // this.setSummary(this.res$);
+    //     console.log(res);
+    //     this.setMultivariableData(res);
+    //     // this.setSummary(this.res$);
       });
   }
 
   getIndicators = () => {
     this.api.getIndicators().subscribe(
       (data: any) => {
-        this.indicators$ = data;
+        data.forEach((element:any) => {
+          element.indicators.forEach((res:any) => {
+            this.indicators$.push(res);
+          });
+        });
+        console.log(this.indicators$);
       },
       (error: any) => console.log(error)
     );
   };
 
   ngAfterContentInit() {
-    this._sharedService.sendSubsetObservable.subscribe((data) => {
-      this.accessions$ = data.data;
-    });
 
 /*     this._sharedService.sendMultivariableObservable.subscribe((res: any) => {
       this.multivariable = res;

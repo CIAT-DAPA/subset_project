@@ -42,6 +42,7 @@ import { AccessionsDetailComponent } from '../../accessions-detail/accessions-de
 
 export const DEFAULT_HEIGHT = '500px';
 export const DEFAULT_WIDTH = '500px';
+import * as L from 'leaflet';
 
 @Component({
   selector: 'advanced-subset-map',
@@ -51,15 +52,56 @@ export const DEFAULT_WIDTH = '500px';
 })
 export class AdvancedSubsetMapComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() data: any;
+  @Input() showMap: any;
   vectorSource: any;
   vectorSourceT: any;
   vectorLayer: any;
   rasterLayer: any;
   popupOverlay: any;
-  map!: Map;
+  map!: any;
   constructor(
     private renderer: Renderer2, public dialog: MatDialog, private _sharedService: SharedService
   ) { }
+
+   initMap(): void {
+    this.map = L.map('advanced-map', {
+      center: [0, 0],
+      zoom: 2,
+      zoomControl: false 
+    });
+
+    const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      minZoom: 2,
+      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    });
+
+    tiles.addTo(this.map);
+
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(this.map)
+
+
+    this.data.data.forEach((val: any, index: any) => {
+      if (val.geo_lon != null && val.geo_lat != null) {
+        const marker = L.circleMarker([val.geo_lat, val.geo_lon],{ radius: 5 });
+        marker.addTo(this.map);
+        marker.setStyle({color: 'green'});
+        marker.bindPopup( "Name: " + val.name + " Crop: " + val.crop,);
+        marker.on('mouseover', function(event){
+          marker.openPopup();
+        });
+        marker.on('mouseout', function(event){
+          marker.closePopup();
+        });
+        marker.on('click', () => {
+          this.openAccessionDetail(val)
+        });
+      }
+    });
+  }
+
 
   
   openAccessionDetail(object: any) {
@@ -73,175 +115,36 @@ export class AdvancedSubsetMapComponent implements OnInit, OnChanges, AfterViewI
 
   ngOnInit() {  
     // this.drawMap();
-    this.map = new Map({
-      target: 'subset-map',
-      controls: defaultCOntrols({
-        attributionOptions: {
-          collapsible: false,
+    // this.map = new Map({
+    //   target: 'subset-map',
+    //   controls: defaultCOntrols({
+    //     attributionOptions: {
+    //       collapsible: false,
           
-        },
-      }),
-      layers: [
-        new TileLayer({
-          source: new OSM(),
-        }),
-      ],
-      view: new View({
-        center: olProj.fromLonLat([0, 0]),
-        zoom: 1,
+    //     },
+    //   }),
+    //   layers: [
+    //     new TileLayer({
+    //       source: new OSM(),
+    //     }),
+    //   ],
+    //   view: new View({
+    //     center: olProj.fromLonLat([0, 0]),
+    //     zoom: 1,
         
-      }),
-    });
+    //   }),
+    // });
   }
 
   ngOnChanges(changes: SimpleChanges) {
-  
+    if (this.showMap == true)
+    this.initMap()
+    console.log(this.showMap)
   }
 
   ngAfterViewInit() {
-    setInterval( () => {
-      this.map.updateSize();
-  }, 100);
   }
 
-  drawMap() {
-    var coordinates: any = [];
-    this.data.data.forEach((val: any, index: any) => {
-      if (val.geo_lon != null && val.geo_lat != null) {
-        let marker = new Feature({
-          geometry: new Point(fromLonLat([val.geo_lon, val.geo_lat])),
-          name: val.name,
-          crop: val.crop,
-          obj: val,
-        });
-        coordinates.push(marker);
-      }
-    });
-
-    var iconStyle = new Style({
-      image: new CircleStyle({
-        radius: 3,
-      /*   stroke: new Stroke({
-          color: 'orange',
-          width: 2,
-        }), */
-        fill: new Fill({
-          color: 'green',
-        }),
-      }),
-    });
-
-    var labelStyle = new Style({
-      text: new Text({
-        font: '8px Calibri,sans-serif',
-        overflow: true,
-        fill: new Fill({
-          color: '#000',
-        }),
-        stroke: new Stroke({
-          color: '#fff',
-          width: 3,
-        }),
-      }),
-    });
-
-    /* let selectSingleClick = new Select(); */
-
-    var style = [iconStyle];
-
-    this.vectorSourceT = new VectorSource({
-      features: coordinates,
-    });
-
-    this.vectorLayer = new VectorLayer({
-      source: this.vectorSourceT,
-      style: function (feature) {
-        labelStyle.getText().setText(feature.get('name'));
-        return style;
-      },
-    });
-
-    this.map = new Map({
-      target: 'subset-map',
-      controls: defaultCOntrols({
-        attributionOptions: {
-          collapsible: false,
-          
-        },
-      }),
-      layers: [
-        new TileLayer({
-          source: new OSM(),
-        }),
-      ],
-      view: new View({
-        center: olProj.fromLonLat([0, 0]),
-        zoom: 1,
-        
-      }),
-    });
-
-    this.map.addLayer(
-      this.vectorLayer
-    )
-
-    var container = document.getElementById('popup');
-    var overlay = new Overlay({
-      element: container as HTMLElement,
-      autoPan: true,
-      autoPanAnimation: {
-        duration: 250,
-      },
-    });
-    this.map.addOverlay(overlay);
-
-    var closer: any = document.getElementById('popup-closer');
-    closer.onclick = function () {
-      overlay.setPosition(undefined);
-      closer.blur();
-      return false;
-    };
-
-    var content: any = document.getElementById('popup-content');
-    this.map.on('singleclick', function (this: any, evt: any) {
-      var name = this.forEachFeatureAtPixel(evt.pixel, function (feature: any) {
-        return feature.get('name');
-      });
-      var coordinate = evt.coordinate;
-      content.innerHTML = name;
-      overlay.setPosition(coordinate);
-    });
-
-    this.map.on('pointermove', function (this: any, evt: any) {
-      //this.getTargetElement().style.cursor = this.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
-      var name = this.forEachFeatureAtPixel(evt.pixel, function (feature: any) {
-        return feature.get('name');
-      });
-      var crop = this.forEachFeatureAtPixel(evt.pixel, function (feature: any) {
-        return feature.get('crop');
-      });
-      if (name) {
-        var coordinate = evt.coordinate;
-        content.innerHTML = name + " " + crop;
-        overlay.setPosition(coordinate);
-      }
-    });
-
-    this.map.on('singleclick', (evt: any) => {
-      this.map.forEachFeatureAtPixel(evt.pixel, (layer: any) => {
-        var obj = layer.get('obj');
-        this.openAccessionDetail(obj);
-      });
-    });
-
-    this.map.updateSize();
-  }
-
-  setCenter() {
-    var view = this.map.getView();
-    view.setCenter(olProj.fromLonLat([0, 0]));
-    view.setZoom(8);
-  }
 
 
 }

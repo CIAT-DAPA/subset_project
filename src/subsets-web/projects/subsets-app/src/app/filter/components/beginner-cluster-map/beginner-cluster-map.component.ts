@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterContentInit } from '@angular/core';
+import { Component, OnInit, AfterContentInit, AfterViewInit, Input, OnChanges } from '@angular/core';
 import { combineLatest, of, from, zip } from 'rxjs';
 import { groupBy, map, mergeMap, reduce, switchMap, toArray } from 'rxjs/operators';
 import { SharedService } from '../../../core/service/shared.service';
@@ -30,22 +30,22 @@ import OverlayPositioning from 'ol/OverlayPositioning';
 import { toStringHDMS } from 'ol/coordinate';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { AccessionsDetailComponent } from '../../accessions-detail/accessions-detail.component';
-
-export const DEFAULT_HEIGHT = '500px';
-export const DEFAULT_WIDTH = '500px';
+import * as L from 'leaflet';
 
 @Component({
   selector: 'beginner-cluster-map',
   templateUrl: './beginner-cluster-map.component.html',
   styleUrls: ['./beginner-cluster-map.component.scss']
 })
-export class BeginnerClusterMapComponent implements OnInit, AfterContentInit {
+export class BeginnerClusterMapComponent implements OnInit, AfterContentInit, AfterViewInit, OnChanges {
   accessions$:any
   clusters:any = [];
   clustersGrouped$:any;
   analysis$:any = [];
   map:any;
   data:any;
+  colorClusters:any = [];
+  @Input() showMap = false;
  
   constructor(
     private api: IndicatorService,
@@ -53,26 +53,36 @@ export class BeginnerClusterMapComponent implements OnInit, AfterContentInit {
     public dialog: MatDialog
   ) { }
 
-  ngOnInit(): void {
-    // this.map = new Map({
-    //   target: 'map-cluster',
-    //   controls: defaultCOntrols({
-    //     attributionOptions: {
-    //       collapsible: false,
-          
-    //     },
-    //   }),
-    //   layers: [
-    //     new TileLayer({
-    //       source: new OSM(),
-    //     }),
-    //   ],
-    //   view: new View({
-    //     center: olProj.fromLonLat([0, 0]),
-    //     zoom: 1,
-        
-    //   }),
+  ngAfterViewInit() {
+    // console.log("Hello")
+    // this.map = L.map('beginner-map', {
+    //   center: [0, 0],
+    //   zoom: 3,
+    //   zoomControl: false 
     // });
+
+    // const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    //   maxZoom: 18,
+    //   minZoom: 3,
+    //   attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    // });
+
+    // tiles.addTo(this.map);
+
+    // L.control.zoom({
+    //   position: 'bottomright'
+    // }).addTo(this.map)
+    // this.initMap();
+  }
+
+
+  ngOnInit(): void {
+  }
+
+  ngOnChanges() {
+    if (this.showMap == true)
+    this.initMap()
+    console.log(this.showMap)
   }
 
   ngAfterContentInit() {
@@ -116,8 +126,60 @@ export class BeginnerClusterMapComponent implements OnInit, AfterContentInit {
           )
         ).subscribe((res:any) => {
           this.data = res;
+          console.log(this.data);
         })
       });
+  }
+
+  initMap(): void {
+    console.log(this.data);
+    let colors = ['green', 'blue', 'yellow', 'red', 'brown', 'gray', ]
+
+    this.map = L.map('beginner-map', {
+      center: [0, 0],
+      zoom: 2,
+      zoomControl: false 
+    });
+
+    const tiles = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      minZoom: 2,
+      attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    });
+
+    tiles.addTo(this.map);
+
+    L.control.zoom({
+      position: 'bottomright'
+    }).addTo(this.map)
+
+    this.data.forEach((res: any, index: any) => {
+      this.colorClusters.push({cluster:res[0], color: colors[index]})
+      res[1].forEach((val:any) => {
+        if (val.geo_lon != null && val.geo_lat != null) {
+          const marker = L.circleMarker([val.geo_lat, val.geo_lon],{ radius: 5 });
+          marker.addTo(this.map);
+          marker.setStyle({color: colors[index]});
+          marker.bindPopup( "Name: " + val.name + " Crop: " + val.crop,);
+          marker.on('mouseover', function(event){
+            marker.openPopup();
+          });
+          marker.on('mouseout', function(event){
+            marker.closePopup();
+          });
+          marker.on('click', () => {
+            this.openAccessionDetail(val)
+          });
+        }
+      });
+      });
+ 
+  }
+  
+  onMapReady() {
+    setTimeout(() => {
+      this.map.invalidateSize();
+    }, 0);
   }
 
   drawMap() {

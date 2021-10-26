@@ -11,11 +11,13 @@ export class SwitchToggleComponent implements OnInit, AfterContentInit {
   isChecked = false;
    // Observable with the indicators format
    indicators$: any;
+   indicatorsa$: any;
    // Observable with the indicators period format
    indicatorPeriods$: any = [];
    // Var to check all complete
    @Input() passportParms: any;
    rangesValues$:any;
+   cropList:any = []
   constructor(
     private _sharedService: SharedService,
     private api: IndicatorService
@@ -33,6 +35,7 @@ export class SwitchToggleComponent implements OnInit, AfterContentInit {
       this.api.getIndicators().subscribe((res:any) => {
         console.log(res);
         this.indicators$ = res;
+        this.indicatorsa$ = res;
       });
     };
       /* Get indicator periods objects */
@@ -51,6 +54,11 @@ export class SwitchToggleComponent implements OnInit, AfterContentInit {
     this._sharedService.sendRangeValuesObservable.subscribe((res:any) => {
       this.rangesValues$ = res;
     })
+
+    this._sharedService.sendCropsListObservable.subscribe((res: any) => {
+      this.cropList = res;
+      console.log(this.cropList);
+    });
   }
 
 }

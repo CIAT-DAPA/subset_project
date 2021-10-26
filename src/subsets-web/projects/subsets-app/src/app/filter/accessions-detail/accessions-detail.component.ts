@@ -65,7 +65,7 @@ pointAccession:any;
     });
 
     this.map = new Map({
-      target: 'map',
+      target: 'map-detail',
       controls: defaultCOntrols({
         attributionOptions: {
           collapsible: false

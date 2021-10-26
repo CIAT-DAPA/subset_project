@@ -76,7 +76,7 @@
     </div>
   </mat-tab>
   <mat-tab label="Subsets" *ngIf="expertNormalMode$">
-<mat-tab-group mat-align-tabs="start">
+<mat-tab-group mat-align-tabs="start" (selectedTabChange)="tabClick($event)">
   <mat-tab label="Subsets">
     <table-outcomes [params]="subsets"></table-outcomes>
   </mat-tab>
@@ -84,7 +84,7 @@
     <app-plot-outcomes [quantileData]="quantileData"></app-plot-outcomes>
   </mat-tab>
   <mat-tab label="Map">
-    <advanced-subset-map [data]="subsets"></advanced-subset-map>
+    <advanced-subset-map [showMap]="showAdvancedMap" [data]="subsets"></advanced-subset-map>
   </mat-tab>
     </mat-tab-group>
   </mat-tab>
@@ -141,11 +141,11 @@
       <span aria-hidden="true">&times;</span>
     </button>
   </div>
-  <app-multivariable-analysis *ngIf="clusterData" [res$]="minMaxMeanData" [timeMultiAna]="timeMultiAna" [multivariable]="clusterData"></app-multivariable-analysis>
+  <app-multivariable-analysis *ngIf="clusterData" [accessions]="accessions$" [res$]="minMaxMeanData" [timeMultiAna]="timeMultiAna" [multivariable]="clusterData"></app-multivariable-analysis>
  </div>
     <beginner-cluster *ngIf="!expertNormalMode$"></beginner-cluster>
   </mat-tab>
-  <mat-tab label="Summary">
+  <!-- <mat-tab label="Summary">
     <app-summary [namesResponse]="algorithmsList"></app-summary>
-  </mat-tab>
+  </mat-tab> -->
 </mat-tab-group>

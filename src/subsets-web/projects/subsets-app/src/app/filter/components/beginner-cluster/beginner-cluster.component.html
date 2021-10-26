@@ -1,4 +1,4 @@
-<mat-tab-group mat-align-tabs="center">
+<mat-tab-group mat-align-tabs="center" (selectedTabChange)="tabClick($event)">
   <mat-tab label="Accessions"
     ><beginner-cluster-accession></beginner-cluster-accession></mat-tab>
   <mat-tab label="Plots">
@@ -7,5 +7,5 @@
       <mat-tab label="Box"><beginner-cluster-box-plot></beginner-cluster-box-plot></mat-tab>
     </mat-tab-group>
   </mat-tab>
-  <mat-tab label="Map"><beginner-cluster-map></beginner-cluster-map></mat-tab>
+  <mat-tab label="Map"><beginner-cluster-map [showMap]="showMap" ></beginner-cluster-map></mat-tab>
 </mat-tab-group>

@@ -35,13 +35,14 @@ import { BeginnerClusterLinePlotComponent } from './components/beginner-cluster-
 import { BeginnerClusterBoxPlotComponent } from './components/beginner-cluster-box-plot/beginner-cluster-box-plot.component';
 import { BeginnerClusterMapComponent } from './components/beginner-cluster-map/beginner-cluster-map.component';
 import { AdvancedSubsetMapComponent } from './components/advanced-subset-map/advanced-subset-map.component';
+import { MapTestComponent } from './components/map-test/map-test.component';
  
 // d3 and nvd3 should be included somewhere
 
 
 
 @NgModule({
-  declarations: [FormFilterComponent, MapOutcomesComponent, PlotOutcomesComponent, TableOutcomesComponent, FormIndicatorComponent, TabsComponent, DensityChartComponent, AddPointMapComponent, CustomDataComponent, AccessionsDetailComponent, SummaryComponent, MultivariableAnalysisComponent, FormSubsetComponent, MaxPipePipe, FormSpecifcPerCropComponent, BeginnerFormComponent, BeginnerClusterComponent, BeginnerClusterAccessionComponent, AdvancedFormComponent, SwitchToggleComponent, BeginnerClusterLinePlotComponent, BeginnerClusterBoxPlotComponent, BeginnerClusterMapComponent, AdvancedSubsetMapComponent],
+  declarations: [FormFilterComponent, MapOutcomesComponent, PlotOutcomesComponent, TableOutcomesComponent, FormIndicatorComponent, TabsComponent, DensityChartComponent, AddPointMapComponent, CustomDataComponent, AccessionsDetailComponent, SummaryComponent, MultivariableAnalysisComponent, FormSubsetComponent, MaxPipePipe, FormSpecifcPerCropComponent, BeginnerFormComponent, BeginnerClusterComponent, BeginnerClusterAccessionComponent, AdvancedFormComponent, SwitchToggleComponent, BeginnerClusterLinePlotComponent, BeginnerClusterBoxPlotComponent, BeginnerClusterMapComponent, AdvancedSubsetMapComponent, MapTestComponent],
   imports: [
     CommonModule,
     FilterRoutingModule,

@@ -12,6 +12,7 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit {
     // Observable with the indicators format
     @Input() indicators: any;
     // Observable with the indicators period format
+    @Input() cropList: any = [];
     @Input() indicatorPeriods: any;
     // Var to check all complete
     allComplete: boolean = false;
@@ -58,8 +59,15 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit {
 
   // Method to update the checked list
   updateAllComplete(obj:any, field:boolean) {
-    obj.checked = obj.indicators != null && obj.indicators.every((t:any) => t.checked);
-    this.checkTrueIndicators()
+    // if (obj.category != "Other") {
+
+      obj.checked = obj.indicators != null && obj.indicators.every((t:any) => t.checked);
+      console.log(obj.checked)
+    // }
+    // else {
+
+    // }
+      this.checkTrueIndicators()
   }
 
   // Method to check if the users selected some indicators
@@ -80,33 +88,55 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit {
   checkTrueIndicators() {
     this.indicators.forEach((element:any) => {
       element.indicators.forEach((res:any) => {
+      let indicatorSelected: any = this.listValues.filter((prop:any) => prop.id == res.id);
+      // console.log(indicatorSelected);
         if (res.checked == true) {
-          if (!this.pivotList.includes(res.name)) {
-            let minMax = this.rangesValues$.filter((prop:any) => prop.indicator == res.name)
+          if (indicatorSelected.length === 0) {
             this.pivotList.push(res.name)
-            this.listValues.push({
-              minValue: minMax[0].min,
-              highValue: minMax[0].max,
-              type: res.indicator_type,
-              indicator: res.name,
-              pref:res.pref,
-              id:res.id,
-              floor: minMax[0].min,
-              ceil: minMax[0].max,
-            });
+            // console.log(this.pivotList);
+            if (res.indicator_type == "generic") {
+              let minMax = this.rangesValues$.filter((prop:any) => prop.indicator == res.name)
+              this.listValues.push({
+                minValue: minMax[0].min,
+                highValue: minMax[0].max,
+                type: res.indicator_type,
+                indicator: res.name,
+                pref:res.pref,
+                id:res.id,
+                floor: minMax[0].min,
+                ceil: minMax[0].max,
+              });
+            } else {
+              console.log(res.name)
+              this.listValues.push({
+                minValue: 0,
+                highValue: 30,
+                type: res.indicator_type,
+                indicator: res.name,
+                pref:res.pref,
+                id:res.id,
+                floor: 0,
+                ceil: 30,
+              });
+              console.log(this.listValues)
+            }
           }
-        } else {
-          if (this.pivotList.includes(res.name)) {
+        } 
+        else {
+          if (indicatorSelected.length >= 0) {
             let indexPivotList = this.pivotList.indexOf(res.name);
             // let indexListValues = this.listValues.map(function(item) { return item.indicator; }).indexOf(res.name);
             if (indexPivotList > -1) {
+              console.log('Hello');
               this.pivotList.splice(indexPivotList, 1);
-              this.listValues = this.listValues.filter((props:any) => props.indicator != res.name)
+              this.listValues = this.listValues.filter((props:any) => props.id != res.id)
             }
           }
         }
       });
     });
+    console.log(this.listValues)
+    console.log(this.indicators)
   }
 
   checksPeriods(check:boolean) {
