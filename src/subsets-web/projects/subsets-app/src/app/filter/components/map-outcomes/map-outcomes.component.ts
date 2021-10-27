@@ -28,13 +28,14 @@ import OSM from 'ol/source/OSM';
 import * as olProj from 'ol/proj';
 import XYZ from 'ol/source/XYZ';
 import Overlay from 'ol/Overlay';
-import { defaults as defaultCOntrols } from 'ol/control';
+import { Control, defaults as defaultCOntrols } from 'ol/control';
 import Select from 'ol/interaction/Select';
 import { SharedService } from '../../../core/service/shared.service';
 import OverlayPositioning from 'ol/OverlayPositioning';
 import { toStringHDMS } from 'ol/coordinate';
 import { MatDialog, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { AccessionsDetailComponent } from '../../accessions-detail/accessions-detail.component';
+
 
 export const DEFAULT_HEIGHT = '500px';
 export const DEFAULT_WIDTH = '500px';
@@ -127,19 +128,24 @@ export class MapOutcomesComponent implements OnInit, OnChanges, AfterContentInit
       controls: defaultCOntrols({
         attributionOptions: {
           collapsible: false,
+          
         },
       }),
       layers: [
         new TileLayer({
           source: new OSM(),
         }),
-        this.vectorLayer,
       ],
       view: new View({
         center: olProj.fromLonLat([0, 0]),
         zoom: 1,
+        
       }),
     });
+
+    this.map.addLayer(
+      this.vectorLayer
+    )
 
     var container = document.getElementById('popup');
     var overlay = new Overlay({

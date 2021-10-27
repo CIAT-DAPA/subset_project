@@ -53,12 +53,19 @@ class IndicatorType(Document):
 
     meta = {'collection': 'indicators_indicatortype'}
 
+class Category(Document):
+    _id = StringField(required=True)
+    name = StringField(required=True)
+
+    meta = {'collection': 'categories'}
+
 class Indicator(Document):
     _id = StringField(required=True)
     name = StringField(required=True)
     pref = StringField(required=True)
-    crop = ListField(StringField(), default=list)
+    crop = ReferenceField(Crop)
     indicator_type = ReferenceField(IndicatorType)
+    category = ReferenceField(Category)
 
     meta = {'collection': 'indicators_indicator'}
 
@@ -86,18 +93,12 @@ class IndicatorValue(Document):
     month11 = FloatField(required=False)
     month12 = FloatField(required=False)
 
-    meta = {'collection': 'indicator_value',
+    meta = {'collection': 'indicator_value_reduced_v2',
             'auto_create_index':False,    
             "index_background": True,
             'indexes': [
         #    {'fields': ['+crop'],},
-            ('+indicator_period', '+month1','+month2','+month3', 'cellid'),
-            ('+indicator_period', '+month4','+month5','+month6', 'cellid'),
-            ('+indicator_period', '+month7','+month8','+month9', 'cellid'),
-            ('+indicator_period', '+month10','+month11','+month12', 'cellid'),
-            ('+indicator_period', '+month1', '+month2', '+month3', '+month4',
-             '+month5', '+month6', '+month7', '+month8', '+month9', '+month10',
-             '+month11','+month12', 'cellid'),
+            ('+indicator_period','cellid'),
             ]
             }
     # meta = {'collection': 'indicators_indicatorvalue'}

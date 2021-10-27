@@ -1,4 +1,4 @@
-<div *ngIf="lstAccessionsFiltered$.length > 0" class="container">
+<div *ngIf="lstAccessionsFiltered$" class="container">
     <mat-card class="mt-2 mb-2">
       <mat-card-header>
         <mat-card-title>Accessions list filtered by the indicators</mat-card-title>
@@ -38,19 +38,19 @@
           <tr
             *ngFor="
               let value of lstAccessionsFiltered$
-                | paginate: { itemsPerPage: 5, currentPage: ActualPage }
+                | paginate: { itemsPerPage: 5, currentPage: ActualPage, id: 'table-indicators' }
             "
             style="cursor: pointer; cursor: hand; text-align: center;"
             (click)="openAccessionDetail(value)"
           >
             <td>{{ value.number }}</td>
             <td>{{ value.crop }}</td>
-            <td>{{ value.taxonomy_taxon_name }}</td>
+            <td>{{ value.taxon }}</td>
             <td><button mat-stroked-button>See more</button></td>
           </tr>
         </tbody>
       </table>
-      <pagination-controls (pageChange)="ActualPage = $event">
+      <pagination-controls id='table-indicators' (pageChange)="ActualPage = $event">
       </pagination-controls>
       <!-- <div class="page-buttons">
       <button class="btn prev" (click)="fetchPrevious()">Prev
@@ -60,7 +60,8 @@
     </div> -->
       <br />
       <p style="text-align: left">
-        Number of accessions filtered: {{ amountAccessionsFiltered | number: '2.' }}
+        {{ amountAccessionsFiltered | number: '0.' }} Accessions filtered in {{time | number: '0.'}} seconds.
       </p>
     </mat-card>
 </div>
+

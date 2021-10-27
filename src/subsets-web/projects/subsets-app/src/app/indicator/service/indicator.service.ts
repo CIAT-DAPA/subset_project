@@ -8,8 +8,8 @@ import { map } from 'rxjs/operators';
 })
 export class IndicatorService {
   /* URL = 'http://localhost:8001/api/'; */
-  URL = 'http://localhost:5001/api/v1/';
-  // URL = 'https://subset-api.ciat.cgiar.org/api/v1/';
+  /*URL = 'http://localhost:5001/api/v1/';*/
+  URL = 'https://subset-api.ciat.cgiar.org/api/v1/';
   headers = new HttpHeaders({
     'Content-Type': 'application/json'
   });
@@ -85,7 +85,7 @@ export class IndicatorService {
       vars: request.vars,
     };
     return this.http.post(
-      `https://subset-api.ciat.cgiar.org/custom-indicator`,
+      this.URL + `custom-data`,
       parameters,
       { headers: this.headers }
     );
@@ -121,4 +121,27 @@ export class IndicatorService {
       headers: this.headers,
     });
   }
+
+  generateCluster(result: any): Observable<any> {
+    let parameters = {
+      data: result.data,
+      passport: result.passport,
+      analysis: result.analysis
+    };
+    return this.http.post(this.URL + `cluster`, parameters, {
+      headers: this.headers,
+    });
+  }
+
+  getRangeValues(result: any): Observable<any> {
+    let parameters = {
+      indicator: result.indicator,
+      passport: result.passport      
+    };
+    return this.http.post(this.URL + `range-values`, parameters, {
+      headers: this.headers,
+    });
+  }
+
+
 }

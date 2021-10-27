@@ -17,6 +17,7 @@ import {MatProgressBarModule} from '@angular/material/progress-bar';
 import {MatIconModule} from '@angular/material/icon';
 import {ClipboardModule} from '@angular/cdk/clipboard';
 import {MatTooltipModule} from '@angular/material/tooltip';
+import {MatSlideToggleModule} from '@angular/material/slide-toggle';
 
 /* import { NgxMatMomentModule } from '@angular-material-components/moment-adapter'; */
 
@@ -42,7 +43,8 @@ import {MatTooltipModule} from '@angular/material/tooltip';
     MatProgressBarModule,
     MatIconModule,
     ClipboardModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSlideToggleModule
   ],
   exports: [
     MatTabsModule,
@@ -60,7 +62,8 @@ import {MatTooltipModule} from '@angular/material/tooltip';
     MatProgressBarModule,
     MatIconModule,
     ClipboardModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatSlideToggleModule
   ]
 })
 export class MaterialModule { }

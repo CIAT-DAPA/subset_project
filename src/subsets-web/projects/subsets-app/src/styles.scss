@@ -50,3 +50,101 @@ body { margin: 0; font-family: 'Roboto', sans-serif !important;
 html, body {
   font-family: 'Robot';
 }
+
+/* 25 Oct 2021 */
+nav.navbar{
+  height: 80px;
+}
+nav.navbar .container-fluid a.navbar-brand.font-title{
+font-size: 28px;
+font-weight: 400;
+}
+nav.navbar .container-fluid a.navbar-brand.font-title img{
+height: 13%;
+    width: 13%;
+    margin-right: 5px;
+}
+
+nav.navbar .container-fluid a.font-title{
+font-weight: bold;
+}
+nav.navbar li.nav-item {
+    padding-right: 1.5rem;
+    }
+nav.navbar li.nav-item:hover {
+    opacity: 0.8;
+    }
+.navbar-light .navbar-brand:focus, .navbar-light .navbar-brand:hover {
+    color: rgba(255,255,255,.8) !important; 
+}
+
+#tres-circulos img {
+    width: 50%;
+    margin: 5%;
+}
+#tres-circulos {
+    margin: 1% auto 3%;
+}
+#tres-circulos-a {
+    color:black;
+}
+#tres-circulos-a {
+    text-decoration: none;
+}
+#fondo-footer{
+    background-color: #2B2924;
+    color:white;
+    text-align: center;
+    padding: 1%;
+}
+
+#fondo-footer a{
+ color: #B2BD21;
+ }
+nav.navbar {
+    padding: 0 !important;
+}
+.container{
+	width: calc(65% + 16px) !important;
+}
+.navbar-brand {
+    margin-right: -5rem !important;
+}
+.navbar-light .navbar-toggler {
+    background-color: rgba(255,255,255, 0.5);
+    border-radius: 5px;
+}
+.navbar-collapse {
+    background-color: #2B2924;
+    padding: 10px;
+}
+
+/*login*/
+.banner .mat-card{
+    margin-top: 5% !important;
+}
+.banner .mat-card-content{
+    font: 400 14px/20px Roboto, "Helvetica Neue", sans-serif;
+}
+.banner .mat-card-content h2{
+font-family: Raleway,sans-serif !important; 
+font-size: 27px; 
+font-weight: bold; 
+text-align: center;  
+margin-top: 2%;
+  }
+
+.banner .mat-card .dons img{
+    width: 25%;
+}
+
+
+.banner .mat-card-content button{
+    background-color: #B2BD21;
+border-color: #B2BD21;
+}
+
+
+.banner .mat-card-content button:hover {
+opacity: 0.8;
+}

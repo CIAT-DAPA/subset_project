@@ -1,0 +1,36 @@
+<div class="container mt-3">
+  <ng-container *ngFor="let x of clustersGrouped$ | async;let i = index">
+    <h2>Cluster {{x[0]}}</h2>
+    <table class="table table-striped">
+        <thead>
+          <tr>
+            <th
+              scope="col"
+              *ngFor="let header of headers"
+              style="text-align: center"
+            >
+              {{ header }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="
+              let value of x[1]
+                | paginate: { itemsPerPage: 5, currentPage: actualpages[i], id: 'table-accessions' + x[0] }
+            "
+            style="cursor: pointer; cursor: hand; text-align: center;"
+            (click)="openAccessionDetail(value)"
+          >
+            <td>{{ value.number }}</td>
+            <td>{{ value.crop }}</td>
+            <td>{{ value.taxonomy_taxon_name }}</td>
+            <td><button mat-stroked-button>See more</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <pagination-controls  (pageChange)="actualpages[i] = $event" id="table-accessions{{x[0]}}" >
+    </pagination-controls>
+  </ng-container>
+<hr>
+</div>

@@ -1,0 +1,82 @@
+.title {
+    width: 100%;
+    text-align: center;
+}
+
+.banner {
+    height: 50vh;
+    width: 100%;
+    background: url('../../../../assets/images/overlay.png'), url('../../../../assets/images/about-us.jpg');
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
+.banner {
+    text-align: center;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    
+/*     flex-direction: column;
+    vertical-align: middle; */
+    font-size: 15px;
+}
+
+ul {
+    text-align: justify;
+}
+
+
+.content {
+    width: 50%;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    flex-direction: column;
+    vertical-align: middle
+}
+
+.background {
+    width: 100%;
+    display: flex;
+}
+
+.image-center {
+    width: 50%;
+}
+
+
+
+.description {
+    /* text-align: center; */
+    color: #fff;
+    width: 50%;
+    display: flex;
+    justify-content: center;
+    align-content: center;
+    flex-direction: column;
+    vertical-align: middle;
+    margin-bottom: 15%;
+    font-size: 15px;
+}
+
+.jumbo {
+    background: rgb(200, 54, 54); /* This is for ie8 and below */
+    background: rgba(200, 54, 54, 0.5); 
+ }
+
+ .dons {
+     width: 100%;
+     display: flex;
+ }
+
+ #methodologies-sections{
+    font-size: 22px;
+    line-height: 1em;
+    font-weight: 200;
+    padding:50px;
+
+}

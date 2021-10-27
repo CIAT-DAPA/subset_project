@@ -5,6 +5,9 @@ import { AccessionsDetailComponent } from '../../filter/accessions-detail/access
 import { IndicatorService } from '../../indicator/service/indicator.service';
 import { saveAs } from 'file-saver';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { Observable } from 'rxjs';
+import { share } from 'rxjs/operators';
+import { T } from '@angular/cdk/keycodes';
 
 @Component({
   selector: 'app-tabs',
@@ -12,13 +15,17 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
   styleUrls: ['./tabs.component.scss'],
 })
 export class TabsComponent implements OnInit, AfterContentInit {
-  accessions$: any = [];
+  accessions$: any[];
+  expertNormalMode$:boolean = false;
   headers: any = [];
   ActualPage: number = 1;
   params: any;
-  subsets: any[];
-  quantileData: any[];
+  subsets: any;
+  quantileData!: any;
+  // quantileData!: Observable<any>;
+  timeMultiAna: any;
   clusterData: any[];
+  minMaxMeanData: any[];
   /* Get accessions by page */
   properties!: any[];
   amountData: number;
@@ -29,6 +36,8 @@ export class TabsComponent implements OnInit, AfterContentInit {
   dbscanCheck: boolean;
   hdbscanCheck: boolean;
   agglomerativeCheck: boolean;
+  selectdIndex: number = 0;
+  @Input() activeTabs: boolean;
   constructor(
     private _sharedService: SharedService,
     public dialog: MatDialog,
@@ -36,9 +45,8 @@ export class TabsComponent implements OnInit, AfterContentInit {
   ) {
     this.headers = ['Number', 'Crop name', 'Taxon', 'Action'];
     this.amountData = 0;
-    this.subsets = [];
-    this.quantileData = [];
     this.clusterData = [];
+    this.minMaxMeanData = [];
     this.agglomerativeCheck = true;
     this.dbscanCheck = false;
     this.hdbscanCheck = false;
@@ -49,6 +57,8 @@ export class TabsComponent implements OnInit, AfterContentInit {
       n_clusters: 5,
     };
     this.algorithmsList = [];
+    this.accessions$ = []
+    this.activeTabs = true;
   }
 
   addAlgorithmsToList() {
@@ -78,6 +88,10 @@ export class TabsComponent implements OnInit, AfterContentInit {
         }
       }
     ); */
+  }
+
+  sendIndicatorSummary(indSum: any) {
+    this._sharedService.sendIndicatorSummary(indSum);
   }
 
   downloadJsonFormat(data: any) {
@@ -112,10 +126,24 @@ export class TabsComponent implements OnInit, AfterContentInit {
     this._sharedService.sendSummary(summ);
   }
 
+  setMultivariableData(mul: any) {
+    this._sharedService.sendMultivariable(mul);
+  }
+
+  setSubsets(accession: any) {
+    console.log(accession)
+    this._sharedService.sendSubsets(accession);
+  }
+
   ngOnInit(): void {
-    this._sharedService.sendSubsetObservable.subscribe((data) => {
+    this._sharedService.sendAccessionsObservable.subscribe((data) => {
       this.accessions$ = data;
       this.amountData = this.accessions$.length;
+    });
+
+    this._sharedService.sendexpertNormalObservable.subscribe((data) => {
+      this.expertNormalMode$ = data;
+      console.log(data)
     });
   }
 
@@ -123,24 +151,40 @@ export class TabsComponent implements OnInit, AfterContentInit {
     this._sharedService.sendIndicatorsObservable.subscribe((params: any) => {
       this.params = params;
     });
+    this._sharedService.getTabSelected().subscribe((tabIndex: number) => {
+      this.selectdIndex = tabIndex;
+      if (this.params) {
+        console.log("Hello")
+        console.log(this.params)
+        this.buildSubsets();
+      }/*  */
+    });
   }
 
   buildSubsets = () => {
-    this.subsets = []
+    this.subsets = {};
+    // let sharedChannel = this.api.getSubsets(this.params).pipe(share())
+    // this.quantileData = this.api.getSubsets(this.params);
     this.api.getSubsets(this.params).subscribe((res: any) => {
-      this.subsets = res;
+      if (this.subsets) {
+        this.activeTabs = false;
+      }
+      this.subsets = res.univariate;
+      this.setSubsets(this.subsets)
+      this.quantileData = res.quantile;
+      this.sendIndicatorSummary(this.subsets.data)
     });
   };
 
-  buildQuantilePlots = () => {
+  /* buildQuantilePlots = () => {
     this.quantileData = [];
     this.api.getQuantile(this.params).subscribe((res: any) => {
       this.quantileData = res;
     });
-  };
+  }; */
 
   buildClusters = () => {
-    this.clusterData = []
+    this.clusterData = [];
     this.algorithmsList = [];
     this.addAlgorithmsToList();
     this.params['analysis'] = {
@@ -149,8 +193,10 @@ export class TabsComponent implements OnInit, AfterContentInit {
     };
     console.log(this.params);
     this.api.getCluster(this.params).subscribe((res: any) => {
-      this.clusterData = res;
-      console.log(this.clusterData)
+      this.clusterData = res.data;
+      this.timeMultiAna = res.time
+      this.minMaxMeanData = res.calculate
+      console.log(this.clusterData);
     });
   };
 }

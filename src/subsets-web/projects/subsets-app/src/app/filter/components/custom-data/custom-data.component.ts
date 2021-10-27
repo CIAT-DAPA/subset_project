@@ -53,10 +53,10 @@ export class CustomDataComponent implements OnInit {
       vars: this.varSelected,
     };
     this.api.getCustomData(this.requestData).subscribe((res: any) => {
-      this.accessions$ = res.data.accessions;
+     /*  this.accessions$ = res.data.accessions;
       this.stats$ = res.data.stats;
       this.drawTable(this.accessions$);
-      this.close();
+      this.close(); */
     }),
       (err: any) => {
         console.log(err);
