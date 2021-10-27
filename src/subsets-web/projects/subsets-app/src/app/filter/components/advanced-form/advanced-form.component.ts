@@ -101,6 +101,7 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit {
                 highValue: minMax[0].max,
                 type: res.indicator_type,
                 indicator: res.name,
+                crop: res.crop,
                 pref:res.pref,
                 id:res.id,
                 floor: minMax[0].min,
@@ -113,6 +114,7 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit {
                 highValue: 30,
                 type: res.indicator_type,
                 indicator: res.name,
+                crop: res.crop,
                 pref:res.pref,
                 id:res.id,
                 floor: 0,
@@ -123,14 +125,14 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit {
           }
         } 
         else {
-          if (indicatorSelected.length >= 0) {
-            let indexPivotList = this.pivotList.indexOf(res.name);
+          if (indicatorSelected.length > 0) {
+            // let indexPivotList = this.pivotList.indexOf(res.name);
             // let indexListValues = this.listValues.map(function(item) { return item.indicator; }).indexOf(res.name);
-            if (indexPivotList > -1) {
+            // if (indexPivotList > -1) {
               console.log('Hello');
-              this.pivotList.splice(indexPivotList, 1);
+              // this.pivotList.splice(indexPivotList, 1);
               this.listValues = this.listValues.filter((props:any) => props.id != res.id)
-            }
+            // }
           }
         }
       });
