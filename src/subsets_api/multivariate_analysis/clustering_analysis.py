@@ -80,8 +80,14 @@ def dbscan_func(scaled_data, eps = 20, minPts = 10):
     return labels
 
 def agglomerative_func(scaled_data, max_cluster, min_cluster = 2):
-    #apply silhouette method
+    #set the number of clusters range for silhouette method
+    #the max_cluster should not be greater than n_samples - 1
+    n_samples = len(scaled_data.index)
+    if max_cluster >= n_samples:
+        max_cluster = n_samples - 1
+    
     range_n_clusters = list(range(min_cluster, max_cluster + 1))
+    #apply silhouette method
     avg_silhouette_values = []
 
     for n_clusters in range_n_clusters:
@@ -92,9 +98,10 @@ def agglomerative_func(scaled_data, max_cluster, min_cluster = 2):
         silhouette_avg = silhouette_score(scaled_data, labels)
         avg_silhouette_values.append(silhouette_avg)
 
+    # the optimal number of clusters has the max avg silhouette score
     idx_max_avg = np.argmax(avg_silhouette_values)
     n_optimum = range_n_clusters[idx_max_avg]
-    print(n_optimum)
+    """ print(n_optimum) """
     model = AgglomerativeClustering(n_clusters = n_optimum, affinity = 'euclidean', linkage = 'ward')
     model.fit(scaled_data)
     labels = model.labels_
@@ -171,7 +178,7 @@ def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_
             agglo_dict = {k: kwargs[k] for k in dict(kwargs) if k in agglo_args}
 
             agglo_labels = agglomerative_func(scaled_data, **agglo_dict)
-            scaled_data["cluster_aggolmerative"] = agglo_labels     
+            scaled_data["cluster_hac"] = agglo_labels     
 
         scaled_data["crop_name"] = crop
 
