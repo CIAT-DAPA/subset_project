@@ -118,3 +118,33 @@ nav.navbar {
     background-color: #2B2924;
     padding: 10px;
 }
+
+/*login*/
+.banner .mat-card{
+    margin-top: 5% !important;
+}
+.banner .mat-card-content{
+    font: 400 14px/20px Roboto, "Helvetica Neue", sans-serif;
+}
+.banner .mat-card-content h2{
+font-family: Raleway,sans-serif !important; 
+font-size: 27px; 
+font-weight: bold; 
+text-align: center;  
+margin-top: 2%;
+  }
+
+.banner .mat-card .dons img{
+    width: 25%;
+}
+
+
+.banner .mat-card-content button{
+    background-color: #B2BD21;
+border-color: #B2BD21;
+}
+
+
+.banner .mat-card-content button:hover {
+opacity: 0.8;
+}
