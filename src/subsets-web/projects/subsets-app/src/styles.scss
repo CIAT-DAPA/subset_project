@@ -154,6 +154,16 @@ opacity: 0.8;
     width: 90%;
 }
 
+#logo-aboutus{
+        width: 30%;
+    margin: auto;
+    display: block;
+}
+#logo-allianceicarda{
+        width: 70%;
+    margin: 5% auto;
+    display: block;
+}
 
 /*responsive*/
 
@@ -193,8 +203,11 @@ opacity: 0.8;
         padding: 5%;
     }
 
-
+#logo-aboutus, #logo-allianceicarda{
+        width: 90%;
 }
+
+  }
 @media (max-width: 800px){
    
     
