@@ -383,6 +383,7 @@ def subset():
                         lst_box_data.append(obj)
 
             df_quantiles = pd.DataFrame([s for s in lst_box_data])
+            print(df_quantiles)
             lst_field_quantiles = ['Q1', 'Q2', 'Q3', 'month', 'whisker_low', 'whisker_high']
             df_quantiles_grouped = (df_quantiles.groupby(['indicator','period', 'crop'])[lst_field_quantiles]
             .apply(lambda x: x.to_dict('r'))
@@ -515,10 +516,12 @@ def generate_clusters():
                 lst_indicators = []
                 lst_months = []
                 others_columns = []
-                analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, max_cluster=hyperparameters['n_clusters'])
+                print("min cluster: " + str(hyperparameters['min_cluster']) + " max cluster: " + str(hyperparameters['n_clusters']))
+                analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, max_cluster=hyperparameters['n_clusters'], min_cluster=hyperparameters['min_cluster'])
 
                 # from df to dict
                 response_analysis = analysis.to_json(orient='records')
+
 
                 for k,col in enumerate(analysis.columns):
                     """  """
