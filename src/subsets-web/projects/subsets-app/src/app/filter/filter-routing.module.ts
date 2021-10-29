@@ -17,7 +17,7 @@ const routes: Routes = [
     component: FormFilterComponent
   }, {
     path: 'load-data',
-    component: BeginnerClusterMapComponent
+    component: MapTestComponent
   },
   {
     path: 'accession-detail/:id',

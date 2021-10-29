@@ -18,8 +18,13 @@
             <i class="fab fa-js"></i> Download json
           </button>
         </div>
-  <ng-container *ngFor="let x of clustersGrouped$ | async;let i = index">
-    <h2>Cluster {{x[0]}}</h2>
+        <mat-card class="mt-2 mb-2" *ngFor="let t of test$ | async">
+          <mat-card-header>
+            <mat-card-title>{{t[0]}}</mat-card-title>
+          </mat-card-header>
+        
+  <ng-container *ngFor="let s of t[1] | async;let i = index">
+    <h2>Cluster {{s[0]}}</h2>
     <table class="table table-striped">
         <thead>
           <tr>
@@ -35,8 +40,8 @@
         <tbody>
           <tr
             *ngFor="
-              let value of x[1]
-                | paginate: { itemsPerPage: 5, currentPage: actualpages[i], id: 'table-accessions' + x[0] }
+              let value of s[1]
+                | paginate: { itemsPerPage: 5, currentPage: actualpages[i], id: 'table-accessions' + s[0] }
             "
             style="cursor: pointer; cursor: hand; text-align: center;"
             (click)="openAccessionDetail(value)"
@@ -48,8 +53,9 @@
           </tr>
         </tbody>
       </table>
-      <pagination-controls  (pageChange)="actualpages[i] = $event" id="table-accessions{{x[0]}}" >
+      <pagination-controls  (pageChange)="actualpages[i] = $event" id="table-accessions{{s[0]}}" >
     </pagination-controls>
   </ng-container>
+</mat-card>
 <hr>
 </div>

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges } from '@angular/core';
 import { SharedService } from '../../../core/service/shared.service';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 import { distinctUntilChanged } from 'rxjs/operators';
@@ -9,10 +9,11 @@ import { Options } from '@angular-slider/ngx-slider';
   templateUrl: './beginner-form.component.html',
   styleUrls: ['./beginner-form.component.scss'],
 })
-export class BeginnerFormComponent implements OnInit {
+export class BeginnerFormComponent implements OnInit, OnChanges {
   // Observable with the indicators format
   @Input() indicators$: any;
   @Input() cropList: any = [];
+  @Input() formActive: boolean = false;
   // Observable with the indicators period format
   @Input() indicatorPeriods$: any;
   // Var to check all complete
@@ -39,6 +40,17 @@ export class BeginnerFormComponent implements OnInit {
   }
 
   ngOnInit(): void {}
+
+  ngOnChanges() {
+    if (this.formActive === false) {
+      this.indicators$.forEach((element: any) => {
+        element.checked = false
+        element.indicators.forEach((prop: any) => {
+          prop.checked = false
+        })
+      })
+    }
+  }
 
   setTabIndex(indx: number) {
     this._sharedService.setTabSelected(indx);

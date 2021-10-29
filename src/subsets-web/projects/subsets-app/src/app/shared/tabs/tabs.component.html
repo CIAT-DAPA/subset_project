@@ -120,14 +120,20 @@
       </div>
     </div>
   </mat-card>
-  <mat-card class="mt-3">
+  <mat-card class="mt-3" style="height: 200px;">
     <div  style="width: 48%">
       <mat-checkbox class="example-margin" [checked]="agglomerativeCheck" [(ngModel)]="agglomerativeCheck" color="primary">Agglomerative method <i matTooltip="Info about the action" class="fas fa-question-circle"></i></mat-checkbox>
     </div>
     <div class="" style="display: flex; width: 100%" [hidden]="!agglomerativeCheck">
       <div style="width: 100%">
-        <label for="n-clusters">Numbers of clusters</label>
-        <input type="number" class="form-control" [(ngModel)]="hyperParameters.n_clusters" />
+        <label for="period" class="form-label">Add a range of number of clusters</label>
+        <ngx-slider
+          [(value)]="hyperParameters.min_cluster"
+          id="period"
+          [(highValue)]="hyperParameters.n_clusters"
+          [options]="clusterSliderOption"
+        >
+        </ngx-slider>
       </div>
     </div>
   </mat-card>

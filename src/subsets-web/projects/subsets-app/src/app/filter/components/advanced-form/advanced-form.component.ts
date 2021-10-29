@@ -1,5 +1,5 @@
 import { Options } from '@angular-slider/ngx-slider';
-import { Component, Input, OnInit, AfterContentInit} from '@angular/core';
+import { Component, Input, OnInit, AfterContentInit, OnChanges} from '@angular/core';
 import { SharedService } from '../../../core/service/shared.service';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 
@@ -8,9 +8,10 @@ import { IndicatorService } from '../../../indicator/service/indicator.service';
   templateUrl: './advanced-form.component.html',
   styleUrls: ['./advanced-form.component.scss']
 })
-export class AdvancedFormComponent implements OnInit, AfterContentInit {
+export class AdvancedFormComponent implements OnInit, AfterContentInit, OnChanges {
     // Observable with the indicators format
     @Input() indicators: any;
+    @Input() formActive: boolean = true;
     // Observable with the indicators period format
     @Input() cropList: any = [];
     @Input() indicatorPeriods: any;
@@ -47,6 +48,17 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit {
 
   ngOnInit(): void {
     
+  }
+
+  ngOnChanges() {
+    if (this.formActive === true) {
+      this.indicators.forEach((element: any) => {
+        element.checked = false
+        element.indicators.forEach((prop: any) => {
+          prop.checked = false
+        })
+      })
+    }
   }
 
   ngAfterContentInit() {

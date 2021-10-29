@@ -1,8 +1,28 @@
 <div class="container mt-2">
-    <div style="display: flex" class="">
-      <h3 class="mr-2 mb-2">Normal</h3>
-      <mat-slide-toggle [(ngModel)]="isChecked" (change)="setExpertNormalMode($event.checked)" color="primary">Expert</mat-slide-toggle>
-    </div>
+  <div style="display: flex" class="">
+    <h3 class="mr-2 mb-2">Normal</h3>
+    <mat-slide-toggle
+      [(ngModel)]="isChecked"
+      (change)="setExpertNormalMode($event.checked)"
+      color="primary"
+      >Expert</mat-slide-toggle
+    >
+  </div>
 </div>
-<beginner-form [cropList]="cropList" [passportParms]="passportParms" [indicatorPeriods$]="indicatorPeriods$" [indicators$]="indicators$" *ngIf="!isChecked"></beginner-form>
-<advanced-form [cropList]="cropList" [passportParms]="passportParms" [rangesValues$]="rangesValues$" [indicatorPeriods]="indicatorPeriods$" [indicators]="indicatorsa$" *ngIf="isChecked"></advanced-form>
+<beginner-form
+  [cropList]="cropList"
+  [passportParms]="passportParms"
+  [indicatorPeriods$]="indicatorPeriods$"
+  [indicators$]="indicators$"
+  [formActive]="isChecked"
+  *ngIf="!isChecked"
+></beginner-form>
+<advanced-form
+[formActive]="isChecked"
+  [cropList]="cropList"
+  [passportParms]="passportParms"
+  [rangesValues$]="rangesValues$"
+  [indicatorPeriods]="indicatorPeriods$"
+  [indicators]="indicatorsa$"
+  *ngIf="isChecked"
+></advanced-form>

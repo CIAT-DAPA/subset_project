@@ -8,6 +8,7 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { Observable } from 'rxjs';
 import { share } from 'rxjs/operators';
 import { T } from '@angular/cdk/keycodes';
+import { Options } from '@angular-slider/ngx-slider';
 
 @Component({
   selector: 'app-tabs',
@@ -39,6 +40,16 @@ export class TabsComponent implements OnInit, AfterContentInit {
   showAdvancedMap = false;
   selectdIndex: number = 0;
   @Input() activeTabs: boolean;
+  // agglo
+  maxCluster: number;
+  minCluster: number;
+  clusterSliderOption: Options = {
+    floor: 0,
+    ceil: 100,
+    showTicksValues: true,
+    tickStep: 1,
+    tickValueStep: 30,
+  };
   constructor(
     private _sharedService: SharedService,
     public dialog: MatDialog,
@@ -56,10 +67,13 @@ export class TabsComponent implements OnInit, AfterContentInit {
       epsilon: 10,
       min_cluster_size: 10,
       n_clusters: 5,
+      min_cluster:2
     };
     this.algorithmsList = [];
     this.accessions$ = []
     this.activeTabs = true;
+    this.maxCluster = 5;
+    this.minCluster = 2;
   }
 
   addAlgorithmsToList() {

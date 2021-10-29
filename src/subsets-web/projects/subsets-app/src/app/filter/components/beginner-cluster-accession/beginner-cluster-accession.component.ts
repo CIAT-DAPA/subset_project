@@ -18,6 +18,7 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
   analysis$:any = [];
   headers:any[];
   actualpages:any;
+  test$:any;
   constructor(
     private api: IndicatorService,
     private _sharedService: SharedService,
@@ -73,6 +74,38 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
         )
         // .subscribe((res:any) => {
         //   console.log(res);
+        // })
+        this.test$ = of(this.clusters).pipe(
+          switchMap((data: any) =>
+            from(data).pipe(
+              groupBy((item: any) => item.crop),
+              mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
+              // reduce((acc: any, val: any) => acc.concat([val]), []),
+
+              // map((x:any) => {return x[1]})
+              mergeMap((array:any) => {// Take each from above array and group each array by manDate
+                const newArray = from(array[1]).pipe(groupBy(
+                  (val:any) => val.cluster_aggolmerative,
+                  ),
+                  mergeMap(group => {
+                    return zip(of(group.key), group.pipe(toArray())); // return the group values as Arrays
+                  }),
+                  reduce((acc: any, val: any) => acc.concat([val]), []),
+                  )
+                  // .subscribe((re:any) => {
+                  //   newArray = re;
+                  // })
+                  array[1] = newArray;
+                  // console.log(array)
+                  return [array]
+              }),
+              reduce((acc: any, val: any) => acc.concat([val]), []),
+              // toArray()
+            )
+          )
+        )
+        // .subscribe((res:any) => {
+        //   console.log(res)
         // })
       });
   }
