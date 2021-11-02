@@ -513,6 +513,7 @@ def generate_clusters():
         if multivariate_values:
             try:
                 lst_calculates = []
+                lst_summary = []
                 lst_indicators = []
                 lst_months = []
                 others_columns = []
@@ -551,6 +552,7 @@ def generate_clusters():
                             # Get min
                             # getNameIndicatorByPref(indicator)
                             mini = group[1][[indicator +  '_' + x for x in lst_months]].min()
+                            # print(mini.min())
                             obj_min = {x: mini[i] for i,x in enumerate(lst_months)}
                             obj_min['operator'] = 'min'
                             obj_min['cluster'] = group[0]
@@ -581,6 +583,9 @@ def generate_clusters():
                             obj_sd['indicator'] = indicator
                             obj_sd['methd'] = methds[1]
                             lst_calculates.append(obj_sd)
+
+                            obj_summary = {"mean":mean.mean(), "min":mini.min(), "max":maxi.max(), "cluster":group[0], "indicator": indicator}
+                            lst_summary.append(obj_summary)
                 # print(lst_calculates)
                 df_multivariate = pd.DataFrame([s for s in lst_calculates])
                 lst_months_grouped = lst_months
@@ -595,6 +600,13 @@ def generate_clusters():
                 # # dicti = df_multivariate.pivot('indicator','operator').to_dict('index')
                 min_max_mean_sd = json.loads(df_calculate)
                 response_analysis_json = json.loads(response_analysis)
+                summary_json = json.dumps(lst_summary)
+                # converting string to json
+                final_dictionary = json.loads(summary_json)
+                print(final_dictionary)
+  
+                # printing final result
+                
                 # # # Calculate quantiles by month
                 obj_list_quantiles = []
                 for methd in others_columns:
@@ -634,7 +646,8 @@ def generate_clusters():
                     'data': response_analysis_json,
                     # 'time': total_time_multi_ana,
                     'calculate': min_max_mean_sd,
-                    'quantile': quantile_data
+                    'quantile': quantile_data,
+                    'summary': final_dictionary
                 }
             except ValueError as ve:
                 print(str(ve))
