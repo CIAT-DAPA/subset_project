@@ -2,6 +2,7 @@
 h2 {
     color: #88ba42;
     font-weight: bold;
+    margin-top: 25px;
 }
 
 .btn-green {
@@ -14,7 +15,7 @@ h2 {
 }
 
 .outcome-space {
-    width: 70%;
+    width: 100%;
     
 }
 
@@ -25,6 +26,7 @@ h2 {
 .band-green {
     background-color: #88ba42;
     width: 100%;
+    padding:8px;
 }
 
 .band-green h1, h3 {
@@ -86,3 +88,32 @@ h1 {
 .coordinate {
   width: 45%;
 }
+/* 1 nov 2021 */
+.mt-3, .my-3, .mb-3 {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0 !important;
+}
+.mat-step-header .mat-step-icon-selected, .mat-step-header .mat-step-icon-state-done, .mat-step-header .mat-step-icon-state-edit, .mat-vertical-stepper-header .mat-step-icon, .mat-step-ico
+{
+  background-color: #88BA42 !important;
+}
+.mb-3.ng-star-inserted button{
+  background-color: white !important;
+  color: #88BA42 !important;
+}
+.ng-star-inserted button{
+  background-color: #88BA42 !important;
+  color: white !important;
+}
+.mat-vertical-stepper-content, .mat-vertical-content.ng-tns-c180-0{
+  padding-bottom: 1px !important;
+}
+.flex-container {
+      display: flex;
+  min-height: 100vh;
+      }
+
+
+      .footer{
+        display: none;
+      }
