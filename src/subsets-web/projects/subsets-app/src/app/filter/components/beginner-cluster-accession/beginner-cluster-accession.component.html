@@ -1,4 +1,38 @@
 <div class="container mt-3">
+      <!-- Summary table -->
+      <h2>Summary table</h2> 
+      <table class="table table-striped mt-2">
+        <thead>
+          <tr>
+            <th
+              scope="col"
+              *ngFor="let header of headerSummary"
+              class="item-table"
+              style="text-align: center"
+            >
+              {{ header }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="
+              let value of summary$
+                | paginate: { itemsPerPage: 5, currentPage: actualpageSummary, id: 'table-summary' }
+            "
+            style="text-align: center; cursor: pointer; cursor: hand"
+          >
+            <td>{{getIndicatorName(value.indicator)}}</td>
+            <td>{{value.mean | number: '0.'}}</td>
+            <td>{{value.min | number: '0.'}}</td>
+            <td>{{value.max | number: '0.'}}</td>
+            <td>{{value.cluster | number: '0.'}}</td>
+          </tr>
+        </tbody>
+        <pagination-controls id="table-summary" (pageChange)="actualpageSummary = $event">
+        </pagination-controls>
+      </table>
+      <!-- End summary table -->
   <div
           class=""
           style="width: 100%; display: flex; justify-content: flex-end"
@@ -18,39 +52,7 @@
             <i class="fab fa-js"></i> Download json
           </button>
         </div>
-        <!-- Summary table -->
-        <table class="table table-striped mt-4">
-          <thead>
-            <tr>
-              <th
-                scope="col"
-                *ngFor="let header of headerSummary"
-                class="item-table"
-                style="text-align: center"
-              >
-                {{ header }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              *ngFor="
-                let value of summary$
-                  | paginate: { itemsPerPage: 5, currentPage: actualpageSummary, id: 'table-summary' }
-              "
-              style="text-align: center; cursor: pointer; cursor: hand"
-            >
-              <td>{{getIndicatorName(value.indicator)}}</td>
-              <td>{{value.mean | number: '0.'}}</td>
-              <td>{{value.min | number: '0.'}}</td>
-              <td>{{value.max | number: '0.'}}</td>
-              <td>{{value.cluster | number: '0.'}}</td>
-            </tr>
-          </tbody>
-          <pagination-controls id="table-summary" (pageChange)="actualpageSummary = $event">
-          </pagination-controls>
-        </table>
-        <!-- End summary table -->
+        <h2>Outcomes</h2>
         <mat-card class="mt-2 mb-2" *ngFor="let t of test$ | async">
           <mat-card-header>
             <mat-card-title>{{t[0]}}</mat-card-title>
