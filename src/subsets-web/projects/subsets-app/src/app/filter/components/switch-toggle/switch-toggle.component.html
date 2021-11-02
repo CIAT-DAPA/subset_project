@@ -1,12 +1,16 @@
 <div class="container mt-2">
   <div style="display: flex" class="">
-    <h3 class="mr-2 mb-2">Normal</h3>
+    <h3 class="mr-2 mb-2">Basic</h3>
     <mat-slide-toggle
       [(ngModel)]="isChecked"
       (change)="setExpertNormalMode($event.checked)"
       color="primary"
-      >Expert</mat-slide-toggle
+      >Advanced</mat-slide-toggle
     >
+  </div>
+  <div style="display: flex; justify-content: flex-end; width: 100%;">
+    <a mat-icon-button href="/explore/glosary" target="_blank" ><mat-icon matTooltip="Go to Glossary">book</mat-icon></a>
+    <!-- <button mat-icon-button hre><mat-icon matTooltip="Go to Glossary">book</mat-icon></button> -->
   </div>
 </div>
 <beginner-form

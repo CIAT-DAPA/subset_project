@@ -38,6 +38,7 @@ import { AdvancedSubsetMapComponent } from './components/advanced-subset-map/adv
 import { MapTestComponent } from './components/map-test/map-test.component';
  
 // d3 and nvd3 should be included somewhere
+import 'hammerjs';
 
 
 

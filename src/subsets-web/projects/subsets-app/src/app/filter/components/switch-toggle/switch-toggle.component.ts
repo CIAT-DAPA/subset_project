@@ -1,4 +1,5 @@
 import { Component, Input, OnInit, AfterContentInit } from '@angular/core';
+import { Router } from '@angular/router';
 import { SharedService } from '../../../core/service/shared.service';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 
@@ -20,7 +21,8 @@ export class SwitchToggleComponent implements OnInit, AfterContentInit {
    cropList:any = []
   constructor(
     private _sharedService: SharedService,
-    private api: IndicatorService
+    private api: IndicatorService,
+    private router: Router
   ) {
     this.getIndicatorsList();
     this.getIndicatorPeriods();

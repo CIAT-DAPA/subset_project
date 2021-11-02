@@ -80,7 +80,7 @@ export class SummaryComponent implements OnInit, AfterContentInit {
     let objs = this.multivariable$.filter((res: any) => res.crop_name == crop);
     if (methd == 'aggolmerative') {
       objs.forEach((element: any) => {
-        if (element.cluster_aggolmerative >= 0) {
+        if (element.cluster_hac >= 0) {
           count++;
         }
       });
@@ -107,8 +107,8 @@ export class SummaryComponent implements OnInit, AfterContentInit {
     let objs = this.multivariable$.filter((res: any) => res.crop_name == crop);
     objs.forEach((element: any) => {
       if (methd == 'aggolmerative') {
-        if (element.cluster_aggolmerative >= 0)
-          lstResult.push(element.cluster_aggolmerative);
+        if (element.cluster_hac >= 0)
+          lstResult.push(element.cluster_hac);
       }
       if (methd == 'hdbscan') {
         if (element.cluster_hdbscan >= 0)

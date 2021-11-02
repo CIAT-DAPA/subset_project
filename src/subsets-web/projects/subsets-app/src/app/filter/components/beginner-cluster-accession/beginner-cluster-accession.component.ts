@@ -16,9 +16,13 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
   clusters:any = [];
   clustersGrouped$:any;
   analysis$:any = [];
+  summary$:any = [];
   headers:any[];
   actualpages:any;
+  actualpageSummary:number = 1;
   test$:any;
+  indicators$:any = [];
+  headerSummary:any[];
   constructor(
     private api: IndicatorService,
     private _sharedService: SharedService,
@@ -26,6 +30,13 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
   ) {
     this.headers = ['Number', 'Crop name', 'Taxon', 'Action'];
     this.actualpages = [1,1,1,1,1,1,1,1,1,1]
+    this.headerSummary = [
+      'Indicator',
+      'Mean',
+      'Min',
+      'Max',
+      'Cluster',
+    ];
   }
 
   ngAfterContentInit() {
@@ -35,12 +46,34 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
     });
     this._sharedService.sendMultivariableBeginnerObservable.subscribe((res:any) => {
       this.analysis$ = res.data;
+      this.summary$ = res.summary
       // this.analysis$.forEach((element:any) => {
-      //   element['cluster'] = element["('cluster_aggolmerative', '')"]
-      //   delete element["('cluster_aggolmerative', '')"]
+      //   element['cluster'] = element["('cluster_hac', '')"]
+      //   delete element["('cluster_hac', '')"]
       // });
       this.seeVar();
     }) 
+  }
+
+  getIndicators = () => {
+    this.api.getIndicators().subscribe(
+      (data: any) => {
+        data.forEach((element:any) => {
+          element.indicators.forEach((res:any) => {
+            this.indicators$.push(res);
+          });
+        });
+        console.log(data);
+      },
+      (error: any) => console.log(error)
+    );
+  };
+
+  getIndicatorName(pref: string) {
+    let indicatorFiltered = this.indicators$.filter(
+      (prop: any) => prop.pref == pref
+    );
+    return indicatorFiltered[0].name;
   }
 
   seeVar() {
@@ -56,7 +89,7 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
       .pipe(map((res: any) => mergeById(res[0], res[1])))
       .subscribe((res: any) => {
         res.forEach((element:any) => {
-          if (element.cluster_aggolmerative >= 0) {
+          if (element.cluster_hac >= 0) {
             this.clusters.push(element)
           }
         });
@@ -66,7 +99,7 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
         this.clustersGrouped$ = of(this.clusters).pipe(
           switchMap((data: any) =>
             from(data).pipe(
-              groupBy((item: any) => item.cluster_aggolmerative),
+              groupBy((item: any) => item.cluster_hac),
               mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
               reduce((acc: any, val: any) => acc.concat([val]), [])
             )
@@ -85,7 +118,7 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
               // map((x:any) => {return x[1]})
               mergeMap((array:any) => {// Take each from above array and group each array by manDate
                 const newArray = from(array[1]).pipe(groupBy(
-                  (val:any) => val.cluster_aggolmerative,
+                  (val:any) => val.cluster_hac,
                   ),
                   mergeMap(group => {
                     return zip(of(group.key), group.pipe(toArray())); // return the group values as Arrays
@@ -140,6 +173,6 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
   }
   
   ngOnInit(): void {
-
+  this.getIndicators();
   }
 }

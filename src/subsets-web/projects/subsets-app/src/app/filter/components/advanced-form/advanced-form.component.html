@@ -5,7 +5,7 @@
      </div> -->
      <!-- <mat-card style="width: 100%;"> -->
      <ng-container *ngFor="let x of indicators">
-       <section *ngIf="x.category != 'Other'">
+       <section *ngIf="x.category != 'Crop-specific indicators'">
          <p>
            <mat-checkbox
              color="primary"
@@ -22,7 +22,7 @@
          </section>
        </section>
      </ng-container>
-     <ng-container *ngFor="let x of indicators">
+     <!-- <ng-container *ngFor="let x of indicators">
       <section *ngIf="x.category == 'Other'">
         <p>
           <mat-checkbox
@@ -41,7 +41,7 @@
         </ng-container>
         </section>
       </section>
-    </ng-container>
+    </ng-container> -->
      <ngx-spinner></ngx-spinner>
    <!-- </mat-card> -->
 <mat-card class="mt-3">

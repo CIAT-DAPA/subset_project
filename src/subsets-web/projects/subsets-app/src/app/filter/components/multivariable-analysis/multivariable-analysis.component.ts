@@ -99,7 +99,7 @@ export class MultivariableAnalysisComponent
       } else if (this.namesResponse.includes('cluster_hdbscan')) {
         this.getSummaryMethodology('hdbscan');
       } else {
-        this.getSummaryMethodology('aggolmerative');
+        this.getSummaryMethodology('hac');
       }
       console.log(this.multivariable);
       console.log(this.accessions);
@@ -128,7 +128,7 @@ export class MultivariableAnalysisComponent
       .pipe(map((res: any) => mergeById(res[0], res[1])))
       .subscribe((res: any) => {
         res.forEach((element:any) => {
-          if (element.cluster_aggolmerative >= -1 || element.cluster_dbscan >= -1 ||element.cluster_hdbscan >= -1) {
+          if (element.cluster_hac >= -1 || element.cluster_dbscan >= -1 ||element.cluster_hdbscan >= -1) {
             this.accessionsCombined.push(element)
           }
         });
@@ -137,7 +137,7 @@ export class MultivariableAnalysisComponent
         let dbscan = this.accessionsCombined.filter((prop: any) => prop.cluster_dbscan >= 0);
         let hdbscan = this.accessionsCombined.filter((prop: any) => prop.cluster_hdbscan >= 0);
         let agglomerative = this.accessionsCombined.filter(
-          (prop: any) => prop.cluster_aggolmerative >= 0
+          (prop: any) => prop.cluster_hac >= 0
         );
         this.resDbscan$ = dbscan.sort(
           (a: any, b: any) => a.cluster_dbscan - b.cluster_dbscan
@@ -146,7 +146,7 @@ export class MultivariableAnalysisComponent
           (a: any, b: any) => a.cluster_hdbscan - b.cluster_hdbscan
         );
         this.resAgglomerative$ = agglomerative.sort(
-          (a: any, b: any) => a.cluster_aggolmerative - b.cluster_aggolmerative
+          (a: any, b: any) => a.cluster_hac - b.cluster_hac
         );
     //     console.log(res);
     //     this.setMultivariableData(res);

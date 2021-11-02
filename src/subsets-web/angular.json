@@ -36,7 +36,7 @@
               "node_modules/leaflet/dist/leaflet.css",
               "node_modules/leaflet.awesome-markers/dist/leaflet.awesome-markers.css",
               "./node_modules/ngx-toastr/toastr.css",
-              "./node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
+              "node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
               "projects/subsets-app/src/styles.scss",
               "./node_modules/bootstrap/dist/css/bootstrap.min.css"
             ],

@@ -1,11 +1,6 @@
 <div class="container mt-2">
- <!--  <div style="display: flex" class="">
-    <h3 class="mr-2 mb-2">Normal</h3>
-    <mat-slide-toggle color="primary">Expert</mat-slide-toggle>
-  </div> -->
-  <!-- <mat-card style="width: 100%;"> -->
   <ng-container *ngFor="let x of indicators$">
-    <section *ngIf="x.category != 'Other'">
+    <section *ngIf="x.category != 'Crop-specific indicators'">
       <p>
         <mat-checkbox
         id="{{x.category}} + 'beginner'"
@@ -24,7 +19,7 @@
     </section>
   </ng-container>
   <ng-container *ngFor="let x of indicators$">
-    <section *ngIf="x.category == 'Other'">
+    <section *ngIf="x.category == 'Crop-specific indicators'">
       <p>
         <mat-checkbox
           color="primary"
@@ -37,7 +32,7 @@
       <section class="ml-3" *ngFor="let y of x.indicators">
         <ng-container *ngIf="cropList.includes(y.crop)">
         <p>
-          <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{ y.name }} -- {{y.crop}}</mat-checkbox>
+          <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{y.crop}} -- {{ y.name }}</mat-checkbox>
         </p>
       </ng-container>
       </section>
@@ -47,7 +42,7 @@
 <!-- </mat-card> -->
 
 <mat-card class="mt-3 mb-3">
-  <label for="period" class="form-label">Add a range of number of clusters</label>
+  <label for="period" class="form-label">Add a range of number of clusters </label>
   <ngx-slider
     [(value)]="minCluster"
     id="period"
@@ -56,7 +51,7 @@
   >
   </ngx-slider>
   <button class="btn btn-green mt-4" (click)="buildSubsets()">
-    Get Filter
+    Apply Filters
   </button>
 </mat-card>
 </div>

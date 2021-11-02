@@ -127,10 +127,10 @@
       </div>
     </mat-tab>
     <mat-tab
-      *ngIf="namesResponse.includes('cluster_aggolmerative')"
+      *ngIf="namesResponse.includes('cluster_hac')"
     >
     <ng-template mat-tab-label>
-      <span (click)="getSummaryMethodology('aggolmerative')">Agglomerative Analysis</span>
+      <span (click)="getSummaryMethodology('hac')">Agglomerative Analysis</span>
     </ng-template>
     <div
     class=""
@@ -174,13 +174,13 @@
               "
             >
               <tr
-                *ngIf="value.cluster_aggolmerative >= 0"
+                *ngIf="value.cluster_hac >= 0"
                 style="text-align: center; cursor: pointer; cursor: hand"
               >
                 <td>{{ value.crop }}</td>
                 <td>{{ value.name }}</td>
                 <td>{{ value.number }}</td>
-                <td>{{ value.cluster_aggolmerative }}</td>
+                <td>{{ value.cluster_hac }}</td>
               </tr>
             </ng-container>
           </tbody>
@@ -228,9 +228,6 @@
     <pagination-controls id="table-summary" *ngIf="multivariable.length > 0" (pageChange)="actualPageT2 = $event">
     </pagination-controls>
   </table>
-
-  <hr>
-
   <!--   <div class="row">
     <div id="maps"></div>
     <div id="popups" class="ol-popup">
