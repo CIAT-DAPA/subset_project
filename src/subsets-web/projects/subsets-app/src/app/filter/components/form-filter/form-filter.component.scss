@@ -11,13 +11,14 @@ h2 {
 }
 
 .filter-space {
-    width: 30%;
+   /* width: 35%;*/
+    padding: 0 30px;
 }
-
+/*
 .outcome-space {
-    width: 100%;
+    width: 65%;
     
-}
+}*/
 
 .flex-container {
     display: flex;
@@ -108,7 +109,13 @@ h1 {
 .mat-vertical-stepper-content, .mat-vertical-content.ng-tns-c180-0{
   padding-bottom: 1px !important;
 }
-.flex-container {
+/*.flex-container {
       display: flex;
   min-height: 100vh;
-      }
+      }*/
+/*responsive*/
+ @media (max-width: 1200px){
+ .filter-space {
+    width: 100%;
+ }
+ }
