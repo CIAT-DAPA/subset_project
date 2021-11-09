@@ -1,10 +1,12 @@
-import { Component, OnInit, AfterContentInit } from '@angular/core';
+import { Component, OnInit, AfterContentInit,  ElementRef, Renderer2, ViewChild, } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { combineLatest, of, from, zip } from 'rxjs';
 import { groupBy, map, mergeMap, reduce, switchMap, toArray } from 'rxjs/operators';
 import { SharedService } from '../../../core/service/shared.service';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 import { AccessionsDetailComponent } from '../../accessions-detail/accessions-detail.component';
+import * as d3 from 'd3';
+declare var $: any;
 
 @Component({
   selector: 'beginner-cluster-accession',
@@ -13,6 +15,8 @@ import { AccessionsDetailComponent } from '../../accessions-detail/accessions-de
 })
 export class BeginnerClusterAccessionComponent implements OnInit, AfterContentInit {
   accessions$:any
+  cropSelected:any;
+  summSelected:any;
   clusters:any = [];
   clustersGrouped$:any;
   analysis$:any = [];
@@ -22,11 +26,16 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
   actualpageSummary:number = 1;
   test$:any;
   indicators$:any = [];
+  cropList:any = [];
   headerSummary:any[];
+  indicatorsAvailables:any[];
+  @ViewChild('plots') private plots!: ElementRef;
   constructor(
     private api: IndicatorService,
     private _sharedService: SharedService,
-    public dialog: MatDialog
+    public dialog: MatDialog,
+    public chartElem: ElementRef,
+    private renderer: Renderer2
   ) {
     this.headers = ['Number', 'Crop name', 'Taxon', 'Action'];
     this.actualpages = [1,1,1,1,1,1,1,1,1,1]
@@ -37,22 +46,61 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
       'Max',
       'Cluster',
     ];
+    this.indicatorsAvailables = [];
   }
 
   ngAfterContentInit() {
+    // Get crop list
+    this._sharedService.sendCropsListObservable.subscribe((res: any) => {
+      this.cropList = res;
+    });
+    // Get the accessions data
     this._sharedService.sendAccessionsObservable.subscribe((data) => {
       this.accessions$ = data;
-      console.log(data);
     });
+
+    // Get the clustering analysis from beginner form
     this._sharedService.sendMultivariableBeginnerObservable.subscribe((res:any) => {
+      // set clustering analysis data
       this.analysis$ = res.data;
+      // Set summary data (Min, Max and Mean)
       this.summary$ = res.summary
-      // this.analysis$.forEach((element:any) => {
-      //   element['cluster'] = element["('cluster_hac', '')"]
-      //   delete element["('cluster_hac', '')"]
-      // });
+      // Set the clusters available
+      let listTest:any = [];
+      this.analysis$.forEach((element:any) => {
+        listTest.push(element.cluster_hac)
+      
+      });
+      // Set the indicators available
+      this.summary$.forEach((element:any) => {
+        // if (!this.indicatorsAvailables.includes(element.indicator))
+        this.indicatorsAvailables.push(element.indicator);
+      });
+      listTest = [...new Set(listTest)];
+      this.indicatorsAvailables = [...new Set(this.indicatorsAvailables)];
+      this.headerSummary = listTest.sort((n1:any,n2:any) => n1 - n2);
       this.seeVar();
     }) 
+  }
+
+  getValueFromClusterAndIndicator(indicator:string, nCluster:number, summ:any) {
+    let result:any;
+    let filteredlist:any = this.summary$.filter((prop:any) => prop.indicator == indicator && prop.cluster == nCluster);
+    switch (summ) {
+      case 'Mean':
+        result = filteredlist[0].mean;
+        break;
+      case 'Maximum':
+        result = filteredlist[0].max;
+        break;
+      case 'Minimum':
+        result = filteredlist[0].min;
+        break;
+      default:
+        result = filteredlist[0].mean;
+        break;
+    }
+    return result
   }
 
   getIndicators = () => {
@@ -76,6 +124,66 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
     return indicatorFiltered[0].name;
   }
 
+  clearDiv() {
+    let valueYouWantToPut = '';
+    this.renderer.setProperty(
+      this.plots.nativeElement,
+      'innerHTML',
+      valueYouWantToPut
+    );
+  }
+
+  drawPlot(crop:any) {
+    this.clearDiv();
+    this.plot(crop);
+    window.addEventListener('resize', () =>
+      this.plot(crop)
+    );
+  }
+
+  plot(crop:any) {
+    let data:any[] = []
+    this.headerSummary.forEach((cluster:any) => {
+      let accessionsFiltered: any[] = this.clusters.filter((prop:any) => prop.cluster_hac == cluster && prop.crop == crop)
+      let obj: any = {label: 'Cluster ' + cluster, value: accessionsFiltered.length};
+      data.push(obj)
+    })
+
+    $(this.plots.nativeElement).append(
+      '<div id="plote"><svg></svg></div>'
+    );
+      nv.addGraph(() => {
+        var width = 960,
+        height = 700;
+        var chart = nv.models.pieChart()
+      .x(function(d) { return d.label })
+      .y(function(d) { return d.value })
+      .showLabels(true);
+
+        d3.select(this.chartElem.nativeElement)
+          .select('#plote svg')
+          // .on("click", function(d) {
+          //   console.log(d)
+          //   alert('test');
+          //     // code you want executed on the click event 
+          // })
+          .attr("width", width)
+          .attr("height", height)
+          .datum(data)
+          .transition().duration(350)
+          .call(chart)
+
+          chart.pie.dispatch.on("elementClick", function(e) {
+            alert("You've clicked " + e.data.label);
+          });
+        
+         
+          nv.utils.windowResize(chart.update);
+        return chart;
+      });
+
+  }
+
   seeVar() {
     const mergeById = (t: any, s: any) =>
       t.map((p: any) =>
@@ -96,6 +204,8 @@ export class BeginnerClusterAccessionComponent implements OnInit, AfterContentIn
         this.clusters = this.clusters.sort(
           (a: any, b: any) => a.cluster - b.cluster
         );
+        console.log(this.clusters);
+        // this.drawPlot();
         this.clustersGrouped$ = of(this.clusters).pipe(
           switchMap((data: any) =>
             from(data).pipe(

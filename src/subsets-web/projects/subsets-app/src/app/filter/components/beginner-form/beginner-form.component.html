@@ -1,13 +1,13 @@
 <div class="container mt-2">
   <ng-container *ngFor="let x of indicators$">
-    <section *ngIf="x.category != 'Crop-specific indicators'">
+    <section *ngIf="!['Crop-specific indicators'].includes(x.category)">
       <p>
         <mat-checkbox
         id="{{x.category}} + 'beginner'"
           color="primary"
           [checked]="x.checked"
           [indeterminate]="someComplete(x)"
-          (change)="setAll($event.checked, x)"
+          (change)="setAll($event.checked, x.category,x)"
           >{{ x.category }}</mat-checkbox
         >
       </p>
@@ -18,25 +18,28 @@
       </section>
     </section>
   </ng-container>
-  <ng-container *ngFor="let x of indicators$">
-    <section *ngIf="x.category == 'Crop-specific indicators'">
+  <ng-container *ngIf="listCropAvailable.length > 0">
+
+    <ng-container *ngFor="let x of indicators$">
+      <section *ngIf="x.category == 'Crop-specific indicators'">
       <p>
         <mat-checkbox
           color="primary"
           [checked]="x.checked"
           [indeterminate]="someComplete(x)"
-          (change)="setAll($event.checked, x)"
+          (change)="setAll($event.checked, x.category,x)"
           >{{ x.category }}</mat-checkbox
-        >
-      </p>
-      <section class="ml-3" *ngFor="let y of x.indicators">
-        <ng-container *ngIf="cropList.includes(y.crop)">
-        <p>
-          <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{y.crop}} -- {{ y.name }}</mat-checkbox>
+          >
         </p>
-      </ng-container>
+        <section class="ml-3" *ngFor="let y of x.indicators">
+          <ng-container *ngIf="cropList.includes(y.crop)">
+            <p>
+              <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{y.crop}} -- {{ y.name }}</mat-checkbox>
+            </p>
+          </ng-container>
+        </section>
       </section>
-    </section>
+    </ng-container>
   </ng-container>
   <ngx-spinner></ngx-spinner>
 <!-- </mat-card> -->

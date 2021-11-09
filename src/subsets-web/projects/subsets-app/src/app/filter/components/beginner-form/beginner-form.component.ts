@@ -3,6 +3,7 @@ import { SharedService } from '../../../core/service/shared.service';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { Options } from '@angular-slider/ngx-slider';
+import { T } from '@angular/cdk/keycodes';
 
 @Component({
   selector: 'beginner-form',
@@ -12,6 +13,8 @@ import { Options } from '@angular-slider/ngx-slider';
 export class BeginnerFormComponent implements OnInit, OnChanges {
   // Observable with the indicators format
   @Input() indicators$: any;
+  listCropWithIndicators: any[];
+  listCropAvailable: any[] =[];
   @Input() cropList: any = [];
   @Input() formActive: boolean = false;
   // Observable with the indicators period format
@@ -37,18 +40,39 @@ export class BeginnerFormComponent implements OnInit, OnChanges {
   ) {
     this.maxCluster = 5;
     this.minCluster = 2;
+    this.listCropWithIndicators = [
+      'Beans',
+      'Cassava',
+      'Banana',
+      'Wheat',
+      'Maize',
+      'Potato',
+      'Sweet potato',
+      'Rice',
+      'Barley',
+      'Sorghum',
+      'Pearl millet',
+      'Cowpea',
+      'Yam',
+      'Soybean',
+    ];
   }
 
   ngOnInit(): void {}
 
   ngOnChanges() {
     if (this.formActive === false) {
+      this.cropList.forEach((element:any) => {
+        if (this.listCropWithIndicators.includes(element)) {
+          this.listCropAvailable.push(element)
+        } 
+      });
       this.indicators$.forEach((element: any) => {
-        element.checked = false
+        element.checked = false;
         element.indicators.forEach((prop: any) => {
-          prop.checked = false
-        })
-      })
+          prop.checked = false;
+        });
+      });
     }
   }
 
@@ -66,13 +90,8 @@ export class BeginnerFormComponent implements OnInit, OnChanges {
 
   // Method to update the checked list
   updateAllComplete(obj: any, field: boolean) {
-    obj.checked =
-      obj.indicators != null && obj.indicators.every((t: any) => t.checked);
-    if (field === true) {
-      console.log(true);
-    } else {
-      console.log(false);
-    }
+    obj.checked = obj.indicators != null && obj.indicators.every((t: any) => t.checked);
+    console.log(obj)
   }
 
   // Method to check if the users selected some indicators
@@ -86,9 +105,18 @@ export class BeginnerFormComponent implements OnInit, OnChanges {
   }
 
   // Set all indicators by category
-  setAll(completed: boolean, obj: any) {
+  setAll(completed: boolean, category:any,  obj: any) {
     obj.checked = completed;
-    obj.indicators.forEach((t: any) => (t.checked = completed));
+    if (category === 'Crop-specific indicators') {
+      obj.indicators.forEach((t: any) => {
+      if (this.listCropAvailable.includes(t.crop)) {
+        t.checked = completed
+      }
+    });
+    } else {
+      obj.indicators.forEach((t:any) => t.checked = completed);
+    }
+    console.log(obj)
   }
 
   filterIndicatorPeriodById(indicator: string): string {
@@ -130,8 +158,11 @@ export class BeginnerFormComponent implements OnInit, OnChanges {
       passport: this.passportParms,
       analysis: {
         algorithm: ['agglomerative'],
-        hyperparameter: { n_clusters: this.maxCluster, min_cluster: this.minCluster },
-        summary: true
+        hyperparameter: {
+          n_clusters: this.maxCluster,
+          min_cluster: this.minCluster,
+        },
+        summary: true,
       },
     };
     console.log(request);

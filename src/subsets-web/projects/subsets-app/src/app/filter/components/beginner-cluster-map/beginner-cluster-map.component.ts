@@ -283,6 +283,7 @@ export class BeginnerClusterMapComponent
       );
 
       if (filtered.length > 0) {
+                this.colorClusters.push({crop:element.crop, cluster: element.cluster, color: element.color, fillColor:element.fillColor})
                 filtered.forEach((val: any) => {
             if (val.geo_lon != null && val.geo_lat != null) {
               // const marker = L.marker([val.geo_lat, val.geo_lon], {
@@ -308,6 +309,16 @@ export class BeginnerClusterMapComponent
       }
     });
 
+    // Grouped cluster color
+    this.clustersGrouped$ = of(this.colorClusters).pipe(
+      switchMap((data: any) =>
+        from(data).pipe(
+          groupBy((item: any) => item.crop),
+          mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
+          reduce((acc: any, val: any) => acc.concat([val]), [])
+        )
+      )
+    )
     // this.cropList.forEach((element: any, index: any) => {
     //   this.listClusters.forEach((clus: any, indx: any) => {
     //     var MyCustomMarker = L.divIcon({

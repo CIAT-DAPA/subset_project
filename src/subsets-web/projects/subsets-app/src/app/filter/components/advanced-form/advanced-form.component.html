@@ -1,17 +1,13 @@
 <div class=" mt-2">
-    <!--  <div style="display: flex" class="">
-       <h3 class="mr-2 mb-2">Normal</h3>
-       <mat-slide-toggle color="primary">Expert</mat-slide-toggle>
-     </div> -->
-     <!-- <mat-card style="width: 100%;"> -->
+   
      <ng-container *ngFor="let x of indicators">
-       <section *ngIf="x.category != 'Crop-specific indicators'">
+       <section *ngIf="!['Crop-specific indicators', 'Extracted indicators'].includes(x.category)">
          <p>
            <mat-checkbox
              color="primary"
              [checked]="x.checked"
              [indeterminate]="someComplete(x)"
-             (change)="setAll($event.checked, x)"
+             (change)="setAll($event.checked, x.category,x)"
              >{{ x.category }}</mat-checkbox
            >
          </p>
@@ -22,26 +18,29 @@
          </section>
        </section>
      </ng-container>
-     <!-- <ng-container *ngFor="let x of indicators">
-      <section *ngIf="x.category == 'Other'">
+     <ng-container *ngIf="listCropAvailable.length > 0">
+
+      <ng-container *ngFor="let x of indicators">
+        <section *ngIf="x.category == 'Crop-specific indicators'">
         <p>
           <mat-checkbox
             color="primary"
             [checked]="x.checked"
             [indeterminate]="someComplete(x)"
-            (change)="setAll($event.checked, x)"
+            (change)="setAll($event.checked, x.category,x)"
             >{{ x.category }}</mat-checkbox
-          >
-        </p>
-        <section class="ml-3" *ngFor="let y of x.indicators">
-          <ng-container *ngIf="cropList.includes(y.crop)">
-          <p>
-            <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{ y.name }} -- {{y.crop}}</mat-checkbox>
+            >
           </p>
-        </ng-container>
+          <section class="ml-3" *ngFor="let y of x.indicators">
+            <ng-container *ngIf="cropList.includes(y.crop)">
+              <p>
+                <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{y.crop}} -- {{ y.name }}</mat-checkbox>
+              </p>
+            </ng-container>
+          </section>
         </section>
-      </section>
-    </ng-container> -->
+      </ng-container>
+    </ng-container>
      <ngx-spinner></ngx-spinner>
    <!-- </mat-card> -->
 <mat-card class="mt-3">

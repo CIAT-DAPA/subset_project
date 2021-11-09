@@ -509,20 +509,50 @@ def generate_clusters():
                     "month11": x.month11,
                     "month12": x.month12}
                     for x in indicator_periods_values if  x.cellid in cell_id_crop])
-            # Create a df from multivariate analysis dict
+            elif indicator['type'] == 'extracted':
+                print(indicator['name'])
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+                    # Filtering values of indicator to multivariate analysis
+                indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+                # loop for each crop present in the query
+                for crop in crops:
+                    cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
+                    # cellid list from crop
+                    cell_id_crop = list(set(cell_id_crop))
+                    # Dict to multivariate analysis
+                    multivariate_values.extend([{
+                        "crop": crop['name'],
+                        "pref_indicator": x.indicator_period.indicator.pref,
+                        "indicator": x.indicator_period.indicator.name,
+                        "cellid": x.cellid,
+                         "month1": x.value,
+                        "month2": x.value,
+                        "month3": x.value,
+                        "month4": x.value,
+                        "month5": x.value,
+                        "month6": x.value,
+                        "month7": x.value,
+                        "month8": x.value,
+                        "month9": x.value,
+                        "month10": x.value,
+                        "month11": x.value,
+                        "month12": x.value}
+                        for x in indicator_periods_values if  x.cellid in cell_id_crop])
+
+        # Create a df from multivariate analysis dict
         if multivariate_values:
             try:
                 lst_calculates = []
                 lst_summary = []
                 lst_indicators = []
                 lst_months = []
+                soil_indicators_list = []
                 others_columns = []
                 print("min cluster: " + str(hyperparameters['min_cluster']) + " max cluster: " + str(hyperparameters['n_clusters']))
                 analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, max_cluster=hyperparameters['n_clusters'], min_cluster=hyperparameters['min_cluster'])
 
                 # from df to dict
                 response_analysis = analysis.to_json(orient='records')
-
 
                 for k,col in enumerate(analysis.columns):
                     """  """
@@ -541,7 +571,6 @@ def generate_clusters():
                 lst_months_quantiles = list(set(lst_months))
                 lst_months.sort()
                 print(others_columns)
-            
 
                 # Calculate Min Max Mean and Sd
                 for methd in others_columns:
@@ -649,6 +678,7 @@ def generate_clusters():
                     'quantile': quantile_data,
                     'summary': final_dictionary
                 }
+                print('Method 1')
             except ValueError as ve:
                 print(str(ve))
                 print("Exception")
@@ -805,6 +835,7 @@ def generate_clusters():
                     'time': total_time_multi_ana,
                     'calculate': min_max_mean_parsed
                 }
+                print('Method 2')
             except ValueError as ve:
                 print(str(ve))
                 print("Exception")

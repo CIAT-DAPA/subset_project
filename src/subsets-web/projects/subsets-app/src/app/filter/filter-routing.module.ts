@@ -9,6 +9,7 @@ import { BeginnerFormComponent } from './components/beginner-form/beginner-form.
 import { BeginnerClusterMapComponent } from './components/beginner-cluster-map/beginner-cluster-map.component';
 import { MapTestComponent } from './components/map-test/map-test.component';
 import { MapOutcomesComponent } from './components/map-outcomes/map-outcomes.component';
+import { DensityChartComponent } from './components/density-chart/density-chart.component';
 
 
 const routes: Routes = [
@@ -17,7 +18,7 @@ const routes: Routes = [
     component: FormFilterComponent
   }, {
     path: 'load-data',
-    component: MapTestComponent
+    component: DensityChartComponent
   },
   {
     path: 'accession-detail/:id',

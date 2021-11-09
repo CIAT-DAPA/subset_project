@@ -165,7 +165,6 @@ export class TabsComponent implements OnInit, AfterContentInit {
 
     this._sharedService.sendexpertNormalObservable.subscribe((data) => {
       this.expertNormalMode$ = data;
-      console.log(data)
     });
   }
 
@@ -175,9 +174,7 @@ export class TabsComponent implements OnInit, AfterContentInit {
     });
     this._sharedService.getTabSelected().subscribe((tabIndex: number) => {
       this.selectdIndex = tabIndex;
-      if (this.params) {
-        console.log("Hello")
-        console.log(this.params)
+      if (this.expertNormalMode$ === true) {
         this.buildSubsets();
       }/*  */
     });
@@ -214,12 +211,10 @@ export class TabsComponent implements OnInit, AfterContentInit {
       hyperparameter: this.hyperParameters,
       summary: false
     };
-    console.log(this.params);
     this.api.generateCluster(this.params).subscribe((res: any) => {
       this.clusterData = res.data;
       this.timeMultiAna = res.time
       this.minMaxMeanData = res.calculate
-      console.log(this.clusterData);
     });
   };
 }

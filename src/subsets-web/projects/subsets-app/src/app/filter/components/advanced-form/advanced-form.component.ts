@@ -12,6 +12,8 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit, OnChange
     // Observable with the indicators format
     @Input() indicators: any;
     @Input() formActive: boolean = true;
+    listCropWithIndicators: any[];
+    listCropAvailable:any[] = [];
     // Observable with the indicators period format
     @Input() cropList: any = [];
     @Input() indicatorPeriods: any;
@@ -44,6 +46,22 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit, OnChange
       this.pivotList = [];
       this.monthFirt = 1;
       this.monthEnd = 12;
+      this.listCropWithIndicators = [
+        'Beans',
+        'Cassava',
+        'Banana',
+        'Wheat',
+        'Maize',
+        'Potato',
+        'Sweet potato',
+        'Rice',
+        'Barley',
+        'Sorghum',
+        'Pearl millet',
+        'Cowpea',
+        'Yam',
+        'Soybean',
+      ];
      }
 
   ngOnInit(): void {
@@ -52,6 +70,11 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit, OnChange
 
   ngOnChanges() {
     if (this.formActive === true) {
+      this.cropList.forEach((element:any) => {
+        if (this.listCropWithIndicators.includes(element)) {
+          this.listCropAvailable.push(element)
+        } 
+      });
       this.indicators.forEach((element: any) => {
         element.checked = false
         element.indicators.forEach((prop: any) => {
@@ -91,9 +114,17 @@ export class AdvancedFormComponent implements OnInit, AfterContentInit, OnChange
   }
 
   // Set all indicators by category
-  setAll(completed: boolean, obj:any) {
+  setAll(completed: boolean, category:any,obj:any) {
     obj.checked = completed;
-    obj.indicators.forEach((t:any) => t.checked = completed);
+    if (category === 'Crop-specific indicators') {
+      obj.indicators.forEach((t: any) => {
+      if (this.listCropAvailable.includes(t.crop)) {
+        t.checked = completed
+      }
+    });
+    } else {
+      obj.indicators.forEach((t:any) => t.checked = completed);
+    }
     this.checkTrueIndicators();
   }
 

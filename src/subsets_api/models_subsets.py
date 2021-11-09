@@ -92,6 +92,7 @@ class IndicatorValue(Document):
     month10 = FloatField(required=False)
     month11 = FloatField(required=False)
     month12 = FloatField(required=False)
+    value = FloatField(required=False)
 
     meta = {'collection': 'indicator_value_reduced_v2',
             'auto_create_index':False,    
