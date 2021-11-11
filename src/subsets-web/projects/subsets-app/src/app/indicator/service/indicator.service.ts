@@ -8,8 +8,8 @@ import { map } from 'rxjs/operators';
 })
 export class IndicatorService {
   /* URL = 'http://localhost:8001/api/'; */
-  URL = 'http://localhost:5001/api/v1/';
-  // URL = 'https://subset-api.ciat.cgiar.org/api/v1/';
+   //URL = 'http://localhost:5001/api/v1/';
+  URL = 'https://subset-api.ciat.cgiar.org/api/v1/';
   headers = new HttpHeaders({
     'Content-Type': 'application/json'
   });
