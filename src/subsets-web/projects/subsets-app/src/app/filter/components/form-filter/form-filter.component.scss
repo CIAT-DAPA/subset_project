@@ -109,13 +109,20 @@ h1 {
 .mat-vertical-stepper-content, .mat-vertical-content.ng-tns-c180-0{
   padding-bottom: 1px !important;
 }
-/*.flex-container {
-      display: flex;
-  min-height: 100vh;
-      }*/
-/*responsive*/
+
  @media (max-width: 1200px){
  .filter-space {
     width: 100%;
  }
  }
+ /*11/11/2021*/
+ .flex-container{
+    overflow: hidden;
+    height: 85vh;
+ }
+
+.filter-space, .outcome-space{
+    overflow-y: scroll;
+    max-height: 100%;
+}
+
