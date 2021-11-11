@@ -48,40 +48,20 @@
   <div class="row text-center" id="methodologies-sections">
     <div class="col-lg-8">
       <div class="">
-        <p
-          class=""
-          style="
-            text-align: justify;
-            font-family: Roboto, sans-serif !important;
-          "
-        >
-          1.
-          <strong
-            >DBSCAN - Density-Based Spatial Clustering of Applications with
-            Noise</strong
-          >: This technique is used to find arbitrary shaped clusters and to
-          detect outliers (i.e. clusters with noise). DBSCAN requires two key
-          parameters:
+        <p class="" style="text-align: justify;font-family: Roboto, sans-serif !important; text-indent: 10px;">
+         
+          <strong>1. DBSCAN - Density-Based Spatial Clustering of Applications with Noise</strong>: This technique is used to find arbitrary shaped clusters and to detect outliers (i.e. clusters with noise). DBSCAN requires two key parameters:
         </p>
         <ul>
           <li>
-            <strong>EPS: </strong> Specifies how close points should be to each
-            other to be considered neighbors and a part of a cluster. If the
-            distance between two points is lower or equal to eps, these two
-            points are considered neighbors.
+            <strong>EPS: </strong> Specifies how close points should be to each other to be considered neighbors and a part of a cluster. If the distance between two points is lower or equal to eps, these two points are considered neighbors.
           </li>
           <br />
           <li>
-            <strong>minPts: </strong> This parameter specifies the minimum
-            number of data points to form a dense region and, thus, a cluster.
+            <strong>minPts: </strong> This parameter specifies the minimum number of data points to form a dense region and, thus, a cluster.
           </li>
         </ul>
-        <p
-          style="
-            text-align: justify;
-            font-family: Roboto, sans-serif !important;
-          "
-        >
+        <p style="text-align: justify; font-family: Roboto, sans-serif !important;">
           Points that are in low-density regions are marked as outliers.
         </p>
       </div>
@@ -90,10 +70,7 @@
     <div class="col-lg-4">
       <br />
       <div class="img-methodology">
-        <img
-          src="../../../../assets/images/dbscan.png"
-          alt="dbscan clustering"
-        />
+        <img  src="../../../../assets/images/dbscan.png" alt="dbscan clustering"/>
       </div>
     </div>
   </div>
@@ -101,33 +78,16 @@
   <div class="row text-center" id="methodologies-sections">
     <div class="col-lg-4">
       <div class="img-methodology">
-        <img
-          src="../../../../assets/images/hdbscan.png"
-          alt="dbscan clustering"
-        />
+        <img src="../../../../assets/images/hdbscan.png" alt="dbscan clustering"/>
       </div>
     </div>
 
     <div class="col-lg-8">
       <div class="">
         <br /><br />
-        <p
-          class=""
-          style="
-            text-align: justify;
-            font-family: Roboto, sans-serif !important;
-          "
-        >
-          2.
-          <strong
-            >HDBSCAN - Hierarchical Density-Based Spatial Clustering of
-            Applications with Noise</strong
-          >
-          : This algorithm extends DBSCAN by converting it into a hierarchical
-          clustering algorithm. The parameter that should be defined for our
-          implementation is <strong>Minimum Cluster Size</strong>, which
-          specifies the minimum number of points that a cluster should have. By
-          default, this parameter is set to <strong>10</strong>.
+        <p class="" style=" text-align: justify; font-family: Roboto, sans-serif !important; text-indent: 10px;">
+          
+          <strong>2. HDBSCAN - Hierarchical Density-Based Spatial Clustering of Applications with Noise</strong>: This algorithm extends DBSCAN by converting it into a hierarchical clustering algorithm. The parameter that should be defined for our implementation is <strong>Minimum Cluster Size</strong>, which specifies the minimum number of points that a cluster should have. By default, this parameter is set to <strong>10</strong>.
         </p>
       </div>
     </div>
@@ -137,30 +97,15 @@
     <div class="col-lg-8">
       <div class="">
         <br /><br />
-        <p
-          class=""
-          style="
-            text-align: justify;
-            font-family: Roboto, sans-serif !important;
-          "
-        >
-          3. <strong>HAC - Hierarchical Agglomerative Clustering </strong>:HAC
-          uses a bottom-up approach to form clusters. It starts by considering
-          each point as a cluster, and merges pairs of clusters as moving up the
-          hierarchy. The algorithm keeps merging until reaching the optimal
-          number of clusters. We rely on the <strong>Silhouette</strong> method to define that
-          optimal number of clusters from a user-entered range. This range is
-          set by default to [2 – 5].
+        <p class="" style=" text-align: justify; font-family: Roboto, sans-serif !important; text-indent: 10px;">
+          <strong>3. HAC - Hierarchical Agglomerative Clustering </strong>:HAC uses a bottom-up approach to form clusters. It starts by considering each point as a cluster, and merges pairs of clusters as moving up the hierarchy. The algorithm keeps merging until reaching the optimal number of clusters. We rely on the <strong>Silhouette</strong> method to define that optimal number of clusters from a user-entered range. This range is set by default to [2 – 5].
         </p>
       </div>
     </div>
 
     <div class="col-lg-4">
       <div class="img-methodology">
-        <img
-          src="../../../../assets/images/agglomerative.png"
-          alt="dbscan clustering"
-        />
+        <img src="../../../../assets/images/agglomerative.png" alt="dbscan clustering"/>
       </div>
     </div>
   </div>

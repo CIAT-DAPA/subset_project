@@ -1,13 +1,35 @@
-<div style="text-align:center">
-    <h1>
-      Signup
-    </h1>
-  </div>
 
-  <input #username type='text' placeholder='username'>
-  <input #email type='text' placeholder='email'>
-  <input #password1 type='password' placeholder='password1'>
-  <input #password2 type='password' placeholder='password2'>
-  <button (click)="signup(username.value, email.value, password1.value, password2.value)">signup</button>
+  <div class="banner">
+
+  <mat-card class="mt-2">
+    <mat-card-content>
+    <h2>Welcome to Subsets tool</h2>
+    <h3>Signup</h3>
+
+    <mat-form-field class="full-width-input">
+<input #username type='text' placeholder='username'>
+    </mat-form-field>
+
+    <mat-form-field class="full-width-input">
+<input #password1 type='password' placeholder='password1'>
+    </mat-form-field>
+    <mat-form-field class="full-width-input">
+<input #password2 type='password' placeholder='password2'>
+    </mat-form-field>
+
+
+    <button (click)="signup(username.value, email.value, password1.value, password2.value)">signup</button>
   <p>{{ error?.message }}</p>
   <p *ngIf="error">{{ error?.error | json }}</p>
+
+  </mat-card-content>
+  <br>
+  <div class="dons mb-2">
+    <img src="../../../../assets/images/ciat.png" class="" alt="" >
+    <img src="../../../../assets/images/icard.svg" class="ml-3" alt="" height="35px">
+    <img src="../../../../assets/images/crop-trust.png" class="ml-3" alt="" height="45px">
+    <img src="" alt="">
+  </div>
+</mat-card>
+
+</div>
