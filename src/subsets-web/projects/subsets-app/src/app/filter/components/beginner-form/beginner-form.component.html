@@ -13,7 +13,7 @@
       </p>
       <section class="ml-3" *ngFor="let y of x.indicators">
         <p>
-          <mat-checkbox id="{{y.name}} + 'beginner'" color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{ y.name }}</mat-checkbox>
+          <mat-checkbox  *ngIf="y.pref != 'TEXMHT'" id="{{y.name}} + 'beginner'" color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{ y.name }}</mat-checkbox>
         </p>
       </section>
     </section>
@@ -45,11 +45,7 @@
 <!-- </mat-card> -->
 
 <mat-card class="mt-3 mb-3">
-  <label for="period" class="form-label">Add a range of number of clusters </label>
-  <div style="display: flex; justify-content: flex-end; width: 100%;">
-    <a mat-icon-button href="/explore/methodology" target="_blank" ><mat-icon matTooltip="Go to Methodologies">dns</mat-icon></a>
-    <!-- <button mat-icon-button hre><mat-icon matTooltip="Go to Glossary">book</mat-icon></button> -->
-  </div>
+  <label for="period" class="form-label">Add a range of number of clusters <a mat-icon-button href="/explore/methodology" target="_blank" ><mat-icon matTooltip="Go to Methodologies">help</mat-icon></a></label>
   <ngx-slider
     [(value)]="minCluster"
     id="period"

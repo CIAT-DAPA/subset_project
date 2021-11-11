@@ -14,6 +14,7 @@ export class BeginnerClusterLinePlotComponent implements OnInit, AfterContentIni
   @ViewChild('plots') private plots!: ElementRef;
   selectedIndicatorList$:any;
   indicatorSelected:any;
+  cropSelected:any;
 
   constructor(
     private api: IndicatorService,

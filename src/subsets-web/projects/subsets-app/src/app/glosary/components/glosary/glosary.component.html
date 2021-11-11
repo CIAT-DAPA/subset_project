@@ -1,20 +1,40 @@
 <div class="banner" id="subpage">
   <div
     class="jumbotron bg-transparent container"
-    style="width: 80%; /*height: 200px;*/ margin-top: 13%;"  >
-    <h1 class="display-4" style="text-align: justify;font-size: 50px;font-family: Raleway, sans-serif !important;">Glossary</h1>
+    style="width: 80%; /*height: 200px;*/ margin-top: 13%"
+  >
+    <h1
+      class="display-4"
+      style="
+        text-align: justify;
+        font-size: 50px;
+        font-family: Raleway, sans-serif !important;
+      "
+    >
+      Glossary
+    </h1>
     <hr class="my-4" />
   </div>
 </div>
 
 <div class="container">
-  <p class="" style="text-align: justify; font-size: 22px;
-    line-height: 1.2em;    font-weight: 200;    padding: 2%;">
+  <p
+    class=""
+    style="
+      text-align: justify;
+      font-size: 22px;
+      line-height: 1.2em;
+      font-weight: 200;
+      padding: 2%;
+    "
+  >
     These tables contains the information related with the different indicators
     calculated in this tool.
-    </p>
-  <hr /><br />
-  <h2><strong>Generic indicators</strong></h2><br />
+  </p>
+  <hr />
+  <br />
+  <h2><strong>Generic indicators</strong></h2>
+  <br />
   <table class="table table-striped table-responsive mb-4">
     <thead>
       <tr>
@@ -29,87 +49,102 @@
       </tr>
     </thead>
     <tbody>
-      <tr >
+      <tr>
         <td>Drought stress</td>
         <td>Number of water stress days</td>
-        <td>Number of days per growing season, for which the ratio of actual to potential evapotranspiration (ERATIO) is below 0.5. The ERATIO is computed following a simple water balance model as in Jones and Thornton (2009).</td>
+        <td>
+          Number of days per month, for which the ratio of actual to potential evapotranspiration (ERATIO) is below 0.5. The ERATIO is computed following a simple water balance model as in Jones and Thornton (2009).
+        </td>
+        <td>ndws</td>
         <td>days</td>
-        
       </tr>
-      <tr >
+      <tr>
         <td>Flooding stress</td>
         <td>Number of days with water logging</td>
-        <td>Number of days per growing season, for which the soil is at least 50% between field capacity and saturation. Computed using the same simple water balance model as for NDWS.</td>
+        <td>
+          Number of days per month, for which the soil is at least 50% between field capacity and saturation. Computed using the same simple water balance model as for NDWS.
+        </td>
+        <td>ndwl</td>
         <td>days</td>
-        
       </tr>
-      <tr >
+      <tr>
         <td>Flooding stress</td>
         <td>Extreme daily precipitation</td>
-        <td>The 95th percentile of precipitation per growing season, computed using the daily data.</td>
+        <td>
+          The 95th percentile of precipitation per month, computed using the daily data.
+        </td>
+        <td>p_95</td>
         <td>mm</td>
-        
       </tr>
-      <tr >
+      <tr>
         <td>Drought stress</td>
         <td>Total precipitation</td>
-        <td>Total daily precipitation per month, computed using the daily data.</td>
+        <td>
+          Total daily precipitation per month, computed using the daily data.
+        </td>
+        <td>t_rain</td>
         <td>mm</td>
-        
       </tr>
-      <tr >
-        <td>Other</td>
-        <td>Average precipitation</td>
-        <td>Average daily precipitation per growing season, computed using the daily data.</td>
-        <td>mm</td>
-        
+      <tr>
+        <td>Heat stress</td>
+        <td>Average minimum temperature/td>
+        <td>
+          Average maximum temperature per month.
+        </td>
+        <td>TN</td>
+        <td>°C</td>
       </tr>
 
-    <tr >
-      <td>Other</td>
-      <td>Average solar radiation</td>
-      <td>Average solar radiation per month.</td>
-      <td>W/m²</td>
-      
-    </tr>
-    <tr >
-      <td>Heat stress</td>
-      <td>Average maximum temperature</td>
-      <td>Average maximum temperature per growing season.</td>
-      <td>°C</td>
-      
-    </tr>
+      <tr>
+        <td>Indicator photoperiod</td>
+        <td>Average solar radiation per month</td>
+        <td>Average solar radiation per month.</td>
+        <td>m_srad</td>
+        <td>W/m²</td>
+      </tr>
+      <tr>
+        <td>Heat stress</td>
+        <td>Average maximum temperature</td>
+        <td>Average maximum temperature per month.</td>
+        <td>TX</td>
+        <td>°C</td>
+      </tr>
 
-    <tr >
-      <td>Other</td>
-      <td>Daylength of the middle Julian day per month</td>
-      <td>Daylength of the middle Julian day of month per growing season.</td>
-      <td>Hours</td>
-      
-    </tr>
-    <tr >
-      <td>Heat stress</td>
-      <td>Number of days with high VPD</td>
-      <td>The count of days per month for which VPD is equal or greater than 4 kPa. High VPD can lead to reduced stomatal conductance, and lower transpiration and photosynthesis.</td>
-      <td>Days</td>
-      
-    </tr>
-    <tr >
-      <td>Heat stress</td>
-      <td>Average VPD</td>
-      <td>Average per growing season VPD.</td>
-      <td>Kpa</td>
-      
-    </tr>
-    <tr>
-      <td>Drought stress</td>
-      <td>Consecutive dry days</td>
-      <td>Maximum number of consecutive dry days (P less to 1 mm), per growing season.</td>
-      <td>days</td>
-
+      <tr>
+        <td>Indicators photoperiod</td>
+        <td>Daylength of the middle Julian day per month</td>
+        <td>Daylength of the middle Julian day of month per month.</td>
+        <td>ind_time</td>
+        <td>Hours</td>
+      </tr>
+      <tr>
+        <td>Heat stress</td>
+        <td>Number of days with high VPD</td>
+        <td>
+          The count of days per month for which VPD is equal or greater than 4 kPa. High VPD can lead to reduced stomatal conductance, and lower transpiration and photosynthesis.
+        </td>
+        <td>NVPD4</td>
+        <td>Days</td>
+      </tr>
+      <tr>
+        <td>Heat stress</td>
+        <td>Average VPD</td>
+        <td>Average per month VPD.</td>
+        <td>VPD</td>
+        <td>Kpa</td>
+      </tr>
+      <tr>
+        <td>Drought stress</td>
+        <td>Consecutive dry days</td>
+        <td>
+          Maximum number of consecutive dry days (P less to 1 mm), per month.
+        </td>
+        <td>cdd</td>
+        <td>days</td>
+      </tr>
     </tbody>
   </table>
-  <hr>
+  <hr />
   <h2><strong>Extracted values indicators</strong></h2>
   <table class="table table-striped table-responsive mb-4">
     <thead>
@@ -125,35 +160,37 @@
       </tr>
     </thead>
     <tbody>
-      <tr >
-        <td>Extracted indicator</td>
-        <td>Soil texture type</td>
-        <td>USDA texture class.</td>
-        <td>USDA</td>
-        
-      </tr>
-      <tr >
+      <tr>
         <td>Extracted indicator</td>
         <td>Bulk density</td>
         <td>Bulk density, averaged over the top 60 cm of soil.</td>
-        <td>SoilGrids</td>   
+        <td>BDLFIE</td>
+        <td>SoilGrids</td>
       </tr>
-      <tr >
+      <tr>
         <td>Extracted indicator</td>
         <td>Cation exchange capacity</td>
         <td>Cation exchange capacity, averaged over the top 60 cm of soil.</td>
-        <td>SoilGrids</td>   
+        <td>CECSOL</td>
+        <td>SoilGrids</td>
       </tr>
-      <tr >
-        <td>Extracted indicator</td>
+      <tr>
+        <td>Soil indicators</td>
         <td>Organic carbon content</td>
         <td>Soil organic carbon, averaged over the top 60 cm of soil.</td>
-        <td>SoilGrids</td>   
+        <td>ORCDRC</td>
+        <td>SoilGrids</td>
       </tr>
-
+      <tr>
+        <td>Soil indicators</td>
+        <td>Ph</td>
+        <td>PH.</td>
+        <td>PHIHOX</td>
+        <td>SoilGrids</td>
+      </tr>
     </tbody>
   </table>
-  <hr>
+  <hr />
   <h2><strong>Crop-specific indicators</strong></h2>
   <table class="table table-striped table-responsive mb-4">
     <thead>
@@ -169,27 +206,28 @@
       </tr>
     </thead>
     <tbody>
-      <tr >
+      <tr>
         <td>Specific indicator</td>
-        <td>Number of days high daytime temperature</td>
-        <td>Number of days with NT_threshold > threshold per crop.</td>
+        <td>Number of days high maximum temperature</td>
+        <td>Number of days with TMAX > threshold per crop.</td>
+        <td>days_heat</td>
         <td>days</td>
-        
       </tr>
-      <tr >
+      <tr>
         <td>Specific indicator</td>
         <td>Number of days with low minimum temperatures</td>
-        <td>number of days with NT_threshold  < threshold per crop.</td>
-        <td>days</td>   
+        <td>Number of days with TMIN < threshold per crop.</td>
+        <td>days_cold</td>
+        <td>days</td>
       </tr>
 
-      <tr >
+      <tr>
         <td>Specific indicator</td>
         <td>Number of days optmimum</td>
-        <td>Number of days optmimum.</td>
-        <td>days</td>   
+        <td>Number of days optmimum.Number of days with average temperature within a range of optimal values per crop.</td>
+        <td>days_optm</td>
+        <td>days</td>
       </tr>
-
     </tbody>
   </table>
 </div>

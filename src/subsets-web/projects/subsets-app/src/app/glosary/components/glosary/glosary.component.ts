@@ -10,8 +10,8 @@ export class GlosaryComponent implements OnInit {
   headerExtratec: any[] 
 
   constructor() { 
-    this.headersArray = ["Category","Variable", "Description", "Units"]
-    this.headerExtratec = ["Category","Variable", "Description", "Database"]
+    this.headersArray = ["Category","Variable", "Description", "Abbreviation","Units"]
+    this.headerExtratec = ["Category","Variable", "Description", "Abbreviation","Database"]
   }
 
   ngOnInit(): void {

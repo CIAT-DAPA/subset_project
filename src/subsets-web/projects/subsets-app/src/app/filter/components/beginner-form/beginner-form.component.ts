@@ -27,7 +27,7 @@ export class BeginnerFormComponent implements OnInit, OnChanges {
   maxCluster: number;
   minCluster: number;
   clusterSliderOption: Options = {
-    floor: 0,
+    floor: 2,
     ceil: 100,
     showTicksValues: true,
     tickStep: 1,

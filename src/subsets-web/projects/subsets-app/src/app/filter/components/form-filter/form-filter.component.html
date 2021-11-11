@@ -37,7 +37,7 @@
                 *ngFor="let crop of filteredCrops | async"
                 [value]="crop"
               >
-                {{ crop }}
+                {{ crop }} - <small>({{getAmountOfAccessions(crop)}})</small>
               </mat-option>
             </mat-autocomplete>
           </mat-form-field>
@@ -251,7 +251,7 @@
         </div>
       </mat-step>
       <mat-step [editable]="true" (click)="getAccessions()">
-        <ng-template matStepLabel>Set indicators </ng-template>
+        <ng-template matStepLabel>Set indicators  <a mat-icon-button href="/explore/glosary" target="_blank" ><mat-icon matTooltip="Go to Glossary">help</mat-icon></a></ng-template>
         <switch-toggle [passportParms]="passportParams"></switch-toggle>
       </mat-step>
     </mat-vertical-stepper>

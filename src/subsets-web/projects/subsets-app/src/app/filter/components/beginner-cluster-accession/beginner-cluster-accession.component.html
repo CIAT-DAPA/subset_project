@@ -1,97 +1,141 @@
-<div class="container mt-3">
-      <!-- Summary table -->
-      <h2>Summary table</h2> 
-      <table class="table table-striped mt-2">
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              *ngFor="let header of headerSummary"
-              class="item-table"
-              style="text-align: center"
-            >
-              {{ header }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="
-              let value of summary$
-                | paginate: { itemsPerPage: 5, currentPage: actualpageSummary, id: 'table-summary' }
-            "
-            style="text-align: center; cursor: pointer; cursor: hand"
-          >
-            <td>{{getIndicatorName(value.indicator)}}</td>
-            <td>{{value.mean | number: '0.'}}</td>
-            <td>{{value.min | number: '0.'}}</td>
-            <td>{{value.max | number: '0.'}}</td>
-            <td>{{value.cluster | number: '0.'}}</td>
-          </tr>
-        </tbody>
-        <pagination-controls id="table-summary" (pageChange)="actualpageSummary = $event">
-        </pagination-controls>
-      </table>
-      <!-- End summary table -->
-  <div
-          class=""
-          style="width: 100%; display: flex; justify-content: flex-end"
-        >
-          <button
-            mat-button
-            (click)="downloadCsvFormat(clusters)"
-            style="color: #3f51b5"
-          >
-            <i class="fas fa-file-csv"></i> Download csv
-          </button>
-          <button
-            mat-button
-            (click)="downloadJsonFormat(clusters)"
-            style="color: #3f51b5"
-          >
-            <i class="fab fa-js"></i> Download json
-          </button>
-        </div>
-        <h2>Outcomes</h2>
-        <mat-card class="mt-2 mb-2" *ngFor="let t of test$ | async">
-          <mat-card-header>
-            <mat-card-title>{{t[0]}}</mat-card-title>
-          </mat-card-header>
-        
-  <ng-container *ngFor="let s of t[1] | async;let i = index">
-    <h2>Cluster {{s[0]}}</h2>
-    <table class="table table-striped">
-        <thead>
-          <tr>
-            <th
-              scope="col"
-              *ngFor="let header of headers"
-              style="text-align: center"
-            >
-              {{ header }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            *ngFor="
-              let value of s[1]
-                | paginate: { itemsPerPage: 5, currentPage: actualpages[i], id: 'table-accessions' + s[0] }
-            "
-            style="cursor: pointer; cursor: hand; text-align: center;"
-            (click)="openAccessionDetail(value)"
-          >
-            <td>{{ value.number }}</td>
-            <td>{{ value.crop }}</td>
-            <td>{{ value.taxonomy_taxon_name }}</td>
-            <td><button mat-stroked-button>See more</button></td>
-          </tr>
-        </tbody>
-      </table>
-      <p>Total accessions {{s[1].length}}</p>
-      <pagination-controls  (pageChange)="actualpages[i] = $event" id="table-accessions{{s[0]}}" >
-    </pagination-controls>
-  </ng-container>
-</mat-card>
-<hr>
+<!-- Summary table -->
+<h2>Summary table</h2>
+
+<!-- Test -->
+<div style="display: flex; width: 100%;">
+  <div style="width: 25%;">
+    <label for="indicator-selected">Select a variable to evaluate</label>
+    <select
+      [(ngModel)]="summSelected"
+      class="form-control"
+      id=""
+    >
+      <option>Mean</option>
+      <option>Maximum</option>
+      <option>Mean</option>
+    </select>
+  </div>
+  <div class="ml-4" style="width: 25%;">
+    <label for="indicator-selected">Select a crop</label>
+    <select
+      [(ngModel)]="cropSelected"
+      (ngModelChange)="drawPlot(cropSelected)"
+      class="form-control"
+      id=""
+    >
+      <option *ngFor="let x of cropList" value="{{ x }}">{{ x }}</option>
+    </select>
+  </div>
 </div>
+
+<table class="table mt-2">
+  <thead>
+    <tr>
+      <th scope="col" class="item-table" style="text-align: center">Cluster</th>
+      <th
+        scope="col"
+        *ngFor="let header of indicatorsAvailables"
+        class="item-table"
+        style="text-align: center"
+      >
+        {{ header }}
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr
+      *ngFor="let value of headerSummary"
+      style="text-align: center; cursor: pointer; cursor: hand"
+    >
+      <td>Cluster {{ value + 1 }}</td>
+      <td *ngFor="let column of indicatorsAvailables">
+        {{
+          getValueFromClusterAndIndicator(
+            column,
+            value,
+            cropSelected,
+            summSelected
+          ) | number: '0.'
+        }}
+      </td>
+    </tr>
+  </tbody>
+  <!-- <pagination-controls id="table-summary1" (pageChange)="actualpageSummary = $event">
+        </pagination-controls> -->
+</table>
+<!-- End summary table -->
+
+<!-- Pie chart -->
+<div class="mt-3" #plots></div>
+<hr />
+<!-- End Pie chart -->
+
+<div class="" style="width: 100%; display: flex; justify-content: flex-end">
+  <button
+    mat-button
+    (click)="downloadCsvFormat(clusters)"
+    style="color: #3f51b5"
+  >
+    <i class="fas fa-file-csv"></i> Download csv
+  </button>
+  <button
+    mat-button
+    (click)="downloadJsonFormat(clusters)"
+    style="color: #3f51b5"
+  >
+    <i class="fab fa-js"></i> Download json
+  </button>
+</div>
+<h2>Outcomes</h2>
+<mat-card class="mb-2" *ngIf="test$ | async">
+  <mat-card-header>
+    <mat-card-title>Accessions</mat-card-title>
+  </mat-card-header>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th
+          scope="col"
+          *ngFor="let header of headers"
+          style="text-align: center"
+        >
+          {{ header }}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr
+        *ngFor="
+          let value of test$
+            | paginate
+              : {
+                  itemsPerPage: 5,
+                  currentPage: actualpages[0],
+                  id: 'table-accessions'
+                }
+            | async
+        "
+        style="cursor: pointer; cursor: hand; text-align: center"
+        (click)="openAccessionDetail(value)"
+      >
+        <td>{{ value.number }}</td>
+        <td>{{ value.crop }}</td>
+        <td>{{ value.taxonomy_taxon_name }}</td>
+        <td><button mat-stroked-button>See more</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <p>Total accessions</p>
+  <pagination-controls
+    (pageChange)="actualpages[0] = $event"
+    id="table-accessions"
+  >
+  </pagination-controls>
+</mat-card>
+<mat-card class="mt-2 mb-2">
+  <mat-card-header>
+    <mat-card-title>Accessions location</mat-card-title>
+  </mat-card-header>
+  <beginner-cluster-map class="mb-4"></beginner-cluster-map>
+</mat-card>

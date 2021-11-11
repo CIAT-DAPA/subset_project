@@ -25,7 +25,7 @@
             <i class="fab fa-js"></i> Download json
           </button>
         </div>
-        <table class="table table-striped">
+        <table class="table">
           <thead>
             <tr>
               <th
@@ -104,7 +104,7 @@
   </mat-tab>
   <mat-tab>
     <ng-template mat-tab-label>
-      <span>Cluster</span>
+      <span>Subsets</span>
     </ng-template>
     <div *ngIf="expertNormalMode$">
       <div style="width: 100%" class="mt-2 mr-2 advance-properties">
@@ -117,11 +117,7 @@
               color="primary"
             >
               Dbscan method
-              <i
-                matTooltip="Info about the action"
-                class="fas fa-question-circle"
-              ></i
-            ></mat-checkbox>
+              <a mat-icon-button href="/explore/methodology" target="_blank" ><mat-icon matTooltip="Go to Methodologies">help</mat-icon></a></mat-checkbox>
           </div>
           <div
             class=""
@@ -154,11 +150,7 @@
               [(ngModel)]="hdbscanCheck"
               color="primary"
               >Hdbscan method
-              <i
-                matTooltip="Info about the action"
-                class="fas fa-question-circle"
-              ></i
-            ></mat-checkbox>
+              <a mat-icon-button href="/explore/methodology" target="_blank" ><mat-icon matTooltip="Go to Methodologies">help</mat-icon></a></mat-checkbox>
           </div>
           <div
             class=""
@@ -183,11 +175,7 @@
               [(ngModel)]="agglomerativeCheck"
               color="primary"
               >Agglomerative method
-              <i
-                matTooltip="Info about the action"
-                class="fas fa-question-circle"
-              ></i
-            ></mat-checkbox>
+              <a mat-icon-button href="/explore/methodology" target="_blank" ><mat-icon matTooltip="Go to Methodologies">help</mat-icon></a></mat-checkbox>
           </div>
           <div
             class=""

@@ -1,7 +1,7 @@
 <div class=" mt-2">
    
      <ng-container *ngFor="let x of indicators">
-       <section *ngIf="!['Crop-specific indicators', 'Extracted indicators'].includes(x.category)">
+       <section *ngIf="!['Crop-specific indicators'].includes(x.category)">
          <p>
            <mat-checkbox
              color="primary"
@@ -13,7 +13,7 @@
          </p>
          <section class="ml-3" *ngFor="let y of x.indicators">
            <p>
-             <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{ y.name }}</mat-checkbox>
+             <mat-checkbox *ngIf="y.pref != 'TEXMHT'" color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{ y.name }}</mat-checkbox>
            </p>
          </section>
        </section>

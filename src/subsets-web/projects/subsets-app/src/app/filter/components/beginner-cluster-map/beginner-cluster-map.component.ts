@@ -106,9 +106,9 @@ export class BeginnerClusterMapComponent
   ngOnInit(): void {}
 
   ngOnChanges() {
-    if (this.showMap == true) {
-      this.initMap();
-    }
+    // if (this.showMap == true) {
+    //   this.initMap();
+    // }
   }
 
   getRandomColor() {
@@ -141,7 +141,7 @@ export class BeginnerClusterMapComponent
           color: colors[index],
           fillColor: this.getRandomColor(),
         };
-        this.tested$.push(obj)
+        this.tested$.push(obj);
       });
     });
   }
@@ -154,6 +154,9 @@ export class BeginnerClusterMapComponent
       (res: any) => {
         this.analysis$ = res.data;
         this.combineData();
+        setTimeout(() => {
+          this.initMap();
+        }, 5000)
       }
     );
     this._sharedService.sendCropsListObservable.subscribe((res: any) => {
@@ -278,34 +281,43 @@ export class BeginnerClusterMapComponent
       .addTo(this.map);
 
     this.tested$.forEach((element: any) => {
-      let filtered:any = this.clusters.filter(
-        (prop: any) => prop.crop == element.crop && prop.cluster_hac == element.cluster
+      let filtered: any = this.clusters.filter(
+        (prop: any) =>
+          prop.crop == element.crop && prop.cluster_hac == element.cluster
       );
 
       if (filtered.length > 0) {
-                this.colorClusters.push({crop:element.crop, cluster: element.cluster, color: element.color, fillColor:element.fillColor})
-                filtered.forEach((val: any) => {
-            if (val.geo_lon != null && val.geo_lat != null) {
-              // const marker = L.marker([val.geo_lat, val.geo_lon], {
-              //   icon: MyCustomMarker,
-              // }).addTo(this.map);
-              const marker = L.circleMarker([val.geo_lat, val.geo_lon], {
-                radius: 5,
-              });
-              marker.addTo(this.map);
-              marker.setStyle({ color: element.color, fillColor: element.fillColor });
-              marker.bindPopup('Name: ' + val.name + ' Crop: ' + val.crop);
-              marker.on('mouseover', function (event) {
-                marker.openPopup();
-              });
-              marker.on('mouseout', function (event) {
-                marker.closePopup();
-              });
-              marker.on('click', () => {
-                this.openAccessionDetail(val);
-              });
-            }
-          });
+        this.colorClusters.push({
+          crop: element.crop,
+          cluster: element.cluster,
+          color: element.color,
+          fillColor: element.fillColor,
+        });
+        filtered.forEach((val: any) => {
+          if (val.geo_lon != null && val.geo_lat != null) {
+            // const marker = L.marker([val.geo_lat, val.geo_lon], {
+            //   icon: MyCustomMarker,
+            // }).addTo(this.map);
+            const marker = L.circleMarker([val.geo_lat, val.geo_lon], {
+              radius: 5,
+            });
+            marker.addTo(this.map);
+            marker.setStyle({
+              color: element.color,
+              fillColor: element.fillColor,
+            });
+            marker.bindPopup('Name: ' + val.name + ' Crop: ' + val.crop);
+            marker.on('mouseover', function (event) {
+              marker.openPopup();
+            });
+            marker.on('mouseout', function (event) {
+              marker.closePopup();
+            });
+            marker.on('click', () => {
+              this.openAccessionDetail(val);
+            });
+          }
+        });
       }
     });
 
@@ -318,7 +330,7 @@ export class BeginnerClusterMapComponent
           reduce((acc: any, val: any) => acc.concat([val]), [])
         )
       )
-    )
+    );
     // this.cropList.forEach((element: any, index: any) => {
     //   this.listClusters.forEach((clus: any, indx: any) => {
     //     var MyCustomMarker = L.divIcon({

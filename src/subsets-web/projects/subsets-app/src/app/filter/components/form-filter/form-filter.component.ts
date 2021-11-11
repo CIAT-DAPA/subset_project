@@ -308,6 +308,12 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     this.sharedService.sendPassport(params);
   }
 
+  getAmountOfAccessions(crop:string) {
+    let cropFiltered = this.crops$.filter((prop:any) => prop.name == crop)
+
+    return cropFiltered[0].count_accessions
+  }
+
   getCrops = () => {
     this.api.getCrops().subscribe(
       (data) => {
@@ -514,7 +520,8 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     addList: any,
     ctrl: any
   ): void {
-    addList.push(event.option.viewValue);
+    let cropSplit = event.option.viewValue.split(' - ')
+    addList.push(cropSplit[0]);
     this.fruitInput.nativeElement.value = '';
     this.CropsCtrl.setValue(null);
     this.fruitInput.nativeElement.blur();
