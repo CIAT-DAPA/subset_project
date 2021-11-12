@@ -156,7 +156,7 @@ export class BeginnerClusterMapComponent
         this.combineData();
         setTimeout(() => {
           this.initMap();
-        }, 5000)
+        }, 3000)
       }
     );
     this._sharedService.sendCropsListObservable.subscribe((res: any) => {
