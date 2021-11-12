@@ -12,33 +12,20 @@
   <mat-card class="mt-2">
     <mat-card-content>
     <h2>Welcome to Subsets tool</h2>
-    <h3>SignIn</h3>
+    <h3>SignIn</h3> 
 
     <!--  <mat-error *ngIf="loginInvalid">
       The username and password were not recognised
     </mat-error> -->
 
     <mat-form-field class="full-width-input">
-      <input
-        #username
-        matInput
-        placeholder="Username"
-        formControlName="username"
-        required
-      />
+      <input #username matInput placeholder="Username" formControlName="username" required />
 
       <!--  <mat-error> Please provide a valid email address </mat-error> -->
     </mat-form-field>
 
     <mat-form-field class="full-width-input">
-      <input
-        #password
-        matInput
-        type="password"
-        placeholder="Password"
-        formControlName="password"
-        required
-        />
+      <input #password matInput type="password" placeholder="Password" formControlName="password" required />
 
       <mat-error> Please provide a valid password </mat-error>
     </mat-form-field>
