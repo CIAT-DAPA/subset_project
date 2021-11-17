@@ -14,12 +14,16 @@ export class BeginnerClusterBoxPlotComponent implements OnInit, AfterContentInit
   @ViewChild('plots') private plots!: ElementRef;
   selectedIndicatorList$:any;
   indicatorSelected:any;
+  cropSelected:any;
+  cropList:any[];
   constructor(
     private api: IndicatorService,
     private _sharedService: SharedService,
     public chartElem: ElementRef,
     private renderer: Renderer2
-  ) { }
+  ) { 
+    this.cropList = [];
+  }
 
   ngOnInit(): void {
   }
@@ -29,6 +33,7 @@ export class BeginnerClusterBoxPlotComponent implements OnInit, AfterContentInit
     this.plot(
       this.quantile,      
       this.indicatorSelected,
+      this.cropSelected,
       this.plots,
       this.chartElem
     );
@@ -36,6 +41,7 @@ export class BeginnerClusterBoxPlotComponent implements OnInit, AfterContentInit
       this.plot(
         this.quantile,
         this.indicatorSelected,
+        this.cropSelected,
         this.plots,
         this.chartElem
       )
@@ -59,6 +65,10 @@ export class BeginnerClusterBoxPlotComponent implements OnInit, AfterContentInit
     this._sharedService.sendIndicatorsListObservable.subscribe((res:any) => {
       this.selectedIndicatorList$ = res;
     })
+
+    this._sharedService.sendCropsListObservable.subscribe((res: any) => {
+      this.cropList = res;
+    });
     }
 
     getIndicatorNameByPref(pref:string):string {
@@ -66,44 +76,8 @@ export class BeginnerClusterBoxPlotComponent implements OnInit, AfterContentInit
       return indicatorFiltered[0].name
     }
 
-    plot(data: any[], indicator:string,plots: any, svg: any) {
+    plot(data: any[], indicator:string,crop:string,plots: any, svg: any) {
       //console.log(data);
-
-      var datas = [
-        {
-          label: "month1",
-          values: {
-            Q1: 120,
-            Q2: 150,
-            Q3: 200,
-            whisker_low: 115,
-            whisker_high: 210,
-            outliers: [50, 100, 225]
-          },
-        },
-        {
-          label: "month2",
-          values: {
-            Q1: 300,
-            Q2: 350,
-            Q3: 400,
-            whisker_low: 225,
-            whisker_high: 425,
-            outliers: [175, 450]
-          },
-        },
-        {
-          label: "month3",
-          values: {
-            Q1: 50,
-            Q2: 100,
-            Q3: 125,
-            whisker_low: 25,
-            whisker_high: 175,
-            outliers: [0]
-          },
-        }
-      ];
       
       var months = [
         'jan',
@@ -119,7 +93,7 @@ export class BeginnerClusterBoxPlotComponent implements OnInit, AfterContentInit
         'nov',
         'dec',
       ];
-      let dataFiltered = data.filter((res: any) => res.indicator == indicator);
+      let dataFiltered = data.filter((res: any) => res.indicator == indicator && res.crop == crop);
       dataFiltered.forEach((item, index) => {
         $(plots.nativeElement).append(
           '<div id="plot_' +

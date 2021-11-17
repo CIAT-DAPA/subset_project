@@ -31,27 +31,27 @@ export class SummaryComponent implements OnInit, AfterContentInit {
     this.username = localStorage.getItem('username');
   }
 
-  getAMountAccessionsByIndicator(crop: string): number {
-    if (this.indicatorValue$) {
-      let accessions: any = this.indicatorValue$.filter(
-        (x: any) => x.crop == crop
-      );
-      /*     let lstCellids: number[] = []
-      accessions.forEach((res:any) => {
-        lstCellids.push(res.cellid)
-      })
-      let lst: number[] = [...new Set(lstCellids)];
-      let lstAccessionFiltered: number[] = [];
-      lst.forEach((cellid:any) => {
-        let accessionsFiltered = this.accessions$.filter((prop:any) => prop.cellid == cellid);
-        lstAccessionFiltered.push(...accessionsFiltered);
-      }) */
+  // getAMountAccessionsByIndicator(crop: string): number {
+  //   if (this.indicatorValue$) {
+  //     let accessions: any = this.indicatorValue$.filter(
+  //       (x: any) => x.crop == crop
+  //     );
+  //     /*     let lstCellids: number[] = []
+  //     accessions.forEach((res:any) => {
+  //       lstCellids.push(res.cellid)
+  //     })
+  //     let lst: number[] = [...new Set(lstCellids)];
+  //     let lstAccessionFiltered: number[] = [];
+  //     lst.forEach((cellid:any) => {
+  //       let accessionsFiltered = this.accessions$.filter((prop:any) => prop.cellid == cellid);
+  //       lstAccessionFiltered.push(...accessionsFiltered);
+  //     }) */
 
-      return accessions.length;
-    } else {
-      return 0;
-    }
-  }
+  //     return accessions.length;
+  //   } else {
+  //     return 0;
+  //   }
+  // }
 
   ngAfterContentInit(): void {
     this._sharedService.sendSubsetObservable.subscribe((data) => {
@@ -61,24 +61,15 @@ export class SummaryComponent implements OnInit, AfterContentInit {
     this._sharedService.sendIndicatorsSummaryObservable.subscribe(
       (res: any) => {
         this.indicatorValue$ = res;
+        this.namesResponse = Object.keys(this.indicatorValue$[0])
       }
     );
-
-    this._sharedService.sendTimeObservable.subscribe((res: any) => {
-      this.time$ = res;
-      console.log(this.time$);
-    });
-
-    this._sharedService.sendMultivariableObservable.subscribe((res: any) => {
-      console.log(res);
-      this.multivariable$ = res;
-    });
   }
 
   getNumberOfAccessions(crop: string, methd: string): number {
     let count: number = 0;
-    let objs = this.multivariable$.filter((res: any) => res.crop_name == crop);
-    if (methd == 'aggolmerative') {
+    let objs = this.indicatorValue$.filter((res: any) => res.crop_name == crop);
+    if (methd == 'cluster_hac') {
       objs.forEach((element: any) => {
         if (element.cluster_hac >= 0) {
           count++;
@@ -104,9 +95,9 @@ export class SummaryComponent implements OnInit, AfterContentInit {
 
   getNumberOfClusters(crop: string, methd: string): number {
     let lstResult: any[] = [];
-    let objs = this.multivariable$.filter((res: any) => res.crop_name == crop);
+    let objs = this.indicatorValue$.filter((res: any) => res.crop_name == crop);
     objs.forEach((element: any) => {
-      if (methd == 'aggolmerative') {
+      if (methd == 'cluster_hac') {
         if (element.cluster_hac >= 0)
           lstResult.push(element.cluster_hac);
       }

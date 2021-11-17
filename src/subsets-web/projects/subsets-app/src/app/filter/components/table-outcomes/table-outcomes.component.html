@@ -1,3 +1,8 @@
+<div class="jumbotron jumbotron-fluid mt-2 ml-2 mr-2">
+  <p class="lead">Actually the tool found {{lstAccessionsFiltered$.length}} accessions, but you can reduce that number through of clustering methodologies used by us. Please go to Cluster tab. 
+  </p>
+</div>
+
 <div *ngIf="lstAccessionsFiltered$" class="">
     <mat-card class="mt-2 mb-2">
       <mat-card-header>
@@ -22,7 +27,7 @@
           <i class="fab fa-js"></i> Download json
         </button>
       </div>
-      <table class="table table-striped">
+      <table class="table">
         <thead>
           <tr>
             <th

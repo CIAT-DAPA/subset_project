@@ -1,4 +1,3 @@
-<div class="container">
   <br />
   <mat-tab-group mat-align-tabs="center">
     <mat-tab
@@ -27,7 +26,7 @@
     </button>
   </div>
       <div class="analysis-table">
-        <table class="table table-striped mt-4">
+        <table class="table  mt-4">
           <thead>
             <tr>
               <th
@@ -89,7 +88,7 @@
     </div>
     
       <div class="analysis-table">
-        <table class="table table-striped mt-4">
+        <table class="table  mt-4">
           <thead>
             <tr>
               <th
@@ -152,7 +151,7 @@
     </button>
   </div>
       <div class="analysis-table">
-        <table class="table table-striped mt-4">
+        <table class="table mt-4">
           <thead>
             <tr>
               <th
@@ -195,7 +194,7 @@
   </p>
 
   
-  <table *ngIf="multivariable.length > 0" class="table table-striped mt-4">
+  <table *ngIf="multivariable.length > 0" class="table mt-4">
     <thead>
       <tr>
         <th
@@ -228,12 +227,3 @@
     <pagination-controls id="table-summary" *ngIf="multivariable.length > 0" (pageChange)="actualPageT2 = $event">
     </pagination-controls>
   </table>
-  <!--   <div class="row">
-    <div id="maps"></div>
-    <div id="popups" class="ol-popup">
-        <a href="#" id="popup-closers" class="ol-popup-closer"></a>
-        <div id="popup-contents"></div>
-      </div>
-</div> -->
-</div>
-

@@ -88,6 +88,14 @@ export class BeginnerFormComponent implements OnInit, OnChanges {
     this._sharedService.sendIndicatorList(indicator);
   }
 
+  sendIndicatorsParameters(params: any) {
+    this._sharedService.sendIndicators(params);
+  }
+
+  // sendIndicatorSummary(indSum: any) {
+  //   this._sharedService.sendIndicatorSummary(indSum);
+  // }
+
   // Method to update the checked list
   updateAllComplete(obj: any, field: boolean) {
     obj.checked = obj.indicators != null && obj.indicators.every((t: any) => t.checked);
@@ -166,8 +174,10 @@ export class BeginnerFormComponent implements OnInit, OnChanges {
       },
     };
     console.log(request);
+    this.sendIndicatorsParameters(request);
     this.api.generateCluster(request).subscribe((res: any) => {
       console.log(res);
+      // this.sendIndicatorSummary(res);
       this.setMultivariableDataBeginner(res);
       this.setTabIndex(1);
     });

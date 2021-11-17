@@ -10,13 +10,13 @@
           <td>Total accessions filtered by passport indicators</td>
           <td>{{ item[1].length | number: '2.' }}</td>
         </tr>
-        <tr>
+        <!-- <tr>
           <td>Total accessions filtered by indicators</td>
           <td>{{ getAMountAccessionsByIndicator(item[0]) | number: '0.' }}</td>
-        </tr>
+        </tr> -->
       </tbody>
     </table>
-    <div class="" style="width: 100%;"  *ngIf="namesResponse.includes('dbscan')">
+    <!-- <div class="" style="width: 100%;"  *ngIf="namesResponse.includes('dbscan')">
       <h3>
         <strong>Dbscan Analysis</strong>
       </h3>
@@ -72,6 +72,25 @@
         </tr>
       </tbody>
     </table>
+  </div> -->
+  <div class="" style="width: 100%;"  *ngIf="namesResponse.includes('cluster_hac')">
+    <h3>
+      <strong>Agglomerative Analysis</strong>
+    </h3>
+    <table class="table table-striped mt-2">
+      <tbody>
+        <tr>
+          <td>Total number of accessions by agglomerative analysis</td>
+          <td>{{ getNumberOfAccessions(item[0], 'cluster_hac') | number: '0.' }}</td>
+        </tr>
+        <tr>
+          <td>Total number of cluster by agglomerative analysis</td>
+          <td>
+            {{ getNumberOfClusters(item[0], 'cluster_hac') | number: '0.' }}
+          </td>
+        </tr>
+      </tbody>
+    </table>
   </div>
   </mat-card>
   </div>
@@ -84,7 +103,7 @@
         <mat-icon (click)="openDialog()">add</mat-icon>
       </button>
     </div>
-    <div class="" style="width: 30%;" *ngIf="time$">
+    <!-- <div class="" style="width: 30%;" *ngIf="time$">
     <mat-card>
       <mat-card-header>
         <mat-card-title>Times</mat-card-title>
@@ -124,6 +143,6 @@
         </tbody>
       </table>
     </mat-card>
-    </div>
+    </div> -->
   </div>
 </div>

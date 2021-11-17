@@ -65,7 +65,7 @@ export class BeginnerClusterMapComponent
   listFigures: any[];
   listClusters: any[];
   cropList: any;
-
+  @Input() cropSelected:any
   constructor(
     private api: IndicatorService,
     private _sharedService: SharedService,
@@ -201,6 +201,7 @@ export class BeginnerClusterMapComponent
           )
           .subscribe((res: any) => {
             this.data = res;
+            this.data = this.data.sort((a:any, b:any) => a[0] -b[0])
             console.log(this.data);
           });
 
@@ -280,18 +281,18 @@ export class BeginnerClusterMapComponent
       })
       .addTo(this.map);
 
-    this.tested$.forEach((element: any) => {
-      let filtered: any = this.clusters.filter(
+    this.data.forEach((element: any, index:any) => {
+      let filtered: any = element[1].filter(
         (prop: any) =>
-          prop.crop == element.crop && prop.cluster_hac == element.cluster
+          prop.crop == this.cropSelected
       );
 
       if (filtered.length > 0) {
         this.colorClusters.push({
-          crop: element.crop,
-          cluster: element.cluster,
-          color: element.color,
-          fillColor: element.fillColor,
+          // crop: element.crop,
+          cluster: element[0],
+          color: colors[index],
+          // fillColor: element.fillColor,
         });
         filtered.forEach((val: any) => {
           if (val.geo_lon != null && val.geo_lat != null) {
@@ -303,8 +304,7 @@ export class BeginnerClusterMapComponent
             });
             marker.addTo(this.map);
             marker.setStyle({
-              color: element.color,
-              fillColor: element.fillColor,
+              color: colors[index]
             });
             marker.bindPopup('Name: ' + val.name + ' Crop: ' + val.crop);
             marker.on('mouseover', function (event) {
@@ -322,15 +322,15 @@ export class BeginnerClusterMapComponent
     });
 
     // Grouped cluster color
-    this.clustersGrouped$ = of(this.colorClusters).pipe(
-      switchMap((data: any) =>
-        from(data).pipe(
-          groupBy((item: any) => item.crop),
-          mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
-          reduce((acc: any, val: any) => acc.concat([val]), [])
-        )
-      )
-    );
+    // this.clustersGrouped$ = of(this.colorClusters).pipe(
+    //   switchMap((data: any) =>
+    //     from(data).pipe(
+    //       groupBy((item: any) => item.crop),
+    //       mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
+    //       reduce((acc: any, val: any) => acc.concat([val]), [])
+    //     )
+    //   )
+    // );
     // this.cropList.forEach((element: any, index: any) => {
     //   this.listClusters.forEach((clus: any, indx: any) => {
     //     var MyCustomMarker = L.divIcon({

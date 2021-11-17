@@ -11,17 +11,20 @@ declare var $: any;
 })
 export class BeginnerClusterLinePlotComponent implements OnInit, AfterContentInit {
   minMaxMeanSd$:any = [];
-  @ViewChild('plots') private plots!: ElementRef;
+  @ViewChild('plotsl') private plots!: ElementRef;
   selectedIndicatorList$:any;
   indicatorSelected:any;
   cropSelected:any;
+  cropList:any[];
 
   constructor(
     private api: IndicatorService,
     private _sharedService: SharedService,
     public chartElem: ElementRef,
     private renderer: Renderer2
-  ) { }
+  ) {
+    this.cropList = []
+   }
 
   ngAfterContentInit() {
     this._sharedService.sendMultivariableBeginnerObservable.subscribe((res:any) => {
@@ -31,6 +34,9 @@ export class BeginnerClusterLinePlotComponent implements OnInit, AfterContentIni
     this._sharedService.sendIndicatorsListObservable.subscribe((res:any) => {
       this.selectedIndicatorList$ = res;
     })
+    this._sharedService.sendCropsListObservable.subscribe((res: any) => {
+      this.cropList = res;
+    });
     }  
 
   ngOnInit(): void {
@@ -47,6 +53,7 @@ export class BeginnerClusterLinePlotComponent implements OnInit, AfterContentIni
     this.plot(
       this.minMaxMeanSd$,      
       this.indicatorSelected,
+      this.cropSelected,
       this.plots,
       this.chartElem
     );
@@ -54,6 +61,7 @@ export class BeginnerClusterLinePlotComponent implements OnInit, AfterContentIni
       this.plot(
         this.minMaxMeanSd$,
         this.indicatorSelected,
+        this.cropSelected,
         this.plots,
         this.chartElem
       )
@@ -69,7 +77,7 @@ export class BeginnerClusterLinePlotComponent implements OnInit, AfterContentIni
     );
   }
 
-  plot(data: any[], indicator:string,plots: any, svg: any) {
+  plot(data: any[], indicator:string, crop:string,plots: any, svg: any) {
     //console.log(data);
     var months = [
       'jan',
@@ -85,7 +93,7 @@ export class BeginnerClusterLinePlotComponent implements OnInit, AfterContentIni
       'nov',
       'dec',
     ];
-    let dataFiltered = data.filter((res: any) => res.indicator == indicator);
+    let dataFiltered = data.filter((res: any) => res.indicator == indicator && res.crop == crop);
     dataFiltered.forEach((item, index) => {
       $(plots.nativeElement).append(
         '<div id="plot_' +
@@ -106,7 +114,7 @@ export class BeginnerClusterLinePlotComponent implements OnInit, AfterContentIni
         let x_y = [];
         var l = 0;
         for (let k in d) {
-          if (k != 'cluster') {
+          if (k.includes('month')) {
             let spl = k.split('h')
             x_y.push({ x: parseInt(spl[1]) - 1 , y: d[k] });
             l += 1;
@@ -117,7 +125,8 @@ export class BeginnerClusterLinePlotComponent implements OnInit, AfterContentIni
           (a: any, b: any) => a.x - b.x
         );
         console.log(sorted)
-        return { key: 'Cluster ' + d.cluster, values: x_y };
+        let clusterCalculate = parseInt(d.cluster) + 1
+        return { key: 'Cluster ' + clusterCalculate, values: x_y };
       });
       console.log(plot_data)
 

@@ -88,7 +88,7 @@
       mat-align-tabs="start"
       (selectedTabChange)="tabClick($event)"
     >
-      <mat-tab label="Subsets">
+      <mat-tab label="Accessions">
         <table-outcomes [params]="subsets"></table-outcomes>
       </mat-tab>
       <mat-tab label="Plots">
@@ -225,7 +225,7 @@
     </div>
     <beginner-cluster *ngIf="!expertNormalMode$"></beginner-cluster>
   </mat-tab>
-  <!-- <mat-tab label="Summary">
+  <mat-tab label="Summary">
     <app-summary [namesResponse]="algorithmsList"></app-summary>
-  </mat-tab> -->
+  </mat-tab>
 </mat-tab-group>

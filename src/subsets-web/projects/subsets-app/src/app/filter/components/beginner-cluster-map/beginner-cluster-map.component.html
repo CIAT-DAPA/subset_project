@@ -1,13 +1,14 @@
-
-  <div class="mt-4 mb-2">
-    <ng-container *ngFor="let x of clustersGrouped$ | async">
-      <ul>
-        <li class="mt-1" *ngFor="let y of x[1]"><i class="far fa-circle" [style.color]="y.color"></i> {{x[0]}} -- <i class="fas fa-circle" [style.color]="y.fillColor"></i>  Cluster {{y.cluster}}</li>
-      </ul>
-    </ng-container>
+<div class="mt-4 mb-2">
+  <ul style="display: flex; flex-wrap: wrap;">
+    <li class="ml-2" *ngFor="let y of colorClusters">
+      <i class="fas fa-circle" [style.color]="y.color"></i>
+      Cluster
+      {{ y.cluster + 1 }}
+    </li>
+  </ul>
+</div>
+<div class="map-container">
+  <div class="map-frame">
+    <div id="beginner-map"></div>
   </div>
-  <div class="map-container">
-      <div class="map-frame">
-        <div id="beginner-map"></div>
-      </div>
-    </div>
+</div>

@@ -118,6 +118,7 @@ export class SharedService {
   sendIndicatorSummary(indSum: any) {
     this.indicatorSummary = indSum;
     this.sendIndicatorSummarySubject.next(indSum);
+    console.log(indSum);
   }
 
   sendAccession(acce: any) {

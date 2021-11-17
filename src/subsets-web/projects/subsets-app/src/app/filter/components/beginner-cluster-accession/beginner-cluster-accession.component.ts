@@ -57,7 +57,7 @@ export class BeginnerClusterAccessionComponent
     this.actualpages = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
     this.headerSummary = ['Indicator', 'Mean', 'Min', 'Max', 'Cluster'];
     this.indicatorsAvailables = [];
-    this.variableToEvaluate = ['Mean', 'Max', 'Min'];
+    this.variableToEvaluate = ['Mean', 'Maximum', 'Minimum'];
     this.summSelected = this.variableToEvaluate[0];
   }
 
@@ -99,6 +99,16 @@ export class BeginnerClusterAccessionComponent
         }
       }
     );
+  }
+
+  getClusterListByCrop() {
+    let filterByCrop = this.summary$.filter((prop:any) => prop.crop == this.cropSelected)
+    let listCluster: any[] = [];
+     filterByCrop.forEach((element:any) => {
+      listCluster.push(parseInt(element.cluster))
+    });
+    listCluster = [...new Set(listCluster)];
+    return listCluster;
   }
 
   getValueFromClusterAndIndicator(
@@ -180,8 +190,8 @@ export class BeginnerClusterAccessionComponent
 
     $(this.plots.nativeElement).append('<div id="plote"><svg></svg></div>');
     nv.addGraph(() => {
-      var width = 960,
-        height = 700;
+      var width = 1000,
+        height = 800;
       var chart = nv.models
         .pieChart()
         .x(function (d) {
@@ -203,7 +213,9 @@ export class BeginnerClusterAccessionComponent
 
       chart.pie.dispatch.on('elementClick', (e) => {
         // alert("You've clicked " + e.data.label);
-        this.getAccessionlistByCropAndCluster(e.data.label);
+        let splitVar = e.data.label.split(' ');
+        let realName = splitVar[1] -1
+        this.getAccessionlistByCropAndCluster(realName);
       });
 
       nv.utils.windowResize(chart.update);
@@ -212,13 +224,17 @@ export class BeginnerClusterAccessionComponent
   }
 
   getAccessionlistByCropAndCluster(cluster: any) {
-    let splitVar = cluster.split(' ');
-    let realName = splitVar[1] -1
+    // let splitVar = cluster.split(' ');
+    // let realName = splitVar[1] -1
     let accessionFiltered = this.clusters.filter(
       (prop: any) =>
-        prop.cluster_hac == realName && prop.crop == this.cropSelected
+        prop.cluster_hac == cluster && prop.crop == this.cropSelected
     );
     this.test$ = of(accessionFiltered);
+  }
+
+    sendIndicatorSummary(indSum: any) {
+    this._sharedService.sendIndicatorSummary(indSum);
   }
 
   seeVar() {
@@ -240,7 +256,8 @@ export class BeginnerClusterAccessionComponent
         });
         this.clusters = this.clusters.sort(
           (a: any, b: any) => a.cluster - b.cluster
-        );
+          );
+        this.sendIndicatorSummary(this.clusters);
         console.log(this.clusters);
         // this.drawPlot();
         // this.clustersGrouped$ = of(this.clusters).pipe(

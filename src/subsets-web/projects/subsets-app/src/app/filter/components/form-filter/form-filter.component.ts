@@ -308,6 +308,11 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     this.sharedService.sendPassport(params);
   }
 
+  
+  setMultivariableDataBeginner(mb: any) {
+    this.sharedService.sendMultivariableBeginner(mb);
+  }
+
   getAmountOfAccessions(crop:string) {
     let cropFiltered = this.crops$.filter((prop:any) => prop.name == crop)
 
@@ -397,6 +402,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
           this.countries = prop.country_name;
           console.log(this.filterCrops(prop.crop, 'id'))
           this.crops = this.filterCrops(prop.crop, 'id');
+          this.setCropList(this.crops);
           this.taxon = prop.taxonomy_taxon_name;
           this.institutes = prop.institute_fullname;
           this.biologicalStatus = this.filterBiologicalStatusByName(
@@ -414,6 +420,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
               lstIndicators.push(element.name)
             });
             this.setIndicatorsList(lstIndicators);
+            console.log(ind);
             this.getSubsetsOfAccessionAutomatically(ind);
           }
         }
@@ -423,9 +430,14 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   };
 
   getSubsetsOfAccessionAutomatically = (prop: any) => {
-    console.log(prop);
-    this.sendIndicatorsParameters(prop);
-    this.setTabIndex(1);
+    // this.sendIndicatorsParameters(prop);
+    // this.setTabIndex(1);
+    this.api.generateCluster(prop).subscribe((res: any) => {
+      // console.log(res);
+      // this.sendIndicatorSummary(res);
+      this.setMultivariableDataBeginner(res);
+      this.setTabIndex(1);
+    });
   };
 
   sendIndicatorsParameters(params: any) {

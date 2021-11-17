@@ -59,7 +59,7 @@
         ceil:x.ceil,
         showTicksValues: true,
         tickStep: 1,
-        tickValueStep: 10
+        tickValueStep: x.ceil / 3
       }"
       >
     </ngx-slider>
@@ -138,7 +138,7 @@
     </div>
 
     <button class="btn btn-green mt-3" (click)="getSubsetsOfAccession()">
-        Get Filter
+        Apply Filters
       </button>
   
   </mat-card>
