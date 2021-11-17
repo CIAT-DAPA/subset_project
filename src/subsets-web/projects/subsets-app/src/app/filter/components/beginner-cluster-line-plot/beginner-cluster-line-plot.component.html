@@ -17,6 +17,7 @@
       (ngModelChange)="drawPlot()"
       class="form-control"
       id=""
+      style="width: 30%; padding: 5px; margin: 5px 15px;"
     >
       <option *ngFor="let x of selectedIndicatorList$" value="{{ x.pref }}">
         {{ x.name }}
