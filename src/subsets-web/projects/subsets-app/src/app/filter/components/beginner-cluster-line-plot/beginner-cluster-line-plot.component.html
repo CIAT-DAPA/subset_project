@@ -1,5 +1,5 @@
     <label class="mt-3"  for="indicator-selected">Select an indicator</label>
-    <select [(ngModel)]="indicatorSelected" style="width: 30%; padding: 10px 20px;" (ngModelChange)="drawPlot()" class="form-control" id="">
+    <select [(ngModel)]="indicatorSelected" style="width: 30%; padding: 5px; margin: 5px 15px;" (ngModelChange)="drawPlot()" class="form-control" id="">
       <option *ngFor="let x of selectedIndicatorList$" value="{{x.pref}}">{{x.name}}</option>
     </select>
     <div class="mt-3" #plots></div>
