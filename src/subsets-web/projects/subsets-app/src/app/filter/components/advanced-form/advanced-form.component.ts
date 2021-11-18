@@ -233,7 +233,6 @@ export class AdvancedFormComponent
             // let indexPivotList = this.pivotList.indexOf(res.name);
             // let indexListValues = this.listValues.map(function(item) { return item.indicator; }).indexOf(res.name);
             // if (indexPivotList > -1) {
-            console.log('Hello');
             // this.pivotList.splice(indexPivotList, 1);
             this.listValues = this.listValues.filter(
               (props: any) => props.id != res.id

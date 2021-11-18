@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, AfterContentInit } from '@angular/core';
 import { SharedService } from '../../../core/service/shared.service';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 import { distinctUntilChanged } from 'rxjs/operators';
@@ -10,7 +10,7 @@ import { T } from '@angular/cdk/keycodes';
   templateUrl: './beginner-form.component.html',
   styleUrls: ['./beginner-form.component.scss'],
 })
-export class BeginnerFormComponent implements OnInit, OnChanges {
+export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentInit {
   // Observable with the indicators format
   @Input() indicators$: any;
   listCropWithIndicators: any[];
@@ -56,6 +56,25 @@ export class BeginnerFormComponent implements OnInit, OnChanges {
       'Yam',
       'Soybean',
     ];
+  }
+  ngAfterContentInit() {
+    this._sharedService.sendSubsetSavedObservable.subscribe((data:any) => {
+      let indicatorSelected = data.data
+      setTimeout(() => {
+        indicatorSelected.forEach((element:any) => {
+          this.indicators$.forEach((res:any) => {
+            res.indicators.forEach((prop:any) => {
+              if (prop.name === element.name) {
+                prop.checked = true;
+              }
+            });
+          });
+        });
+        console.log(data.analysis.hyperparameter.min_cluster)
+        this.minCluster =  data.analysis.hyperparameter.min_cluster
+        this.maxCluster =  data.analysis.hyperparameter.n_clusters
+      },6000)
+    })
   }
 
   ngOnInit(): void {}

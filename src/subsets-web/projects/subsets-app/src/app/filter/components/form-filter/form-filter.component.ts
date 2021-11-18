@@ -227,8 +227,11 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   }
 
   sendIndicatorPar(pars: any) {
-    console.log(pars);
     this.sharedService.sendIndicatorsPar(pars);
+  }
+
+  sendSubsetSaved(subset: any) {
+    this.sharedService.sendSubsetSaved(subset);
   }
 
   setTabIndex(indx: number) {
@@ -253,7 +256,9 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
       let paramsInd: any = this.route.snapshot.paramMap.get('indicator');
       let jsonParamsPas = JSON.parse(paramsPassp);
       let jsonParamsInd = JSON.parse(paramsInd);
+      setTimeout(() => {
         this.getAccessionsAutomatically(jsonParamsPas, jsonParamsInd);
+      }, 5000)
     }
 
     this.getCountries();
@@ -390,6 +395,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   }
 
   getAccessionsAutomatically = (prop: any, ind:any) => {
+    this.sendSubsetSaved(ind);
     this.api.getAccessions(prop).subscribe(
       (data) => {
         if (data.length === 0) {
@@ -402,6 +408,8 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
           this.countries = prop.country_name;
           console.log(this.filterCrops(prop.crop, 'id'))
           this.crops = this.filterCrops(prop.crop, 'id');
+          console.log('Hello');
+          console.log(this.crops)
           this.setCropList(this.crops);
           this.taxon = prop.taxonomy_taxon_name;
           this.institutes = prop.institute_fullname;

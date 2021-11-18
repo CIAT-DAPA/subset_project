@@ -87,21 +87,22 @@
   <beginner-cluster-map [cropSelected]="cropSelected" class="mb-4"></beginner-cluster-map>
 </mat-card>
 
-<mat-card class="mb-2" *ngIf="test$ | async">
+<div id="table-accessions" >
+<mat-card class="mb-2" *ngIf="test$.length > 0">
   <mat-card-header>
     <mat-card-title>Accessions</mat-card-title>
   </mat-card-header>
   <div class="" style="width: 100%; display: flex; justify-content: flex-end">
     <button
       mat-button
-      (click)="downloadCsvFormat(clusters)"
+      (click)="downloadCsvFormat(test$)"
       style="color: #3f51b5"
     >
       <i class="fas fa-file-csv"></i> Download csv
     </button>
     <button
       mat-button
-      (click)="downloadJsonFormat(clusters)"
+      (click)="downloadJsonFormat(test$)"
       style="color: #3f51b5"
     >
       <i class="fab fa-js"></i> Download json
@@ -122,14 +123,11 @@
     <tbody>
       <tr
         *ngFor="
-          let value of test$
-            | paginate
-              : {
+          let value of test$  | paginate: {
                   itemsPerPage: 5,
                   currentPage: actualpages[0],
                   id: 'table-accessions'
                 }
-            | async
         "
         style="cursor: pointer; cursor: hand; text-align: center"
         (click)="openAccessionDetail(value)"
@@ -141,10 +139,11 @@
       </tr>
     </tbody>
   </table>
-  <p>Total accessions</p>
+  <p>Total accessions: {{test$.length}}</p>
   <pagination-controls
     (pageChange)="actualpages[0] = $event"
     id="table-accessions"
   >
   </pagination-controls>
 </mat-card>
+</div>

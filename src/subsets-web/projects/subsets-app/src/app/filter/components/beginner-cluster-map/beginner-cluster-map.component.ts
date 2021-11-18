@@ -5,6 +5,7 @@ import {
   AfterViewInit,
   Input,
   OnChanges,
+  SimpleChanges,
 } from '@angular/core';
 import { combineLatest, of, from, zip } from 'rxjs';
 import {
@@ -57,6 +58,7 @@ export class BeginnerClusterMapComponent
   clusters: any = [];
   clustersGrouped$: any;
   analysis$: any = [];
+  summary$: any = [];
   map: any;
   data: any;
   colorClusters: any = [];
@@ -105,10 +107,30 @@ export class BeginnerClusterMapComponent
 
   ngOnInit(): void {}
 
-  ngOnChanges() {
-    // if (this.showMap == true) {
-    //   this.initMap();
-    // }
+  ngOnChanges(changes: SimpleChanges) {
+    console.log(changes);
+    if (changes) {
+      if (changes.cropSelected.firstChange == false) {
+
+        console.log(changes.cropSelected.currentValue);
+        const container = document.getElementById('beginner-map')
+        if (container) {
+          this.clearDiv()
+          this.initMap();
+        }
+      }
+      // this.initMap();
+    }
+  }
+
+    clearDiv() {
+      if (this.map ){
+        this.map.eachLayer(function(layer:any){
+            layer.remove();
+        });
+        this.map.remove();
+        this.map = null;
+    }
   }
 
   getRandomColor() {
@@ -153,8 +175,11 @@ export class BeginnerClusterMapComponent
     this._sharedService.sendMultivariableBeginnerObservable.subscribe(
       (res: any) => {
         this.analysis$ = res.data;
-        this.combineData();
+        this.summary$ = res.summary;
+        // this.combineData();
+        this.mergeAccessionsAndCluster();
         setTimeout(() => {
+          this.clearDiv();
           this.initMap();
         }, 3000)
       }
@@ -162,6 +187,42 @@ export class BeginnerClusterMapComponent
     this._sharedService.sendCropsListObservable.subscribe((res: any) => {
       this.cropList = res;
     });
+  }
+
+  getClusterListByCrop() {
+    let filterByCrop = this.summary$.filter((prop:any) => prop.crop == this.cropSelected)
+    let listCluster: any[] = [];
+     filterByCrop.forEach((element:any) => {
+      listCluster.push(parseInt(element.cluster))
+    });
+    listCluster = [...new Set(listCluster)];
+    return listCluster;
+  }
+
+  mergeAccessionsAndCluster() {
+    let ls:any[] = [];
+    this.analysis$.forEach((element:any) => {
+      let filtered: any[] = this.accessions$.filter((prop:any) => prop.cellid == element.cellid && prop.crop == element.crop_name)
+
+      filtered.forEach(e => e.cluster_hac = element.cluster_hac);
+      ls.push(filtered)
+    });
+    this.clusters = [].concat.apply([], ls);
+    of(this.clusters)
+    .pipe(
+      switchMap((data: any) =>
+        from(data).pipe(
+          groupBy((item: any) => item.cluster_hac),
+          mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
+          reduce((acc: any, val: any) => acc.concat([val]), [])
+        )
+      )
+    )
+    .subscribe((res: any) => {
+      this.data = res;
+      this.data = this.data.sort((a:any, b:any) => a[0] -b[0])
+    });
+    
   }
 
   combineData() {
@@ -205,41 +266,6 @@ export class BeginnerClusterMapComponent
             console.log(this.data);
           });
 
-        // of(this.clusters)
-        //   .pipe(
-        //     switchMap((data: any) =>
-        //       from(data).pipe(
-        //         groupBy((item: any) => item.crop),
-        //         mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
-        //         // reduce((acc: any, val: any) => acc.concat([val]), []),
-
-        //         // map((x:any) => {return x[1]})
-        //         mergeMap((array: any) => {
-        //           // Take each from above array and group each array by manDate
-        //           let newArray: any;
-        //           from(array[1])
-        //             .pipe(
-        //               groupBy((val: any) => val.cluster_hac),
-        //               mergeMap((group) => {
-        //                 return zip(of(group.key), group.pipe(toArray())); // return the group values as Arrays
-        //               }),
-        //               reduce((acc: any, val: any) => acc.concat([val]), [])
-        //             )
-        //             .subscribe((re: any) => {
-        //               newArray = re;
-        //             });
-        //           array[1] = newArray;
-        //           // console.log(array)
-        //           return [array];
-        //         }),
-        //         reduce((acc: any, val: any) => acc.concat([val]), [])
-        //         // toArray()
-        //       )
-        //     )
-        //   )
-        //   .subscribe((res: any) => {
-        //     this.tested$ = res;
-        //   });
       });
   }
 
@@ -280,7 +306,7 @@ export class BeginnerClusterMapComponent
         position: 'bottomright',
       })
       .addTo(this.map);
-
+    this.colorClusters = []
     this.data.forEach((element: any, index:any) => {
       let filtered: any = element[1].filter(
         (prop: any) =>
@@ -425,11 +451,6 @@ export class BeginnerClusterMapComponent
     // });
   }
 
-  onMapReady() {
-    setTimeout(() => {
-      this.map.invalidateSize();
-    }, 0);
-  }
 
   drawMap() {
     let colors = ['green', 'blue', 'yellow', 'red', 'brown', 'gray'];

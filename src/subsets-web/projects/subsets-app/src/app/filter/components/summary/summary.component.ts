@@ -68,7 +68,7 @@ export class SummaryComponent implements OnInit, AfterContentInit {
 
   getNumberOfAccessions(crop: string, methd: string): number {
     let count: number = 0;
-    let objs = this.indicatorValue$.filter((res: any) => res.crop_name == crop);
+    let objs = this.indicatorValue$.filter((res: any) => res.crop == crop);
     if (methd == 'cluster_hac') {
       objs.forEach((element: any) => {
         if (element.cluster_hac >= 0) {
@@ -95,7 +95,7 @@ export class SummaryComponent implements OnInit, AfterContentInit {
 
   getNumberOfClusters(crop: string, methd: string): number {
     let lstResult: any[] = [];
-    let objs = this.indicatorValue$.filter((res: any) => res.crop_name == crop);
+    let objs = this.indicatorValue$.filter((res: any) => res.crop == crop);
     objs.forEach((element: any) => {
       if (methd == 'cluster_hac') {
         if (element.cluster_hac >= 0)

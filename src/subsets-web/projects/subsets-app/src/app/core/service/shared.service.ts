@@ -74,6 +74,11 @@ export class SharedService {
    private sendexperNormalSubject = new Subject<any>();
    sendexpertNormalObservable = this.sendexperNormalSubject.asObservable();
 
+     /* Data from subsets save */
+     subsetSaved: any = [];
+     private sendSubsetSavedSubject = new Subject<any>();
+     sendSubsetSavedObservable = this.sendSubsetSavedSubject.asObservable();
+
   constructor() {}
 
   setTabSelected(tabIndex: number) {
@@ -92,6 +97,11 @@ export class SharedService {
   sendExpertNormal(en: any) {
     this.expertNormal = en;
     this.sendexperNormalSubject.next(en);
+  }
+
+  sendSubsetSaved(en: any) {
+    this.subsetSaved = en;
+    this.sendSubsetSavedSubject.next(en);
   }
 
   sendMultivariableBeginner(mb: any) {
