@@ -24,18 +24,19 @@
   </div>
 </div>
 <br>
-<div class="jumbotron jumbotron-fluid mt-2 ml-2 mr-2">
+<div class="jumbotron mt-2 ml-2 mr-2">
   <p class="lead">Through our automated subsetting method we found <strong>{{headerSummary.length}}</strong> groups (clusters),
     These are described shown below in terms of <strong>{{clusters.length}}</strong> accessions and group characteristics.
   </p>
 </div>
-<div style="display: flex; width: 100%;">
-  <div style="width: 50%;">
+
+<div style="display: flex;" class="row">
+  <div style="" class="col-lg-6 col-sm-12">
     <h4 class="pl-3 pr-3">Click on any section to see the list of accessions according to the cluster.</h4>
     <div class="mt-3" #plots></div>
   </div>
 <!-- Summary table -->
-<div class="mt-3" style="width: 50%;">
+<div class="mt-3" style="" class="col-lg-6 col-sm-12">
   <h2>Summary</h2>
 
   <table class="table mt-2" *ngIf="this.clusters">
@@ -75,6 +76,7 @@
           </pagination-controls> -->
   </table>
 </div>
+
 <!-- End summary table -->
 </div>
 <!-- Pie chart -->

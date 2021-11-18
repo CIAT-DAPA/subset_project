@@ -9,7 +9,18 @@
     width: 100%;
 
 }
-.mat-checkbox-layout, .mat-checkbox-label {
-  white-space: pre-wrap !important;
 
+.mat-checkbox-layout .mat-checkbox-label{
+    white-space: normal !important;
+}
+
+.mat-checkbox label.mat-checkbox-layout{
+    white-space: normal !important;
+}
+label {
+    white-space: normal !important;
+}
+
+span.mat-checkbox-label{
+white-space: normal !important;
 }

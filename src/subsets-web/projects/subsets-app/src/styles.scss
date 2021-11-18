@@ -166,9 +166,9 @@ opacity: 0.8;
 }
 
 /*responsive*/
+/*@media (max-width: 780px) and (min-width: 5px)*/
 
-
-    @media (max-width: 1200px){
+    @media (max-width: 1200px) and (min-width: 401px){
     h1{
         font-size: 24px !important;
         line-height: 0.8em;
@@ -183,14 +183,13 @@ opacity: 0.8;
     .banner#subpage{
         height: 20vh !important;
     }
-
     .img-methodology img
-{
+    {
     width: 90%;
-}
-#methodologies-sections {
+    }
+    #methodologies-sections {
     padding: 10px !important;
-}
+    }
 
     .container{
         width: 90% !important;
@@ -198,18 +197,36 @@ opacity: 0.8;
     .jumbotron {
     width: 85% !important;
     }
-
     #fondo-footer{
         padding: 5%;
     }
-
 #logo-aboutus, #logo-allianceicarda{
         width: 90%;
+    }
 }
 
-  }
-@media (max-width: 800px){
-   
-    
+@media (max-width: 400px){
+    .bg-transparent{
+    width: 90% !important;
+    margin-top: 0 !important;
+    }
+    h1.display-4{
+        font-size: 15px !important;
+        line-height: 0.8em !important;
+    }
+    .bg-transparent p{
+        font-size: 12px !important;
+    }
 }
+/*@media (max-height: 650px){
+.bg-transparent{
+    width: 60% !important;
+    margin-top: 0 !important;
+    }
+}*/
 
+@media (max-height: 600px) and (min-height: 5px){
+        .jumbotron.bg-transparent{
+    margin-top: -2% !important;
+    }
+    }
