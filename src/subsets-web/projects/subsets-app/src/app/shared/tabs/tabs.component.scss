@@ -46,7 +46,7 @@ a {
 .advance-properties {
     width: 100%;
     display: flex;
-    flex-wrap: nowrap;
+    /*flex-wrap: nowrap;*/
     justify-content: space-around
 
 }
@@ -60,3 +60,10 @@ a {
 .mat-tab-header .mat-tab-labels {
     justify-content: left !important;
 }
+/*18/11/2021*/
+ @media (max-width: 950px){
+.mt-3.col-lg-3{
+    padding: 35px !important;
+    }
+
+ }

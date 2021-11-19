@@ -8,7 +8,7 @@
         
         <div class="mt-3" style="width: 98%">
           <mat-form-field class="example-chip-list" >
-            <mat-label>Select a crop (s)</mat-label>
+            <mat-label>Select one or more crops</mat-label>
             <mat-chip-list #chipList aria-label="Crop selection">
               <mat-chip
                 *ngFor="let crop of crops; let i = index"
@@ -46,7 +46,7 @@
         <div class="mb-3">
           <div class="mt-3" style="width: 98%">
             <mat-form-field class="example-chip-list" >
-              <mat-label>Select a taxon name (s)</mat-label>
+              <mat-label>Select one or more taxon names</mat-label>
               <mat-chip-list #taxonList aria-label="Taxon selection">
                 <mat-chip
                   *ngFor="let tax of taxon"
@@ -83,7 +83,7 @@
         </div>
         <div class="mt-3" style="width: 98%">
           <mat-form-field class="example-chip-list" >
-            <mat-label>Select a country (ies)</mat-label>
+            <mat-label>Select one or more countries</mat-label>
             <mat-chip-list #countryList aria-label="Country selection">
               <mat-chip
                 *ngFor="let country of countries"
@@ -149,14 +149,13 @@
         </div>
         <div class="mt-3 mb-3" style="width: 98%">
           <mat-form-field class="example-chip-list" >
-            <mat-label>Select an institute name (s)</mat-label>
+            <mat-label>Select one or more institutes</mat-label>
             <mat-chip-list #instituteList aria-label="Institute selection">
               <mat-chip
                 *ngFor="let inst of institutes"
                 [selectable]="selectable"
                 [removable]="removable"
-                (removed)="remove(inst, institutes)"
-              >
+                (removed)="remove(inst, institutes)">
                 {{ inst }}
                 <mat-icon matChipRemove *ngIf="removable">cancel</mat-icon>
               </mat-chip>
