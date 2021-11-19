@@ -13,7 +13,7 @@ import { NotificationService } from '../../../core/service/notification.service'
 export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChanges {
   indicatorValue$: any[];
   accessions$: any;
-  lstAccessionsFiltered$: any[];
+  lstAccessionsFiltered$:any;
   @Input() params:any;
   cellids:any;
   time:any;
@@ -32,12 +32,13 @@ export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChang
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log(changes.params.currentValue);
-    if (changes.params.currentValue != changes.params.previousValue) {
-      this.time = this.params.time;
-      this.lstAccessionsFiltered$ = this.params.data;
-      this.amountAccessionsFiltered = this.lstAccessionsFiltered$.length;
-    }
+    // if (changes) {
+    //   if (changes.params.firstChange == false) {
+    //   this.time = this.params.time;
+    //   this.lstAccessionsFiltered$ = this.params.data;
+    //   this.amountAccessionsFiltered = this.params.data.length;
+    //   }
+    // }
   /*     data$.forEach((element:any) => {
         this.indicatorValue$.push(element.cellid)
       });
@@ -52,10 +53,13 @@ export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChang
   }
 
   ngAfterContentInit() {
-    /* this._sharedService.sendSubsetObservable.subscribe((data) => {
+    this._sharedService.sendSubsetObservable.subscribe((data) => {
       this.accessions$ = data;
+      this.time = data.time;
+      this.lstAccessionsFiltered$ = data.data;
+      this.amountAccessionsFiltered = data.data.length;
       // console.log(data)
-    }); */
+    });
 
     /* this._sharedService.sendIndicatorsSummaryObservable.subscribe(
       (res: any) => {

@@ -18,7 +18,8 @@ export class SwitchToggleComponent implements OnInit, AfterContentInit {
    // Var to check all complete
    @Input() passportParms: any;
    rangesValues$:any;
-   cropList:any = []
+   @Input() cropList:any = []
+   @Input() accessions:any = [];
   constructor(
     private _sharedService: SharedService,
     private api: IndicatorService,
@@ -32,10 +33,13 @@ export class SwitchToggleComponent implements OnInit, AfterContentInit {
      this._sharedService.sendExpertNormal(en)
    }
 
+   setTabIndex(indx: number) {
+    this._sharedService.setTabSelected(indx);
+  }
+
     // Method to get the indicators list for each category
     getIndicatorsList = () => {
       this.api.getIndicators().subscribe((res:any) => {
-        console.log(res);
         this.indicators$ = res;
         this.indicatorsa$ = res;
       });
@@ -57,10 +61,10 @@ export class SwitchToggleComponent implements OnInit, AfterContentInit {
       this.rangesValues$ = res;
     })
 
-    this._sharedService.sendCropsListObservable.subscribe((res: any) => {
-      this.cropList = res;
-      console.log(this.cropList);
-    });
+    // this._sharedService.sendCropsListObservable.subscribe((res: any) => {
+    //   this.cropList = res;
+    //   console.log(this.cropList);
+    // });
   }
 
 }

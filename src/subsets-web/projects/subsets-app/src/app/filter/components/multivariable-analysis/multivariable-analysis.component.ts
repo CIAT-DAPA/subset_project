@@ -73,6 +73,8 @@ export class MultivariableAnalysisComponent
   summaryReduced: any;
   indicators$: any = [];
   accessionsCombined:any = [];
+  cropList: any = [];
+  cropSelected: any;
 
   constructor(
     private _sharedService: SharedService,
@@ -169,14 +171,10 @@ export class MultivariableAnalysisComponent
   };
 
   ngAfterContentInit() {
-
-/*     this._sharedService.sendMultivariableObservable.subscribe((res: any) => {
-      this.multivariable = res;
-      if (this.multivariable) {
-        this.seeVar();
-        this.namesResponse = Object.keys(this.multivariable[0]);
-      }
-    }); */
+    this._sharedService.sendCropsListObservable.subscribe((res: any) => {
+      this.cropList = res;
+      this.cropSelected = this.cropList[0];
+    });
   }
 
   downloadJsonFormat(data: any) {

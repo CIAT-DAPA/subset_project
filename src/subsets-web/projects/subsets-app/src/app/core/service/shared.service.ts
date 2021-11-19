@@ -79,6 +79,11 @@ export class SharedService {
      private sendSubsetSavedSubject = new Subject<any>();
      sendSubsetSavedObservable = this.sendSubsetSavedSubject.asObservable();
 
+     /* Data from subsets save */
+     subsetAdvanced: any = [];
+     private sendSubsetAdvancedSubject = new Subject<any>();
+     sendSubsetAdvancedObservable = this.sendSubsetAdvancedSubject.asObservable();
+
   constructor() {}
 
   setTabSelected(tabIndex: number) {
@@ -94,6 +99,11 @@ export class SharedService {
     this.sendSubsetSubject.next(subset);
   }
 
+  sendSubsetAdvanced(subset: any) {
+    this.subsetAdvanced = subset;
+    this.sendSubsetAdvancedSubject.next(subset);
+  }
+
   sendExpertNormal(en: any) {
     this.expertNormal = en;
     this.sendexperNormalSubject.next(en);
@@ -105,6 +115,7 @@ export class SharedService {
   }
 
   sendMultivariableBeginner(mb: any) {
+    console.log('Here!')
     this.multivariableBeginner = mb;
     this.sendmultivariableBeginnerSubject.next(mb);
   }

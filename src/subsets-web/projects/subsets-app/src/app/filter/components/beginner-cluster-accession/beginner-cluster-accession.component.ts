@@ -32,7 +32,7 @@ export class BeginnerClusterAccessionComponent
   accessions$: any;
   cropSelected: any;
   summSelected: any;
-  clusters: any = [];
+  clusters: any[];
   clustersGrouped$: any;
   analysis$: any = [];
   summary$: any = [];
@@ -45,7 +45,7 @@ export class BeginnerClusterAccessionComponent
   headerSummary: any[];
   indicatorsAvailables: any[];
   variableToEvaluate:any[];
-  @ViewChild('plots') private plots!: ElementRef;
+  @ViewChild('plots_pie') private plots!: ElementRef;
   constructor(
     private api: IndicatorService,
     private _sharedService: SharedService,
@@ -59,6 +59,7 @@ export class BeginnerClusterAccessionComponent
     this.indicatorsAvailables = [];
     this.variableToEvaluate = ['Mean', 'Maximum', 'Minimum'];
     this.summSelected = this.variableToEvaluate[0];
+    this.clusters = [];
   }
 
   ngAfterContentInit() {
@@ -70,12 +71,14 @@ export class BeginnerClusterAccessionComponent
     // Get the accessions data
     this._sharedService.sendAccessionsObservable.subscribe((data) => {
       this.accessions$ = data;
+      console.log('accessions')
     });
 
     // Get the clustering analysis from beginner form
     this._sharedService.sendMultivariableBeginnerObservable.subscribe(
       (res: any) => {
         // set clustering analysis data
+        console.log(res);
         this.analysis$ = res.data;
         // Set summary data (Min, Max and Mean)
         this.summary$ = res.summary;
@@ -97,6 +100,7 @@ export class BeginnerClusterAccessionComponent
         this.headerSummary = listTest.sort((n1: any, n2: any) => n1 - n2);
         this.mergeAccessionsAndCluster();
         if (this.cropSelected) {
+          console.log('cropSelected')
           this.drawPlot(this.cropSelected);
           // this.test$ = [];
         }
@@ -205,7 +209,9 @@ export class BeginnerClusterAccessionComponent
           return d.value;
         })
         .showLabels(true);
-        console.log(data);
+        console.log('plot')
+        console.log(this.accessions$);
+        console.log(this.analysis$);
       d3.select(this.chartElem.nativeElement)
         .select('#plote svg')
         .attr('width', width)

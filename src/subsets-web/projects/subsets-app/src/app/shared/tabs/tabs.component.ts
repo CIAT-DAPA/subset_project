@@ -152,8 +152,11 @@ export class TabsComponent implements OnInit, AfterContentInit {
     this._sharedService.sendMultivariable(mul);
   }
 
+  setSubsetAdvanced(subset: any) {
+    this._sharedService.sendSubsetAdvanced(subset);
+  }
+
   setSubsets(accession: any) {
-    console.log(accession)
     this._sharedService.sendSubsets(accession);
   }
 
@@ -174,10 +177,15 @@ export class TabsComponent implements OnInit, AfterContentInit {
     });
     this._sharedService.getTabSelected().subscribe((tabIndex: number) => {
       this.selectdIndex = tabIndex;
+      console.log(tabIndex);
       if (this.expertNormalMode$ === true) {
         this.buildSubsets();
       }/*  */
     });
+  }
+
+  selectedIndexChange(val :number ){
+    this.selectdIndex=val;
   }
 
   buildSubsets = () => {

@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnChanges, AfterContentInit } from '@angular/core';
+import { Component, Input, OnInit, OnChanges, AfterContentInit, SimpleChanges } from '@angular/core';
 import { SharedService } from '../../../core/service/shared.service';
 import { IndicatorService } from '../../../indicator/service/indicator.service';
 import { distinctUntilChanged } from 'rxjs/operators';
@@ -12,10 +12,11 @@ import { T } from '@angular/cdk/keycodes';
 })
 export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentInit {
   // Observable with the indicators format
-  @Input() indicators$: any;
+  @Input() indicators$: any = [];
   listCropWithIndicators: any[];
   listCropAvailable: any[] =[];
   @Input() cropList: any = [];
+  @Input() accessions: any = [];
   @Input() formActive: boolean = false;
   // Observable with the indicators period format
   @Input() indicatorPeriods$: any;
@@ -56,6 +57,7 @@ export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentIni
       'Yam',
       'Soybean',
     ];
+    console.log('Contructor')
   }
   ngAfterContentInit() {
     this._sharedService.sendSubsetSavedObservable.subscribe((data:any) => {
@@ -70,7 +72,6 @@ export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentIni
             });
           });
         });
-        console.log(data.analysis.hyperparameter.min_cluster)
         this.minCluster =  data.analysis.hyperparameter.min_cluster
         this.maxCluster =  data.analysis.hyperparameter.n_clusters
       },6000)
@@ -79,20 +80,26 @@ export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentIni
 
   ngOnInit(): void {}
 
-  ngOnChanges() {
+  ngOnChanges(changes: SimpleChanges) {
     if (this.formActive === false) {
       this.cropList.forEach((element:any) => {
         if (this.listCropWithIndicators.includes(element)) {
           this.listCropAvailable.push(element)
         } 
       });
-      this.indicators$.forEach((element: any) => {
-        element.checked = false;
-        element.indicators.forEach((prop: any) => {
-          prop.checked = false;
+        this.indicators$.forEach((element: any) => {
+          element.checked = false;
+          element.indicators.forEach((prop: any) => {
+            prop.checked = false;
+          });
         });
-      });
+        // if (changes.indicators$.firstChange == false) {
+ 
     }
+  }
+
+  setAccession(accession: any) {
+    this._sharedService.sendAccession(accession);
   }
 
   setTabIndex(indx: number) {
@@ -109,6 +116,10 @@ export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentIni
 
   sendIndicatorsParameters(params: any) {
     this._sharedService.sendIndicators(params);
+  }
+
+  setCropList(crop: any) {
+    this._sharedService.sendCropList(crop);
   }
 
   // sendIndicatorSummary(indSum: any) {
@@ -196,6 +207,8 @@ export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentIni
     this.sendIndicatorsParameters(request);
     this.api.generateCluster(request).subscribe((res: any) => {
       console.log(res);
+      this.setCropList(this.cropList);
+      this.setAccession(this.accessions);
       // this.sendIndicatorSummary(res);
       this.setMultivariableDataBeginner(res);
       this.setTabIndex(1);

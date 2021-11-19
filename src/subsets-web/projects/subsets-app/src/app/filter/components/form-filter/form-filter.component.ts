@@ -350,7 +350,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
 
   getAccessions = () => {
     this.passportParams.crop = this.filterCrops(this.crops, 'name');
-    this.setCropList(this.crops);
+    // this.setCropList(this.crops);
     this.passportParams.country_name = this.countries;
     this.passportParams.institute_fullname = this.institutes;
     this.passportParams.taxonomy_taxon_name = this.taxon;

@@ -1,4 +1,4 @@
-<div class="jumbotron jumbotron-fluid mt-2 ml-2 mr-2">
+<div *ngIf="lstAccessionsFiltered$.length > 50" class="jumbotron jumbotron-fluid mt-2 ml-2 mr-2">
   <p class="lead">Actually the tool found {{lstAccessionsFiltered$.length}} accessions, but you can reduce that number through of clustering methodologies used by us. Please go to Cluster tab. 
   </p>
 </div>

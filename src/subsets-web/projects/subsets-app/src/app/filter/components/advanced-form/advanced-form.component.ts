@@ -97,6 +97,12 @@ export class AdvancedFormComponent
     this._sharedService.setTabSelected(indx);
   }
 
+  
+  setCropList(crop: any) {
+    this._sharedService.sendCropList(crop);
+  }
+
+
   // Method to update the checked list
   updateAllComplete(obj: any, field: boolean) {
     // if (obj.category != "Other") {
@@ -321,6 +327,7 @@ export class AdvancedFormComponent
       passport: this.passportParms,
     };
     console.log(request);
+    this.setCropList(this.cropList);
     this.sendIndicatorsParameters(request);
     this.setTabIndex(1);
   };

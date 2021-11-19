@@ -1,4 +1,4 @@
-<mat-tab-group mat-align-tabs="start" [selectedIndex]="selectdIndex">
+<mat-tab-group mat-align-tabs="start" (selectedIndexChange)="selectedIndexChange($event)" [selectedIndex]="selectdIndex">
   <mat-tab label="General">
     <!-- <mat-progress-bar mode="determinate" value="40"></mat-progress-bar> -->
     <div *ngIf="accessions$.length > 0" class="">
@@ -89,7 +89,7 @@
       (selectedTabChange)="tabClick($event)"
     >
       <mat-tab label="Accessions">
-        <table-outcomes [params]="subsets"></table-outcomes>
+        <table-outcomes></table-outcomes>
       </mat-tab>
       <mat-tab label="Plots">
         <app-plot-outcomes [quantileData]="quantileData"></app-plot-outcomes>
@@ -102,11 +102,11 @@
       </mat-tab>
     </mat-tab-group>
   </mat-tab>
-  <mat-tab>
+  <mat-tab  *ngIf="expertNormalMode$">
     <ng-template mat-tab-label>
-      <span>Subsets</span>
+      <span>Clustering analysis</span>
     </ng-template>
-    <div *ngIf="expertNormalMode$">
+    <div>
       <div style="width: 100%" class="mt-2 mr-2 advance-properties">
         <mat-card>
           <div class="" style="width: 48%">
@@ -197,7 +197,7 @@
           </div>
         </mat-card>
       </div>
-      <button class="btn btn-green mt-3" (click)="buildClusters()">
+      <button class="btn btn-green mt-3 ml-3" (click)="buildClusters()">
         Generate clusters
       </button>
       <div
@@ -223,6 +223,13 @@
         [multivariable]="clusterData"
       ></app-multivariable-analysis>
     </div>
+    <!-- <beginner-cluster *ngIf="!expertNormalMode$"></beginner-cluster> -->
+  </mat-tab>
+
+  <mat-tab  *ngIf="!expertNormalMode$">
+    <ng-template mat-tab-label>
+      <span>Subsets</span>
+    </ng-template>
     <beginner-cluster *ngIf="!expertNormalMode$"></beginner-cluster>
   </mat-tab>
   <mat-tab label="Summary">
