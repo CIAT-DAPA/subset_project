@@ -8,8 +8,7 @@
           [checked]="x.checked"
           [indeterminate]="someComplete(x)"
           (change)="setAll($event.checked, x.category,x)"
-          >{{ x.category }}</mat-checkbox
-        >
+          >{{ x.category }}</mat-checkbox>
       </p>
       <section class="ml-3" *ngFor="let y of x.indicators">
         <p>

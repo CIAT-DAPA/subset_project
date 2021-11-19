@@ -142,8 +142,9 @@
             </div>
           </div>
         </mat-card>
-        <mat-card class="mt-3">
-          <div style="width: 48%">
+       
+        <mat-card class="mt-3 col-lg-3 col-sm-12" style="padding: 8px;">
+          <div style="">
             <mat-checkbox
               class="example-margin"
               [checked]="hdbscanCheck"
@@ -167,8 +168,9 @@
             </div>
           </div>
         </mat-card>
-        <mat-card class="mt-3" style="height: 200px">
-          <div style="width: 48%">
+        
+        <mat-card class="mt-3 col-lg-3 col-sm-12" style="height: 200px; padding: 8px;">
+          <div style="">
             <mat-checkbox
               class="example-margin"
               [checked]="agglomerativeCheck"
@@ -183,9 +185,7 @@
             [hidden]="!agglomerativeCheck"
           >
             <div style="width: 100%">
-              <label for="period" class="form-label"
-                >Add a range of number of clusters</label
-              >
+              <label for="period" class="form-label">Add a range of number of clusters</label>
               <ngx-slider
                 [(value)]="hyperParameters.min_cluster"
                 id="period"
