@@ -107,9 +107,10 @@
       <span>Subsets</span>
     </ng-template>
     <div *ngIf="expertNormalMode$">
-      <div style="width: 100%" class="mt-2 mr-2 advance-properties">
-        <mat-card>
-          <div class="" style="width: 48%">
+      <div style="" class="row mt-2 mr-2 advance-properties">
+
+        <mat-card class="mt-3 col-lg-3 col-sm-12" style="padding: 8px;">
+          <div class="" style="">
             <mat-checkbox
               class="example-margin"
               [checked]="dbscanCheck"
@@ -142,8 +143,9 @@
             </div>
           </div>
         </mat-card>
-        <mat-card class="mt-3">
-          <div style="width: 48%">
+       
+        <mat-card class="mt-3 col-lg-3 col-sm-12" style="padding: 8px;">
+          <div style="">
             <mat-checkbox
               class="example-margin"
               [checked]="hdbscanCheck"
@@ -167,8 +169,9 @@
             </div>
           </div>
         </mat-card>
-        <mat-card class="mt-3" style="height: 200px">
-          <div style="width: 48%">
+        
+        <mat-card class="mt-3 col-lg-3 col-sm-12" style="height: 200px; padding: 8px;">
+          <div style="">
             <mat-checkbox
               class="example-margin"
               [checked]="agglomerativeCheck"
@@ -183,9 +186,7 @@
             [hidden]="!agglomerativeCheck"
           >
             <div style="width: 100%">
-              <label for="period" class="form-label"
-                >Add a range of number of clusters</label
-              >
+              <label for="period" class="form-label">Add a range of number of clusters</label>
               <ngx-slider
                 [(value)]="hyperParameters.min_cluster"
                 id="period"
@@ -197,7 +198,7 @@
           </div>
         </mat-card>
       </div>
-      <button class="btn btn-green mt-3" (click)="buildClusters()">
+      <button class="btn btn-green mt-3" (click)="buildClusters()" style="margin:3%;">
         Generate clusters
       </button>
       <div

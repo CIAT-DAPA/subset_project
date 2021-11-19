@@ -18,43 +18,26 @@
 </div>
 <div class="container bg-transparent">
   <p
-    class=""
-    style="
+    class=""    style="
       text-align: justify;
       font-size: 22px;
       line-height: 1.2em;
       font-weight: 200;
-      padding: 2%;
-    "
+      padding: 2%;"
   >
-    In this section, we will clarify the methodology used to perform a cluster
-    analysis on indicators data. The analysis can be done on two types of data:
-    multi-year average of monthly data for the years 1983 – 2016, and monthly
-    data for each year from 1983 to 2016. In the Basic mode, the analysis is
-    done only on the cross-year average of monthly data. The user is not allowed
-    to select a custom range for the values of the selected indicators. The
-    clustering algorithm, which in this case is the Hierarchical Agglomerative
-    Clustering (HAC), is thus applied on the whole selected indicators data. In
-    the Advanced mode, the analysis can be done on the two aforementioned types:
-    the multi-year average of monthly data for the years 1983 – 2016, and the
-    monthly data for each year from 1983 to 2016. In this mode, the user can
-    select custom ranges for each selected indicator data. The clustering
-    algorithms that can be used include: Density-Based Spatial Clustering of
-    Applications with Noise (DBSCAN), Hierarchical Density-Based Spatial
-    Clustering of Applications with Noise (HDBSCAN) and Hierarchical
-    Agglomerative Clustering (HAC).
+    In this section, we will describe the methodology used to run a cluster analysis on indicators data. The analysis can be done on two types of data: multi-year average of monthly data for the years 1983–2016, and monthly data for each year from 1983 to 2016. In the Basic mode, the analysis is done only on the cross-year average of monthly data. The user is not allowed to select a custom range for the values of the selected indicators. The clustering algorithm, which in this case is the Hierarchical Agglomerative Clustering (HAC), is thus applied on the whole selected indicators data. <br /><br />
+In the Advanced mode, the analysis can be done on the two aforementioned types: the multi-year average of monthly data for the years 1983–2016, and the monthly data for each year from 1983 to 2016. In this mode, the user can select custom ranges for each selected indicator data. The clustering algorithms that can be used include: Density-Based Spatial Clustering of Applications with Noise (DBSCAN), Hierarchical Density-Based Spatial Clustering of Applications with Noise (HDBSCAN) and Hierarchical Agglomerative Clustering (HAC).
     <br />
   </p>
   <div class="row text-center" id="methodologies-sections">
     <div class="col-lg-8">
       <div class="">
         <p class="" style="text-align: justify;font-family: Roboto, sans-serif !important; text-indent: 10px;">
-         
-          <strong>1. DBSCAN - Density-Based Spatial Clustering of Applications with Noise</strong>: This technique is used to find arbitrary shaped clusters and to detect outliers (i.e. clusters with noise). DBSCAN requires two key parameters:
+          <strong>1. DBSCAN - Density-Based Spatial Clustering of Applications with Noise: </strong>This technique is used to find arbitrary shaped clusters and to detect outliers (i.e., clusters with noise). DBSCAN requires two key parameters:
         </p>
         <ul>
           <li>
-            <strong>EPS: </strong> Specifies how close points should be to each other to be considered neighbors and a part of a cluster. If the distance between two points is lower or equal to eps, these two points are considered neighbors.
+            <strong>EPS: </strong> It specifies how close points should be to each other to be considered neighbors and a part of a cluster. If the distance between two points is lower or equal to EPS, these two points are considered neighbors.
           </li>
           <br />
           <li>
@@ -84,10 +67,8 @@
 
     <div class="col-lg-8">
       <div class="">
-        <br /><br />
         <p class="" style=" text-align: justify; font-family: Roboto, sans-serif !important; text-indent: 10px;">
-          
-          <strong>2. HDBSCAN - Hierarchical Density-Based Spatial Clustering of Applications with Noise</strong>: This algorithm extends DBSCAN by converting it into a hierarchical clustering algorithm. The parameter that should be defined for our implementation is <strong>Minimum Cluster Size</strong>, which specifies the minimum number of points that a cluster should have. By default, this parameter is set to <strong>10</strong>.
+          <strong>2. HDBSCAN - Hierarchical Density-Based Spatial Clustering of Applications with Noise: </strong>This algorithm extends DBSCAN by converting it into a hierarchical clustering algorithm. The parameter that should be defined for implementation is <strong>Minimum Cluster Size</strong>, which specifies the minimum number of points that a cluster should have. By default, this parameter is set to <strong>10</strong>.
         </p>
       </div>
     </div>
@@ -96,9 +77,8 @@
   <div class="row text-center" id="methodologies-sections">
     <div class="col-lg-8">
       <div class="">
-        <br /><br />
         <p class="" style=" text-align: justify; font-family: Roboto, sans-serif !important; text-indent: 10px;">
-          <strong>3. HAC - Hierarchical Agglomerative Clustering </strong>:HAC uses a bottom-up approach to form clusters. It starts by considering each point as a cluster, and merges pairs of clusters as moving up the hierarchy. The algorithm keeps merging until reaching the optimal number of clusters. We rely on the <strong>Silhouette</strong> method to define that optimal number of clusters from a user-entered range. This range is set by default to [2 – 5].
+          <strong>3. HAC - Hierarchical Agglomerative Clustering: </strong>HAC uses a bottom-up approach to form clusters. It starts by considering each point as a cluster, and merges pairs of clusters as moving up the hierarchy. The algorithm keeps merging until reaching the optimal number of clusters. We rely on the <strong>Silhouette</strong> method to define that optimal number of clusters from a user-entered range. This range is set by default to [2–5].
         </p>
       </div>
     </div>
@@ -110,34 +90,3 @@
     </div>
   </div>
 </div>
-
-<!--   <hr>
-      <div class="background">
-        <div class="image-center">
-          <img
-            src="../../../../assets/images/custom_indicator.png"
-            alt="dbscan clustering"
-            width="550px"
-            height="250px"
-          />
-        </div>
-        <div class="content">
-          <p
-            class=""
-            style="
-              text-align: justify;
-              font-family: Roboto, sans-serif !important;
-            "
-          >
-            Lorem Ipsum is simply dummy text of the printing and typesetting
-            industry. Lorem Ipsum has been the industry's standard dummy text ever
-            since the 1500s, when an unknown printer took a galley of type and
-            scrambled it to make a type specimen book. It has survived not only
-            five centuries, but also the leap into electronic typesetting,
-            remaining essentially unchanged. It was popularised in the 1960s with
-            the release of Letraset sheets containing Lorem Ipsum passages, and
-            more recently with desktop publishing software like Aldus PageMaker
-            including versions of Lorem Ipsum.
-          </p>
-        </div>
-      </div> -->
