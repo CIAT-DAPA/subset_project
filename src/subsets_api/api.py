@@ -44,6 +44,7 @@ def accessions_list():
                "country_name": x.country_name,
                "institute_fullname": x.institute_fullname,
                "institute_acronym": x.institute_acronym,
+               "id": x.id,
                "crop": x.crop.name,
                "geo_lon": x.geo_lon,
                "geo_lat": x.geo_lat,
@@ -152,7 +153,14 @@ def indicator_list():
     indicator = Indicator.objects.all().select_related()
 
     start = time.time()
-    result = [{"name": x.name, "id": x._id, "pref": x.pref, "indicator_type": x.indicator_type.name, "crop": x.crop.name, "category": x.category.name, "checked": False}
+    result = [{"name": x.name,
+                "id": x._id, 
+                "pref": x.pref, 
+                "indicator_type": x.indicator_type.name, 
+                "crop": x.crop.name, 
+                "category": x.category.name, 
+                "checked": False,
+                "unit": x.unit}
               for x in indicator]
     rows = len(result)
     end = time.time()
@@ -188,7 +196,7 @@ def getNameIndicatorByPref(pref):
     indicator = Indicator.objects(pref=pref).first()
     print(indicator)
 
-def getAccessionsFiltered(crops, accessions,cell_ids,indicators_params):
+def getAccessionsFiltered(crops,cell_ids,indicators_params):
     """ Query to filter accessions in order to indicators params """
     # getAccessionByCrop('African yam bean')
     multivariate_values = []
@@ -201,16 +209,15 @@ def getAccessionsFiltered(crops, accessions,cell_ids,indicators_params):
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
              # Filtering values of indicator to multivariate analysis
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
-            rows_indicator = len(indicator_periods_values)
 
             # loop for each crop present in the query
             for crop in crops:
-                cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
+                # cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
                 # cellid list from crop
-                cell_id_crop = list(set(cell_id_crop))
+                # cell_id_crop = list(set(cell_id_crop))
                 # Dict to multivariate analysis
                 multivariate_values.extend([{
-                    "crop": crop['name'],
+                    "crop": crop['crop'],
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid,
@@ -227,10 +234,10 @@ def getAccessionsFiltered(crops, accessions,cell_ids,indicators_params):
                     "month11": x.month11,
                     "month12": x.month12,
                     "period": x.indicator_period.period}
-                    for x in indicator_periods_values if  x.cellid in cell_id_crop])
+                    for x in indicator_periods_values if  x.cellid in cell_ids])
         elif indicator['type'] == 'specific':
-            print(indicator['crop'])
-            cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
+            crp = indicator['crop']
+            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp is x['crop']]
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
 
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
@@ -262,12 +269,9 @@ def getAccessionsFiltered(crops, accessions,cell_ids,indicators_params):
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
             # loop for each crop present in the query
             for crop in crops:
-                cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
-                # cellid list from crop
-                cell_id_crop = list(set(cell_id_crop))
                 # Dict to multivariate analysis
                 multivariate_values.extend([{
-                    "crop": crop['name'],
+                    "crop": crop['crop'],
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid,
@@ -284,7 +288,7 @@ def getAccessionsFiltered(crops, accessions,cell_ids,indicators_params):
                     "month11": x.value,
                     "month12": x.value,
                     "period": x.indicator_period.period}
-                    for x in indicator_periods_values if  x.cellid in cell_id_crop])
+                    for x in indicator_periods_values if  x.cellid in cell_ids])
 
     return multivariate_values
 
@@ -296,11 +300,13 @@ def getAccessionsFiltered(crops, accessions,cell_ids,indicators_params):
 def subset():
     # Start
     total_time_subsets = -1
-    total_time_quantile = -1
     lst_df_univariate = []
     univariate_parsed = []
     data = request.get_json()
     # Passport paramns
+    cellid_ls = data['cellid_list']
+    cellids = [int(cell) for x in cellid_ls for cell in x['cellids']]
+    cellids = list(set(cellids))
     passport_params = data['passport']
     # Indicators params
     indicators_params = data['data']
@@ -311,24 +317,9 @@ def subset():
     ob = [k for k in indicators_params[0] if "month" in str(k)]
 
     content = {}
-    print(ob)
-    #Get crops
-    crops = Crop.objects(Q(id__in = passport_params['crop']))
-    result_crops = [{"id":x.id,"name": x.name} for x in crops]
-
-    # Filter clauses to get accessions in order to parameters
-    filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
-                      for filter in passport_params if len(passport_params[filter]) > 0]
-    # Query to get accessions
-    accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
-
-    # Cellids found in the accessions objects
-    cell_ids = [x.cellid for x in accessions if x.cellid]
-    # Reduce cellid list
-    cell_ids = list(set(cell_ids))
 
     start_time_subsets = time.time()
-    result = getAccessionsFiltered(crops=result_crops, accessions=accessions,cell_ids=cell_ids,indicators_params=indicators_params)
+    result = getAccessionsFiltered(crops=cellid_ls,cell_ids=cellids,indicators_params=indicators_params)
     print('Done!')
   
     if result:
@@ -353,26 +344,8 @@ def subset():
         # Data for univariate analysis
         univariate_data = pd.concat(lst_df_univariate)
         # print(univariate_data)
-        col_one_list = list(set(univariate_data['cellid'].tolist()))
-        accessions_list = []
-        accessions_list.extend([{   
-                "name": x.name,
-                "number": x.number,
-                "acq_date": x.acq_date,
-                "coll_date": x.coll_date,
-                "country_name": x.country_name,
-                "institute_fullname": x.institute_fullname,
-                "institute_acronym": x.institute_acronym,
-                "crop": x.crop.name,
-                "geo_lon": x.geo_lon,
-                "geo_lat": x.geo_lat,
-                "geo_ele": x.geo_ele,
-                "taxonomy_genus": x.taxonomy_genus,
-                "taxonomy_sp_author": x.taxonomy_sp_author,
-                "taxonomy_species": x.taxonomy_species,
-                "taxonomy_taxon_name": x.taxonomy_taxon_name,
-                "cellid": x.cellid}
-            for x in accessions if x.cellid in col_one_list])
+        accessions_list = list(set(univariate_data['cellid'].tolist()))
+        
 
         univariate_result = univariate_data.to_json(orient = "records")
         univariate_parsed = json.loads(univariate_result)
@@ -450,7 +423,9 @@ def subset():
 def generate_clusters():
     data = request.get_json()
      # Passport paramns
-    passport_params = data['passport']
+    cellid_ls = data['cellid_list']
+    cellids = [int(cell) for x in cellid_ls for cell in x['cellids']]
+    cellids = list(set(cellids))
     # Indicators params
     indicators_params = data['data']
     # Multivariate params
@@ -465,7 +440,7 @@ def generate_clusters():
     setSummary = analysis_params['summary']
     
     if setSummary:
-
+        first_time = time.time()
         nYears = (period[1]+1) - period[0]
         # Months list calculated
         # ob = [k for k in indicators_params[0] if "month" in str(k)]
@@ -473,38 +448,21 @@ def generate_clusters():
         nMonths = 12
         content = {}
 
-        #Get crops
-        crops = Crop.objects(Q(id__in = passport_params['crop']))
-        result_crops = [{"id":x.id,"name": x.name} for x in crops]
-        
-        # Filter clauses to get accessions in order to parameters
-        filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
-                        for filter in passport_params if len(passport_params[filter]) > 0]
-        # Query to get accessions
-        accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
-
-        # Cellids found in the accessions objects
-        cell_ids = [x.cellid for x in accessions if x.cellid]
-        # Reduce cellid list
-        cell_ids = list(set(cell_ids))
-
         multivariate_values = []
         for indicator in indicators_params:
             # Indicator periods ids
             periods_ids = indicator["indicator"]
             # Clauses to get data for multivariate analysis
             if indicator['type'] == 'generic':
-                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
                     # Filtering values of indicator to multivariate analysis
                 indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
                 # loop for each crop present in the query
-                for crop in crops:
-                    cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
-                    # cellid list from crop
-                    cell_id_crop = list(set(cell_id_crop))
-                    # Dict to multivariate analysis
+                for crop in cellid_ls:
+                    
                     multivariate_values.extend([{
-                        "crop": crop['name'],
+                        # "crop": crop['name'],
+                        "crop": crop['crop'],
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
                         "cellid": x.cellid,
@@ -520,10 +478,11 @@ def generate_clusters():
                         "month10": x.month10,
                         "month11": x.month11,
                         "month12": x.month12}
-                        for x in indicator_periods_values if  x.cellid in cell_id_crop])
+                        for x in indicator_periods_values if  x.cellid in crop['cellids']])
             elif indicator['type'] == 'specific':
-                print(indicator['crop'])
-                cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
+                crp = indicator['crop']
+                # cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
+                cell_id_crop = [cell for x in cellid_ls for cell in x['cellids'] if crp is x['crop']]
                 indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
 
                 indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
@@ -548,17 +507,19 @@ def generate_clusters():
                     for x in indicator_periods_values if  x.cellid in cell_id_crop])
             elif indicator['type'] == 'extracted':
                 print(indicator['name'])
-                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
                     # Filtering values of indicator to multivariate analysis
                 indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
                 # loop for each crop present in the query
-                for crop in crops:
-                    cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
+                # for crop in crops:
+                for crop in cellid_ls:
+                    # cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
                     # cellid list from crop
-                    cell_id_crop = list(set(cell_id_crop))
+                    # cell_id_crop = list(set(cell_id_crop))
                     # Dict to multivariate analysis
                     multivariate_values.extend([{
-                        "crop": crop['name'],
+                        # "crop": crop['name'],
+                        "crop": crop['crop'],
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
                         "cellid": x.cellid,
@@ -574,7 +535,7 @@ def generate_clusters():
                         "month10": x.value,
                         "month11": x.value,
                         "month12": x.value}
-                        for x in indicator_periods_values if  x.cellid in cell_id_crop])
+                        for x in indicator_periods_values if  x.cellid in crop['cellids']])
 
         # Create a df from multivariate analysis dict
         if multivariate_values:
@@ -583,9 +544,7 @@ def generate_clusters():
                 lst_summary = []
                 lst_indicators = []
                 lst_months = []
-                soil_indicators_list = []
                 others_columns = []
-                print("min cluster: " + str(hyperparameters['min_cluster']) + " max cluster: " + str(hyperparameters['n_clusters']))
                 analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, max_cluster=hyperparameters['n_clusters'], min_cluster=hyperparameters['min_cluster'])
                 # from df to dict
                 response_analysis = analysis.to_json(orient='records')
@@ -606,7 +565,6 @@ def generate_clusters():
                 lst_months = list(set(lst_months))
                 lst_months_quantiles = list(set(lst_months))
                 lst_months.sort()
-                print(others_columns)
 
                 # Calculate Min Max Mean and Sd
                 # for methd in others_columns:
@@ -714,11 +672,14 @@ def generate_clusters():
                     'summary': final_dictionary
                 }
                 print('Method 1')
+                last_time = time.time()
+                total_time = last_time - first_time
+                print(total_time)
             except ValueError as ve:
                 print(str(ve))
                 print("Exception")
     else:
-
+        first_time = time.time()
         lst_df_multivariate = []
         nYears = (period[1]+1) - period[0]
         # Months list calculated
@@ -748,18 +709,20 @@ def generate_clusters():
             multivariate_values = []
             # Clauses to get data for multivariate analysis
             if indicator['type'] == 'generic':
-                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
                     # Filtering values of indicator to multivariate analysis
                 indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
                 print(str(len(indicator_periods_values)))
                 # loop for each crop present in the query
-                for crop in crops:
-                    cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
+                # for crop in crops:
+                for crop in cellid_ls:
+                    # cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
                     # cellid list from crop
-                    cell_id_crop = list(set(cell_id_crop))
+                    # cell_id_crop = list(set(cell_id_crop))
                     # Dict to multivariate analysis
                     multivariate_values.extend([{
-                        "crop": crop['name'],
+                        # "crop": crop['name'],
+                        "crop": crop['crop'],
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
                         "cellid": x.cellid,
@@ -777,10 +740,11 @@ def generate_clusters():
                         "month12": x.month12,
                         "period": x.indicator_period.period
                         }
-                        for x in indicator_periods_values if  x.cellid in cell_id_crop])
+                        for x in indicator_periods_values if  x.cellid in crop['cellids']])
             elif indicator['type'] == 'specific':
-                print(indicator['crop'])
-                cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
+                crp = indicator['crop']
+                cell_id_crop = [cell for x in cellid_ls for cell in x['cellids'] if crp is x['crop']]
+                # cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
                 indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
 
                 indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
@@ -807,17 +771,17 @@ def generate_clusters():
 
             elif indicator['type'] == 'extracted':
                 print(indicator['name'])
-                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
                     # Filtering values of indicator to multivariate analysis
                 indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
                 # loop for each crop present in the query
-                for crop in crops:
-                    cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
+                for crop in cellid_ls:
+                    # cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
                     # cellid list from crop
-                    cell_id_crop = list(set(cell_id_crop))
+                    # cell_id_crop = list(set(cell_id_crop))
                     # Dict to multivariate analysis
                     multivariate_values.extend([{
-                        "crop": crop['name'],
+                        "crop": crop['crop'],
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
                         "cellid": x.cellid,
@@ -834,7 +798,7 @@ def generate_clusters():
                         "month11": x.value,
                         "month12": x.value,
                         "period": x.indicator_period.period}
-                        for x in indicator_periods_values if  x.cellid in cell_id_crop])
+                        for x in indicator_periods_values if  x.cellid in crop['cellids']])
             # Create a df from multivariate analysis dict
             df_multivariate = pd.DataFrame([s for s in multivariate_values])
             for x in range(len(df_multivariate)):
@@ -843,7 +807,6 @@ def generate_clusters():
                     if indicator[colums][1] < df_multivariate.loc[x, colums] or df_multivariate.loc[x, colums] < indicator[colums][0]:
                             df_multivariate.loc[x, colums] = np.nan
 
-            print(df_multivariate)
             lst_df_multivariate.append(df_multivariate)
 
         # Data parsed    
@@ -859,7 +822,6 @@ def generate_clusters():
                                             max_cluster=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
                 # analysis = clustering_analysis(algorithms, multi_na_parsed, nMonths, nYears, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
                 #                             max_cluster=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
-                print(analysis)
                 lst_indicators = [col for col in analysis.columns if 'mean' or 'slope' or 'sd' in str(col)]
 
                 lst_indicators = []
@@ -869,11 +831,8 @@ def generate_clusters():
                         lst_calc = [col, analysis.columns[k+1], analysis.columns[k+2]]
                         lst_indicators.append(lst_calc)
                 lst_methds = [col for col in analysis.columns if 'cluster' in str(col)]
-                print(lst_indicators)
                 for indicator in lst_indicators:
                     for methd in lst_methds:
-                        print(methd)
-                        print(str(indicator[0]))
                         indicator_split = indicator[0].split("_")
                         methd_split = methd.split("_")
                         resultado =  analysis.groupby(['crop_name', str(methd)]).median()[indicator]
@@ -884,10 +843,8 @@ def generate_clusters():
                         resultado['method'] = methd_split[1]
                         resultado.reset_index(inplace=True)
                         resultado.columns = ['crop', 'cluster', 'slp_med', 'mean_med', 'sd_med', 'indicator', 'method']
-                        print(resultado)
                         lst_calculates.append(resultado)
 
-                print(lst_calculates)
                 min_max_mean_data = pd.concat(lst_calculates)
                 min_max_mean_result = min_max_mean_data.to_json(orient = "records")
                 min_max_mean_parsed = json.loads(min_max_mean_result)
@@ -902,6 +859,9 @@ def generate_clusters():
                     'calculate': min_max_mean_parsed
                 }
                 print('Method 2')
+                last_time = time.time()
+                total_time = last_time - start_time
+                print(total_time)
             except ValueError as ve:
                 print(str(ve))
                 print("Exception")
@@ -910,182 +870,182 @@ def generate_clusters():
     return (content)
 
 
-""" Service to create clusters """
-@app.route('/api/v1/clusters', methods=['GET', 'POST'])
-@cross_origin()
-def clusters():
-    lst_df_multivariate = []
-    data = request.get_json()
-    # Passport paramns
-    passport_params = data['passport']
-    # Indicators params
-    indicators_params = data['data']
-    # Multivariate params
-    analysis_params = data['analysis']
+# """ Service to create clusters """
+# @app.route('/api/v1/clusters', methods=['GET', 'POST'])
+# @cross_origin()
+# def clusters():
+#     lst_df_multivariate = []
+#     data = request.get_json()
+#     # Passport paramns
+#     passport_params = data['passport']
+#     # Indicators params
+#     indicators_params = data['data']
+#     # Multivariate params
+#     analysis_params = data['analysis']
 
-    period = indicators_params[0]['period']
+#     period = indicators_params[0]['period']
 
-       # Algorithms list to use
-    algorithms = analysis_params['algorithm']
-    # hyperparameters to the multivariate analysis
-    hyperparameters = analysis_params['hyperparameter']
+#        # Algorithms list to use
+#     algorithms = analysis_params['algorithm']
+#     # hyperparameters to the multivariate analysis
+#     hyperparameters = analysis_params['hyperparameter']
 
-    nYears = (period[1]+1) - period[0]
-    # Months list calculated
-    ob = [k for k in indicators_params[0] if "month" in str(k)]
-    # months number calculated
-    nMonths = len(ob)
-    content = {}
+#     nYears = (period[1]+1) - period[0]
+#     # Months list calculated
+#     ob = [k for k in indicators_params[0] if "month" in str(k)]
+#     # months number calculated
+#     nMonths = len(ob)
+#     content = {}
 
-    #Get crops
-    crops = Crop.objects(Q(id__in = passport_params['crop']))
-    result_crops = [{"id":x.id,"name": x.name} for x in crops]
+#     #Get crops
+#     crops = Crop.objects(Q(id__in = passport_params['crop']))
+#     result_crops = [{"id":x.id,"name": x.name} for x in crops]
 
-    # Filter clauses to get accessions in order to parameters
-    filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
-                      for filter in passport_params if len(passport_params[filter]) > 0]
-    # Query to get accessions
-    accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
+#     # Filter clauses to get accessions in order to parameters
+#     filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
+#                       for filter in passport_params if len(passport_params[filter]) > 0]
+#     # Query to get accessions
+#     accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
 
-    # Cellids found in the accessions objects
-    cell_ids = [x.cellid for x in accessions if x.cellid]
-    # Reduce cellid list
-    cell_ids = list(set(cell_ids))
+#     # Cellids found in the accessions objects
+#     cell_ids = [x.cellid for x in accessions if x.cellid]
+#     # Reduce cellid list
+#     cell_ids = list(set(cell_ids))
 
-    for indicator in indicators_params:
-        # Indicator periods ids
-        periods_ids = indicator["indicator"]
-        multivariate_values = []
-        # Clauses to get data for multivariate analysis
-        if indicator['type'] == 'generic':
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
-                # Filtering values of indicator to multivariate analysis
-            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
-            print(str(len(indicator_periods_values)))
-            # loop for each crop present in the query
-            for crop in crops:
-                cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
-                # cellid list from crop
-                cell_id_crop = list(set(cell_id_crop))
-                # Dict to multivariate analysis
-                multivariate_values.extend([{
-                    "crop": crop['name'],
-                    "pref_indicator": x.indicator_period.indicator.pref,
-                    "indicator": x.indicator_period.indicator.name,
-                    "cellid": x.cellid,
-                    "month1": x.month1,
-                    "month2": x.month2,
-                    "month3": x.month3,
-                    "month4": x.month4,
-                    "month5": x.month5,
-                    "month6": x.month6,
-                    "month7": x.month7,
-                    "month8": x.month8,
-                    "month9": x.month9,
-                    "month10": x.month10,
-                    "month11": x.month11,
-                    "month12": x.month12,
-                    # "period": x.indicator_period.period
-                    }
-                    for x in indicator_periods_values if  x.cellid in cell_id_crop])
-        elif indicator['type'] == 'specific':
-            print(indicator['crop'])
-            cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
+#     for indicator in indicators_params:
+#         # Indicator periods ids
+#         periods_ids = indicator["indicator"]
+#         multivariate_values = []
+#         # Clauses to get data for multivariate analysis
+#         if indicator['type'] == 'generic':
+#             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+#                 # Filtering values of indicator to multivariate analysis
+#             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+#             print(str(len(indicator_periods_values)))
+#             # loop for each crop present in the query
+#             for crop in crops:
+#                 cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
+#                 # cellid list from crop
+#                 cell_id_crop = list(set(cell_id_crop))
+#                 # Dict to multivariate analysis
+#                 multivariate_values.extend([{
+#                     "crop": crop['name'],
+#                     "pref_indicator": x.indicator_period.indicator.pref,
+#                     "indicator": x.indicator_period.indicator.name,
+#                     "cellid": x.cellid,
+#                     "month1": x.month1,
+#                     "month2": x.month2,
+#                     "month3": x.month3,
+#                     "month4": x.month4,
+#                     "month5": x.month5,
+#                     "month6": x.month6,
+#                     "month7": x.month7,
+#                     "month8": x.month8,
+#                     "month9": x.month9,
+#                     "month10": x.month10,
+#                     "month11": x.month11,
+#                     "month12": x.month12,
+#                     # "period": x.indicator_period.period
+#                     }
+#                     for x in indicator_periods_values if  x.cellid in cell_id_crop])
+#         elif indicator['type'] == 'specific':
+#             print(indicator['crop'])
+#             cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
+#             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
 
-            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
-            # Dict to multivariate analysis
-            multivariate_values.extend([{
-                "crop": indicator['crop'],
-                "pref_indicator": x.indicator_period.indicator.pref,
-                "indicator": x.indicator_period.indicator.name,
-                "cellid": x.cellid,
-                "month1": x.month1,
-                "month2": x.month2,
-                "month3": x.month3,
-                "month4": x.month4,
-                "month5": x.month5,
-                "month6": x.month6,
-                "month7": x.month7,
-                "month8": x.month8,
-                "month9": x.month9,
-                "month10": x.month10,
-                "month11": x.month11,
-                "month12": x.month12,
-                "period": x.indicator_period.period}
-                for x in indicator_periods_values if  x.cellid in cell_id_crop])
-        # Create a df from multivariate analysis dict
-        df_multivariate = pd.DataFrame([s for s in multivariate_values])
-        print(df_multivariate)
-        for x in range(len(df_multivariate)):
-            # for colums in list(df_multivariate.columns.values):
-            for colums in ob:
-                if indicator[colums][1] < df_multivariate.loc[x, colums] or df_multivariate.loc[x, colums] < indicator[colums][0]:
-                        df_multivariate.loc[x, colums] = np.nan
+#             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+#             # Dict to multivariate analysis
+#             multivariate_values.extend([{
+#                 "crop": indicator['crop'],
+#                 "pref_indicator": x.indicator_period.indicator.pref,
+#                 "indicator": x.indicator_period.indicator.name,
+#                 "cellid": x.cellid,
+#                 "month1": x.month1,
+#                 "month2": x.month2,
+#                 "month3": x.month3,
+#                 "month4": x.month4,
+#                 "month5": x.month5,
+#                 "month6": x.month6,
+#                 "month7": x.month7,
+#                 "month8": x.month8,
+#                 "month9": x.month9,
+#                 "month10": x.month10,
+#                 "month11": x.month11,
+#                 "month12": x.month12,
+#                 "period": x.indicator_period.period}
+#                 for x in indicator_periods_values if  x.cellid in cell_id_crop])
+#         # Create a df from multivariate analysis dict
+#         df_multivariate = pd.DataFrame([s for s in multivariate_values])
+#         print(df_multivariate)
+#         for x in range(len(df_multivariate)):
+#             # for colums in list(df_multivariate.columns.values):
+#             for colums in ob:
+#                 if indicator[colums][1] < df_multivariate.loc[x, colums] or df_multivariate.loc[x, colums] < indicator[colums][0]:
+#                         df_multivariate.loc[x, colums] = np.nan
 
-        print(df_multivariate)
-        lst_df_multivariate.append(df_multivariate)
+#         print(df_multivariate)
+#         lst_df_multivariate.append(df_multivariate)
 
-    # Data parsed    
-    multi_na_data = pd.concat(lst_df_multivariate)
-    multi_na_result = multi_na_data.to_json(orient = "records")
-    multi_na_parsed = json.loads(multi_na_result)
+#     # Data parsed    
+#     multi_na_data = pd.concat(lst_df_multivariate)
+#     multi_na_result = multi_na_data.to_json(orient = "records")
+#     multi_na_parsed = json.loads(multi_na_result)
 
-    if multi_na_parsed:
-        try:
-            lst_calculates = []
-            start_time_multi_ana = time.time()
-            analysis = clustering_analysis(algorithms=algorithms,data=multi_na_parsed, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
-                                        max_cluster=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
-            # analysis = clustering_analysis(algorithms, multi_na_parsed, nMonths, nYears, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
-            #                             max_cluster=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
-            print(analysis)
-            lst_indicators = [col for col in analysis.columns if 'mean' or 'slope' or 'sd' in str(col)]
+#     if multi_na_parsed:
+#         try:
+#             lst_calculates = []
+#             start_time_multi_ana = time.time()
+#             analysis = clustering_analysis(algorithms=algorithms,data=multi_na_parsed, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
+#                                         max_cluster=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
+#             # analysis = clustering_analysis(algorithms, multi_na_parsed, nMonths, nYears, minPts=hyperparameters['minpts'], eps=hyperparameters['epsilon'],
+#             #                             max_cluster=hyperparameters['n_clusters'], min_cluster_size=hyperparameters['min_cluster_size'])
+#             print(analysis)
+#             lst_indicators = [col for col in analysis.columns if 'mean' or 'slope' or 'sd' in str(col)]
 
-            lst_indicators = []
-            for k,col in enumerate(analysis.columns):
-                """  """
-                if 'slope' in col:
-                    lst_calc = [col, analysis.columns[k+1], analysis.columns[k+2]]
-                    lst_indicators.append(lst_calc)
-            lst_methds = [col for col in analysis.columns if 'cluster' in str(col)]
-            print(lst_indicators)
-            for indicator in lst_indicators:
-                for methd in lst_methds:
-                    print(methd)
-                    print(str(indicator[0]))
-                    indicator_split = indicator[0].split("_")
-                    methd_split = methd.split("_")
-                    resultado =  analysis.groupby(['crop_name', str(methd)]).median()[indicator]
-                    if len(indicator_split) == 3:
-                        resultado['indicator'] = indicator_split[1] + '_' + indicator_split[2]
-                    else:
-                        resultado['indicator'] = indicator_split[1]
-                    resultado['method'] = methd_split[1]
-                    resultado.reset_index(inplace=True)
-                    resultado.columns = ['crop', 'cluster', 'slp_med', 'mean_med', 'sd_med', 'indicator', 'method']
-                    print(resultado)
-                    lst_calculates.append(resultado)
+#             lst_indicators = []
+#             for k,col in enumerate(analysis.columns):
+#                 """  """
+#                 if 'slope' in col:
+#                     lst_calc = [col, analysis.columns[k+1], analysis.columns[k+2]]
+#                     lst_indicators.append(lst_calc)
+#             lst_methds = [col for col in analysis.columns if 'cluster' in str(col)]
+#             print(lst_indicators)
+#             for indicator in lst_indicators:
+#                 for methd in lst_methds:
+#                     print(methd)
+#                     print(str(indicator[0]))
+#                     indicator_split = indicator[0].split("_")
+#                     methd_split = methd.split("_")
+#                     resultado =  analysis.groupby(['crop_name', str(methd)]).median()[indicator]
+#                     if len(indicator_split) == 3:
+#                         resultado['indicator'] = indicator_split[1] + '_' + indicator_split[2]
+#                     else:
+#                         resultado['indicator'] = indicator_split[1]
+#                     resultado['method'] = methd_split[1]
+#                     resultado.reset_index(inplace=True)
+#                     resultado.columns = ['crop', 'cluster', 'slp_med', 'mean_med', 'sd_med', 'indicator', 'method']
+#                     print(resultado)
+#                     lst_calculates.append(resultado)
 
-            print(lst_calculates)
-            min_max_mean_data = pd.concat(lst_calculates)
-            min_max_mean_result = min_max_mean_data.to_json(orient = "records")
-            min_max_mean_parsed = json.loads(min_max_mean_result)
+#             print(lst_calculates)
+#             min_max_mean_data = pd.concat(lst_calculates)
+#             min_max_mean_result = min_max_mean_data.to_json(orient = "records")
+#             min_max_mean_parsed = json.loads(min_max_mean_result)
             
-            results = analysis.to_json(orient = "records")
-            parsed = json.loads(results)
-            end_time_multi_ana = time.time()
-            total_time_multi_ana = end_time_multi_ana - start_time_multi_ana
-            content = {
-                'data': parsed,
-                'time': total_time_multi_ana,
-                'calculate': min_max_mean_parsed
-            }
-        except ValueError as ve:
-            print(str(ve))
-            print("Exception")
+#             results = analysis.to_json(orient = "records")
+#             parsed = json.loads(results)
+#             end_time_multi_ana = time.time()
+#             total_time_multi_ana = end_time_multi_ana - start_time_multi_ana
+#             content = {
+#                 'data': parsed,
+#                 'time': total_time_multi_ana,
+#                 'calculate': min_max_mean_parsed
+#             }
+#         except ValueError as ve:
+#             print(str(ve))
+#             print("Exception")
     
-    return jsonify(content)
+#     return jsonify(content)
 
 
 

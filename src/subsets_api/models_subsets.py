@@ -4,7 +4,7 @@ from mongoengine.fields import StringField
 class Crop(Document):
     #_id = StringField(required=True)
     name = StringField(required=True)
-    meta = {'collection': 'indicators_crop'}
+    meta = {'collection': 'crop'}
 
 class Accession(Document):    
     _id = StringField(required=True)
@@ -66,6 +66,7 @@ class Indicator(Document):
     crop = ReferenceField(Crop)
     indicator_type = ReferenceField(IndicatorType)
     category = ReferenceField(Category)
+    unit = StringField(required=True)
 
     meta = {'collection': 'indicators_indicator'}
 
