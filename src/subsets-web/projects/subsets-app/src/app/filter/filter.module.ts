@@ -39,11 +39,12 @@ import { MapTestComponent } from './components/map-test/map-test.component';
  
 // d3 and nvd3 should be included somewhere
 import 'hammerjs';
+import { AdvancedClusterMapComponent } from './components/advanced-cluster-map/advanced-cluster-map.component';
 
 
 
 @NgModule({
-  declarations: [FormFilterComponent, MapOutcomesComponent, PlotOutcomesComponent, TableOutcomesComponent, FormIndicatorComponent, TabsComponent, DensityChartComponent, AddPointMapComponent, CustomDataComponent, AccessionsDetailComponent, SummaryComponent, MultivariableAnalysisComponent, FormSubsetComponent, MaxPipePipe, FormSpecifcPerCropComponent, BeginnerFormComponent, BeginnerClusterComponent, BeginnerClusterAccessionComponent, AdvancedFormComponent, SwitchToggleComponent, BeginnerClusterLinePlotComponent, BeginnerClusterBoxPlotComponent, BeginnerClusterMapComponent, AdvancedSubsetMapComponent, MapTestComponent],
+  declarations: [FormFilterComponent, MapOutcomesComponent, PlotOutcomesComponent, TableOutcomesComponent, FormIndicatorComponent, TabsComponent, DensityChartComponent, AddPointMapComponent, CustomDataComponent, AccessionsDetailComponent, SummaryComponent, MultivariableAnalysisComponent, FormSubsetComponent, MaxPipePipe, FormSpecifcPerCropComponent, BeginnerFormComponent, BeginnerClusterComponent, BeginnerClusterAccessionComponent, AdvancedFormComponent, SwitchToggleComponent, BeginnerClusterLinePlotComponent, BeginnerClusterBoxPlotComponent, BeginnerClusterMapComponent, AdvancedSubsetMapComponent, MapTestComponent, AdvancedClusterMapComponent],
   imports: [
     CommonModule,
     FilterRoutingModule,

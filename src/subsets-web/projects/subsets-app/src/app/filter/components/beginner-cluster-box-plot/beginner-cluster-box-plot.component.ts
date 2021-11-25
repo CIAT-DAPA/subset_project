@@ -95,13 +95,14 @@ export class BeginnerClusterBoxPlotComponent implements OnInit, AfterContentInit
       ];
       let dataFiltered = data.filter((res: any) => res.indicator == indicator && res.crop == crop);
       dataFiltered.forEach((item, index) => {
+        let clusterName = item.cluster + 1;
         $(plots.nativeElement).append(
           '<div id="plot_' +
             index +
             '"><h3>' +
             this.getIndicatorNameByPref(item.indicator) +
             ' - ' +
-            'Cluster ' + item.cluster +
+            'Set ' + clusterName +
             '</h3><div id="indicator_' +
             item.indicator +
             '_' +
@@ -117,7 +118,6 @@ export class BeginnerClusterBoxPlotComponent implements OnInit, AfterContentInit
         });
         plot_data = plot_data.sort(
           (a: any, b: any) => a.label - b.label);
-        console.log(plot_data)
         nv.addGraph(function() {
           var chart = nv.models.boxPlotChart()
           chart.xAxis.axisLabel('Month').tickFormat(function (d) {

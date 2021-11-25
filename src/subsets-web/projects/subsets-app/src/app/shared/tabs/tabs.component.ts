@@ -17,6 +17,7 @@ import { Options } from '@angular-slider/ngx-slider';
 })
 export class TabsComponent implements OnInit, AfterContentInit {
   accessions$: any[];
+  accessionsFiltered: any[];
   expertNormalMode$:boolean = false;
   headers: any = [];
   ActualPage: number = 1;
@@ -50,11 +51,16 @@ export class TabsComponent implements OnInit, AfterContentInit {
     tickStep: 1,
     tickValueStep: 30,
   };
+  // Hidden tabs from step in filter
+  step1Hidden:boolean;
+  step2Hidden:boolean;
   constructor(
     private _sharedService: SharedService,
     public dialog: MatDialog,
     private api: IndicatorService
   ) {
+    this.step1Hidden = false;
+    this.step2Hidden = false;
     this.headers = ['Number', 'Crop name', 'Taxon', 'Action'];
     this.amountData = 0;
     this.clusterData = [];
@@ -71,6 +77,7 @@ export class TabsComponent implements OnInit, AfterContentInit {
     };
     this.algorithmsList = [];
     this.accessions$ = []
+    this.accessionsFiltered = []
     this.activeTabs = true;
     this.maxCluster = 5;
     this.minCluster = 2;
@@ -94,21 +101,11 @@ export class TabsComponent implements OnInit, AfterContentInit {
       },
       width: '60%',
     });
-    /* dialogRef.afterClosed().subscribe(
-      data => {
-        if (data) {
-          this.params.longitude = data.longitude;
-          this.params.latitude = data.latitude;
-          this.longitudeAndLatitudeVisible = false
-        }
-      }
-    ); */
   }
 
   tabClick(tab:any) {
     if (tab.index === 2) {
       this.showAdvancedMap = true;
-      console.log(this.showAdvancedMap)
     }
   }
 
@@ -164,6 +161,9 @@ export class TabsComponent implements OnInit, AfterContentInit {
     this._sharedService.sendAccessionsObservable.subscribe((data) => {
       this.accessions$ = data;
       this.amountData = this.accessions$.length;
+      if (this.accessions$.length > 0) {
+        this.step1Hidden = true;
+      }
     });
 
     this._sharedService.sendexpertNormalObservable.subscribe((data) => {
@@ -177,7 +177,6 @@ export class TabsComponent implements OnInit, AfterContentInit {
     });
     this._sharedService.getTabSelected().subscribe((tabIndex: number) => {
       this.selectdIndex = tabIndex;
-      console.log(tabIndex);
       if (this.expertNormalMode$ === true) {
         this.buildSubsets();
       }/*  */
@@ -190,25 +189,18 @@ export class TabsComponent implements OnInit, AfterContentInit {
 
   buildSubsets = () => {
     this.subsets = {};
-    // let sharedChannel = this.api.getSubsets(this.params).pipe(share())
-    // this.quantileData = this.api.getSubsets(this.params);
     this.api.getSubsets(this.params).subscribe((res: any) => {
       if (this.subsets) {
         this.activeTabs = false;
       }
-      this.subsets = res.univariate;
+      this.accessionsFiltered = res.univariate.data;
+      this.accessionsFiltered = this.accessions$.filter((prop:any) => this.accessionsFiltered.includes(prop.cellid))
+      this.subsets = {data: this.accessionsFiltered, time: res.univariate.time}
       this.setSubsets(this.subsets)
       this.quantileData = res.quantile;
       // this.sendIndicatorSummary(this.subsets.data)
     });
   };
-
-  /* buildQuantilePlots = () => {
-    this.quantileData = [];
-    this.api.getQuantile(this.params).subscribe((res: any) => {
-      this.quantileData = res;
-    });
-  }; */
 
   buildClusters = () => {
     this.clusterData = [];

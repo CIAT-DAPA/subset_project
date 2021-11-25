@@ -24,6 +24,7 @@ export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentIni
   allComplete: boolean = false;
   // Passport params
   @Input() passportParms: any;
+  @Input() cellidList: any;
   // Max numbers of clusters
   maxCluster: number;
   minCluster: number;
@@ -132,6 +133,7 @@ export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentIni
     console.log(obj)
   }
 
+
   // Method to check if the users selected some indicators
   someComplete(obj: any): boolean {
     if (obj.indicators == null) {
@@ -191,6 +193,7 @@ export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentIni
     });
     this.setIndicatorsList(selectedIndicatorList);
     request = {
+      cellid_list:this.cellidList,
       methd: 'normal',
       data: indicatorsChecked,
       passport: this.passportParms,

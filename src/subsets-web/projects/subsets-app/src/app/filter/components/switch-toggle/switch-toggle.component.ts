@@ -17,6 +17,7 @@ export class SwitchToggleComponent implements OnInit, AfterContentInit {
    indicatorPeriods$: any = [];
    // Var to check all complete
    @Input() passportParms: any;
+   @Input() cellidList: any;
    rangesValues$:any;
    @Input() cropList:any = []
    @Input() accessions:any = [];

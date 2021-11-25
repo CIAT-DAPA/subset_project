@@ -144,7 +144,7 @@ export class BeginnerClusterMapComponent
 
   mergeCropAndCluster() {
     let colors = [
-      'green',
+      'brown',
       'blue',
       'yellow',
       'red',
@@ -154,6 +154,8 @@ export class BeginnerClusterMapComponent
       'black',
       'orange',
       'purple',
+      'Salmon',
+
     ];
     this.cropList.forEach((crop: any, index: any) => {
       this.listClusters.forEach((cluster: any, indx: any) => {
@@ -278,9 +280,19 @@ export class BeginnerClusterMapComponent
       'brown',
       'gray',
       'brown',
-      'black',
+      'Silver',
       'orange',
       'purple',
+      'salmon',
+      'DarkKhaki',
+      'violet',
+      'magenta',
+      'MediumSlateBlue',
+      'GreenYellow',
+      'LimeGreen',
+      'Teal',
+      'Aqua',
+      'SandyBrown'
     ];
 
     this.map = L.map('beginner-map', {
@@ -451,137 +463,6 @@ export class BeginnerClusterMapComponent
     // });
   }
 
-
-  drawMap() {
-    let colors = ['green', 'blue', 'yellow', 'red', 'brown', 'gray'];
-    // let idMap:any = document.getElementById('map');
-    let palmira: any;
-
-    this.map = new Map({
-      target: 'map-cluster',
-      controls: defaultCOntrols({
-        attributionOptions: {
-          collapsible: false,
-        },
-      }),
-      layers: [
-        new TileLayer({
-          source: new OSM(),
-        }),
-      ],
-      view: new View({
-        center: olProj.fromLonLat([0, 0]),
-        zoom: 1,
-      }),
-    });
-
-    if (this.data)
-      this.data.forEach((res: any, index: any) => {
-        var coordinates: any = [];
-        res[1].forEach((val: any) => {
-          if (val.geo_lon != null && val.geo_lat != null) {
-            palmira = new Feature({
-              geometry: new Point(fromLonLat([val.geo_lon, val.geo_lat])),
-              name: val.name,
-              crop: val.crop,
-              obj: val,
-            });
-            coordinates.push(palmira);
-          }
-        });
-
-        // properties
-        var iconStyle = new Style({
-          image: new CircleStyle({
-            radius: 3,
-            fill: new Fill({
-              color: colors[index],
-            }),
-          }),
-        });
-
-        var labelStyle = new Style({
-          text: new Text({
-            font: '8px Calibri,sans-serif',
-            overflow: true,
-            fill: new Fill({
-              color: '#000',
-            }),
-            stroke: new Stroke({
-              color: '#fff',
-              width: 3,
-            }),
-          }),
-        });
-
-        /* let selectSingleClick = new Select(); */
-
-        var style = [iconStyle];
-
-        let vectorSourceT = new VectorSource({
-          features: coordinates,
-        });
-
-        let vectorLayer = new VectorLayer({
-          source: vectorSourceT,
-          style: function (feature) {
-            labelStyle.getText().setText(feature.get('name'));
-            return style;
-          },
-        });
-
-        this.map.addLayer(vectorLayer);
-      });
-
-    var container = document.getElementById('popup');
-    var overlay = new Overlay({
-      element: container as HTMLElement,
-      autoPan: true,
-      autoPanAnimation: {
-        duration: 250,
-      },
-    });
-    this.map.addOverlay(overlay);
-
-    var closer: any = document.getElementById('popup-closer');
-    closer.onclick = function () {
-      overlay.setPosition(undefined);
-      closer.blur();
-      return false;
-    };
-
-    var content: any = document.getElementById('popup-content');
-    this.map.on('singleclick', function (this: any, evt: any) {
-      var name = this.forEachFeatureAtPixel(evt.pixel, function (feature: any) {
-        return feature.get('name');
-      });
-      var coordinate = evt.coordinate;
-      content.innerHTML = name;
-      overlay.setPosition(coordinate);
-    });
-
-    this.map.on('pointermove', function (this: any, evt: any) {
-      //this.getTargetElement().style.cursor = this.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
-      var name = this.forEachFeatureAtPixel(evt.pixel, function (feature: any) {
-        return feature.get('name');
-      });
-      var crop = this.forEachFeatureAtPixel(evt.pixel, function (feature: any) {
-        return feature.get('crop');
-      });
-      if (name) {
-        var coordinate = evt.coordinate;
-        content.innerHTML = name + ' ' + crop;
-        overlay.setPosition(coordinate);
-      }
-    });
-
-    this.map.on('singleclick', (evt: any) => {
-      this.map.forEachFeatureAtPixel(evt.pixel, (layer: any) => {
-        var obj = layer.get('obj');
-        this.openAccessionDetail(obj);
-      });
-    });
-  }
 
   openAccessionDetail(object: any) {
     const dialogRef = this.dialog.open(AccessionsDetailComponent, {

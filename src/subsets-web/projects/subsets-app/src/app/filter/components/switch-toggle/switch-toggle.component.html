@@ -14,6 +14,7 @@
   </div> -->
 </div>
 <beginner-form
+  [cellidList]="cellidList"
   [cropList]="cropList"
   [accessions]='accessions'
   [passportParms]="passportParms"
@@ -23,6 +24,7 @@
   *ngIf="!isChecked"
 ></beginner-form>
 <advanced-form
+[cellidList]="cellidList"
 [formActive]="isChecked"
   [cropList]="cropList"
   [passportParms]="passportParms"

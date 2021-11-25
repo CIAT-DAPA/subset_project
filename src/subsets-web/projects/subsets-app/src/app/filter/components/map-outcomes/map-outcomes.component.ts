@@ -8,7 +8,8 @@ import {
   RendererFactory2,
   ElementRef,
   ViewChild,
-  AfterViewInit
+  AfterViewInit,
+  SimpleChanges
 } from '@angular/core';
 import Map from 'ol/Map';
 import View from 'ol/View';
@@ -53,7 +54,7 @@ export class MapOutcomesComponent implements OnInit, OnChanges, AfterContentInit
   latitude: number = 18.5204;
   longitude: number = 73.8567;
   palmira: any;
-  cali: any;
+  mapData:number;
   accessions$: any;
   @Input('popup') popup!: any;
   @Input() acce: any;
@@ -69,9 +70,22 @@ export class MapOutcomesComponent implements OnInit, OnChanges, AfterContentInit
   private mapL: any;
   // End
 
-  constructor(private renderer: Renderer2, public dialog: MatDialog, private _sharedService: SharedService) {}
+  constructor(private renderer: Renderer2, public dialog: MatDialog, private _sharedService: SharedService) {
+    this.mapData = 0;
+  }
+
+  clearDiv() {
+    if (this.map ){
+      this.map.eachLayer(function(layer:any){
+          layer.remove();
+      });
+      this.map.remove();
+      this.map = null;
+  }
+}
 
   private initMap(): void {
+    this.mapData = 0;
     this.map = L.map('map', {
       center: [0, 0],
       zoom: 2,
@@ -93,6 +107,7 @@ export class MapOutcomesComponent implements OnInit, OnChanges, AfterContentInit
 
     this.acce.forEach((val: any, index: any) => {
       if (val.geo_lon != null && val.geo_lat != null) {
+        this.mapData++
         const marker = L.circleMarker([val.geo_lat, val.geo_lon],{ radius: 5 });
         marker.addTo(this.map);
         marker.setStyle({color: 'green'});
@@ -111,12 +126,18 @@ export class MapOutcomesComponent implements OnInit, OnChanges, AfterContentInit
   }
 
   ngAfterViewInit() {
-    this.initMap()
+  
   }
 
 
-  ngOnChanges() {
-    
+  ngOnChanges(changes: SimpleChanges) {
+    if (this.acce.length > 0) {
+      this.clearDiv();
+      setTimeout(() => {
+        this.initMap();
+  
+      }, 3000)
+    }
     // let idMap:any = document.getElementById('hotel_map');
     // idMap.innerHTML = ""
     // if (this.acce)

@@ -122,6 +122,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   cropParams: any = {};
   subsets$ = [];
   accessions$ = [];
+  cellidList: any[];
   countries$: any = [];
   crops$: any = [];
   accessionsFiltered$: any = [];
@@ -154,6 +155,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     private route: ActivatedRoute,
     private router: Router
   ) {
+    this.cellidList = [];
     this.filteredCrops = this.CropsCtrl.valueChanges.pipe(
       startWith(null),
       map((fruit: string | null) =>
@@ -258,7 +260,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
       let jsonParamsInd = JSON.parse(paramsInd);
       setTimeout(() => {
         this.getAccessionsAutomatically(jsonParamsPas, jsonParamsInd);
-      }, 5000)
+      }, 5000);
     }
 
     this.getCountries();
@@ -300,7 +302,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     this.sharedService.sendAccession(acce);
   }
 
-  setRangeValues(rv:any) {
+  setRangeValues(rv: any) {
     this.sharedService.sendRangeValues(rv);
   }
 
@@ -308,20 +310,18 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     this.sharedService.sendSummary(summ);
   }
 
-
   sendPassportParameters(params: any) {
     this.sharedService.sendPassport(params);
   }
 
-  
   setMultivariableDataBeginner(mb: any) {
     this.sharedService.sendMultivariableBeginner(mb);
   }
 
-  getAmountOfAccessions(crop:string) {
-    let cropFiltered = this.crops$.filter((prop:any) => prop.name == crop)
+  getAmountOfAccessions(crop: string) {
+    let cropFiltered = this.crops$.filter((prop: any) => prop.name == crop);
 
-    return cropFiltered[0].count_accessions
+    return cropFiltered[0].count_accessions;
   }
 
   getCrops = () => {
@@ -367,11 +367,27 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
             'Warning'
           );
         } else {
+          this.cellidList = [];
           this.accessions$ = data.accessions;
+          this.crops.forEach((crp: any) => {
+            let objFilters: any[] = this.accessions$.filter(
+              (prop: any) => prop.crop == crp && prop.cellid > 0
+            );
+            if (objFilters.length > 0) {
+              let cellids = objFilters.map((res: any) => {
+                return res.cellid;
+              });
+              cellids = [...new Set(cellids)];
+              let obj = { crop: crp, cellids: cellids };
+              this.cellidList.push(obj);
+            }
+
+          });
+
           this.setAccession(data.accessions);
           // this.setDataIndicator(data);
           this.setSummary(this.accessions$);
-          this.setRangeValues(data.min_max)
+          this.setRangeValues(data.min_max);
           this.setTabIndex(0);
         }
       },
@@ -394,7 +410,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     saveAs(blob, 'myFile.csv');
   }
 
-  getAccessionsAutomatically = (prop: any, ind:any) => {
+  getAccessionsAutomatically = (prop: any, ind: any) => {
     this.sendSubsetSaved(ind);
     this.api.getAccessions(prop).subscribe(
       (data) => {
@@ -406,10 +422,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
         } else {
           /* Props */
           this.countries = prop.country_name;
-          console.log(this.filterCrops(prop.crop, 'id'))
           this.crops = this.filterCrops(prop.crop, 'id');
-          console.log('Hello');
-          console.log(this.crops)
           this.setCropList(this.crops);
           this.taxon = prop.taxonomy_taxon_name;
           this.institutes = prop.institute_fullname;
@@ -421,14 +434,13 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
           this.accessions$ = data.accessions;
           this.setAccession(data.accessions);
           this.setSummary(this.accessions$);
-          this.setRangeValues(data.min_max)
+          this.setRangeValues(data.min_max);
           if (ind) {
             let lstIndicators: any = [];
-            ind.data.forEach((element:any) => {
-              lstIndicators.push(element.name)
+            ind.data.forEach((element: any) => {
+              lstIndicators.push(element.name);
             });
             this.setIndicatorsList(lstIndicators);
-            console.log(ind);
             this.getSubsetsOfAccessionAutomatically(ind);
           }
         }
@@ -487,8 +499,6 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
   }
 
   filterCrops(crops: string[], filterBy: string): string[] {
-    console.log(this.allCropsArray)
-    console.log(crops)
     let cropSelected: string[] = [];
     if (filterBy === 'name') {
       crops.forEach((value: any) => {
@@ -540,7 +550,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     addList: any,
     ctrl: any
   ): void {
-    let cropSplit = event.option.viewValue.split(' - ')
+    let cropSplit = event.option.viewValue.split(' - ');
     addList.push(cropSplit[0]);
     this.fruitInput.nativeElement.value = '';
     this.CropsCtrl.setValue(null);

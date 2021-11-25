@@ -8,8 +8,8 @@ import { map } from 'rxjs/operators';
 })
 export class IndicatorService {
   /* URL = 'http://localhost:8001/api/'; */
-  //  URL = 'http://localhost:5001/api/v1/';
-  URL = 'https://subset-api.ciat.cgiar.org/api/v1/';
+   URL = 'http://localhost:5001/api/v1/';
+  // URL = 'https://subset-api.ciat.cgiar.org/api/v1/';
   headers = new HttpHeaders({
     'Content-Type': 'application/json'
   });
@@ -94,6 +94,7 @@ export class IndicatorService {
   /* New way to get the results */
   getSubsets(result: any): Observable<any> {
     let parameters = {
+      cellid_list: result.cellid_list,
       data: result.data,
       passport: result.passport,
     };
@@ -124,6 +125,7 @@ export class IndicatorService {
 
   generateCluster(result: any): Observable<any> {
     let parameters = {
+      cellid_list: result.cellid_list,
       data: result.data,
       passport: result.passport,
       analysis: result.analysis

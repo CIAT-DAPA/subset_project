@@ -75,6 +75,9 @@ export class MultivariableAnalysisComponent
   accessionsCombined:any = [];
   cropList: any = [];
   cropSelected: any;
+  data:any = []
+  dataSummary:any = []
+  methodSelected: any;
 
   constructor(
     private _sharedService: SharedService,
@@ -117,6 +120,51 @@ export class MultivariableAnalysisComponent
     this._sharedService.sendSummary(summ);
   }
 
+  filterData(crop:any, methd:any) {
+    let lst:any[] = []
+    let filtered:any[] = [];
+    this.data = []
+    this.dataSummary = []
+    switch (methd) {
+      case 'Dbscan Analysis':
+      filtered = this.multivariable.filter((prop:any) => prop.cluster_dbscan >= 0 && prop.crop_name == crop);
+      filtered.forEach((element:any) => {
+        let accessionByCellid: any[] = this.accessions.filter((prop:any) => prop.crop == crop && prop.cellid == element.cellid)
+        accessionByCellid.forEach(e => e.cluster = element.cluster_dbscan);
+        lst.push(accessionByCellid)
+      });
+      this.data = [].concat.apply([], lst);
+      this.setDataAdvancedMaps(this.data);
+      this.dataSummary = this.res$.filter((prop:any) => prop.crop == crop && prop.method == 'dbscan');
+        break;
+      case 'Hdbscan Analysis':
+          filtered = this.multivariable.filter((prop:any) => prop.cluster_hdbscan >= 0 && prop.crop_name == crop);
+          filtered.forEach((element:any) => {
+            let accessionByCellid: any[] = this.accessions.filter((prop:any) => prop.crop == crop && prop.cellid == element.cellid)
+            accessionByCellid.forEach(e => e.cluster = element.cluster_hdbscan);
+            lst.push(accessionByCellid)
+          });
+          this.data = [].concat.apply([], lst);
+          this.setDataAdvancedMaps(this.data);
+          this.dataSummary = this.res$.filter((prop:any) => prop.crop == crop && prop.method == 'hdbscan');
+            break;
+      case 'Agglomerative Analysis':
+          filtered = this.multivariable.filter((prop:any) => prop.cluster_hac >= 0 && prop.crop_name == crop);
+          filtered.forEach((element:any) => {
+            let accessionByCellid: any[] = this.accessions.filter((prop:any) => prop.crop == crop && prop.cellid == element.cellid)
+            accessionByCellid.forEach(e => e.cluster = element.cluster_hac);
+            lst.push(accessionByCellid)
+          });
+          this.data = [].concat.apply([], lst);
+          this.data = this.data.sort((a: any, b: any) => a.cluster - b.cluster);
+          this.setDataAdvancedMaps(this.data);
+          this.dataSummary = this.res$.filter((prop:any) => prop.crop == crop && prop.method == 'hac');
+            break;
+      default:
+        break;
+    }
+  }
+
   seeVar() {
     const mergeById = (t: any, s: any) =>
       t.map((p: any) =>
@@ -144,6 +192,7 @@ export class MultivariableAnalysisComponent
         this.resDbscan$ = dbscan.sort(
           (a: any, b: any) => a.cluster_dbscan - b.cluster_dbscan
         );
+        console.log(this.resDbscan$);
         this.resHdbscan$ = hdbscan.sort(
           (a: any, b: any) => a.cluster_hdbscan - b.cluster_hdbscan
         );
@@ -155,7 +204,6 @@ export class MultivariableAnalysisComponent
     //     // this.setSummary(this.res$);
       });
   }
-
   getIndicators = () => {
     this.api.getIndicators().subscribe(
       (data: any) => {
@@ -219,5 +267,9 @@ export class MultivariableAnalysisComponent
 
   setMultivariableData(mul: any) {
     this._sharedService.sendMultivariable(mul);
+  }
+
+  setDataAdvancedMaps(data: any) {
+    this._sharedService.sendDataAdvancedMaps(data);
   }
 }

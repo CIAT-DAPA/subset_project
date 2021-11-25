@@ -12,7 +12,7 @@ import { NotificationService } from '../../../core/service/notification.service'
 })
 export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChanges {
   indicatorValue$: any[];
-  accessions$: any;
+  accessions$: any[] = [];
   lstAccessionsFiltered$:any;
   @Input() params:any;
   cellids:any;
@@ -32,29 +32,16 @@ export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChang
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    // if (changes) {
-    //   if (changes.params.firstChange == false) {
-    //   this.time = this.params.time;
-    //   this.lstAccessionsFiltered$ = this.params.data;
-    //   this.amountAccessionsFiltered = this.params.data.length;
-    //   }
-    // }
-  /*     data$.forEach((element:any) => {
-        this.indicatorValue$.push(element.cellid)
-      });
-      this.cellids = [...new Set(this.indicatorValue$)];
-      this.filterAccessionsByIndicator();
-    } *//*  else {
-      this.notifyService.showWarning(
-        "The system didn't find data with the entered parameters",
-        'Warning'
-      ); 
-    }*/
+
   }
 
   ngAfterContentInit() {
-    this._sharedService.sendSubsetObservable.subscribe((data) => {
+    this._sharedService.sendAccessionsObservable.subscribe((data) => {
       this.accessions$ = data;
+      console.log('Hallo');
+    });
+
+    this._sharedService.sendSubsetObservable.subscribe((data) => {
       this.time = data.time;
       this.lstAccessionsFiltered$ = data.data;
       this.amountAccessionsFiltered = data.data.length;

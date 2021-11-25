@@ -184,21 +184,6 @@
             </mat-autocomplete>
           </mat-form-field>
         </div>
-        <!-- <div class="mb-3">
-          <label for="biological-status" class="form-label"
-            >Select a biological status</label
-          >
-          <select
-            name="biological-status"
-            id="biological-status"
-            class="form-control"
-            [(ngModel)]="passportParams.samp_stat"
-          >
-            <option *ngFor="let x of mcpd" value="{{ x.id }}">
-              {{ x.name }}
-            </option>
-          </select>
-        </div> -->
         <div class="mb-3">
           <div class="mt-3" style="width: 98%">
             <mat-form-field class="example-chip-list" >
@@ -251,7 +236,7 @@
       </mat-step>
       <mat-step [editable]="true" (click)="getAccessions()">
         <ng-template matStepLabel>Set indicators  <a mat-icon-button href="/explore/glosary" target="_blank" ><mat-icon matTooltip="Go to Glossary">help</mat-icon></a></ng-template>
-        <switch-toggle [cropList]="crops" [accessions]="accessions$" [passportParms]="passportParams"></switch-toggle>
+        <switch-toggle [cellidList]="cellidList" [cropList]="crops" [accessions]="accessions$" [passportParms]="passportParams"></switch-toggle>
       </mat-step>
     </mat-vertical-stepper>
   </div>

@@ -43,11 +43,12 @@
      <ngx-spinner></ngx-spinner>
    <!-- </mat-card> -->
 <mat-card class="mt-3">
+  <h3 class="mt-2" >Select a range of values</h3>
    <ng-container *ngFor="let x of listValues; let i = index">
 
     <div class="mb-4">
       <label [for]="'value' + i" class="form-label mt-2"
-      >Select a range of values - {{ x.indicator }}</label
+      >{{ x.indicator }}</label
       >
       <ngx-slider
       [(value)]="x.minValue"
@@ -58,7 +59,7 @@
         ceil:x.ceil,
         showTicksValues: true,
         tickStep: 1,
-        tickValueStep: x.ceil / 3
+        tickValueStep: x.ceil
       }"
       >
     </ngx-slider>

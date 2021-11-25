@@ -33,6 +33,7 @@ export class BeginnerClusterAccessionComponent
   cropSelected: any;
   summSelected: any;
   clusters: any[];
+  clusterSelected:any;
   clustersGrouped$: any;
   analysis$: any = [];
   summary$: any = [];
@@ -45,7 +46,9 @@ export class BeginnerClusterAccessionComponent
   headerSummary: any[];
   indicatorsAvailables: any[];
   variableToEvaluate:any[];
+  selectedIndicatorList$:any;
   @ViewChild('plots_pie') private plots!: ElementRef;
+  @ViewChild('summary_table') private summaryTable!: ElementRef;
   constructor(
     private api: IndicatorService,
     private _sharedService: SharedService,
@@ -71,17 +74,21 @@ export class BeginnerClusterAccessionComponent
     // Get the accessions data
     this._sharedService.sendAccessionsObservable.subscribe((data) => {
       this.accessions$ = data;
-      console.log('accessions')
     });
+    // Get the list of indicators selected
+    this._sharedService.sendIndicatorsListObservable.subscribe((res:any) => {
+      this.selectedIndicatorList$ = res;
+    })
 
     // Get the clustering analysis from beginner form
     this._sharedService.sendMultivariableBeginnerObservable.subscribe(
       (res: any) => {
         // set clustering analysis data
-        console.log(res);
         this.analysis$ = res.data;
         // Set summary data (Min, Max and Mean)
         this.summary$ = res.summary;
+        this.setInterpretation(this.cropSelected,'Maximum','t_rain')
+        console.log(this.summary$)
         // Set the clusters available
         let listTest: any = [];
         this.analysis$.forEach((element: any) => {
@@ -100,12 +107,25 @@ export class BeginnerClusterAccessionComponent
         this.headerSummary = listTest.sort((n1: any, n2: any) => n1 - n2);
         this.mergeAccessionsAndCluster();
         if (this.cropSelected) {
-          console.log('cropSelected')
           this.drawPlot(this.cropSelected);
           // this.test$ = [];
         }
       }
     );
+  }
+
+  setInterpretation(crop:any, metric:any, indicator:any) {
+    let objFiltered = this.summary$.filter((prop:any) => prop.indicator==indicator && prop.crop==crop);
+    if (metric=='Maximum') {
+      let maxCluster = objFiltered.reduce((max:any, obj:any) => max.max > obj.max ? max : obj);
+      console.log(maxCluster)
+    }
+  }
+
+  getIndicatorNameAndUnitByPref(pref:any) {
+    let indcatorListFilter = this.selectedIndicatorList$.filter((prop:any) => prop.pref == pref);
+    let res = indcatorListFilter[0].name + ' (' + indcatorListFilter[0].unit + ')';
+    return res;
   }
 
   getClusterListByCrop() {
@@ -116,6 +136,16 @@ export class BeginnerClusterAccessionComponent
     });
     listCluster = [...new Set(listCluster)];
     return listCluster;
+  }
+
+  getAccessionByClusterAndCrop(cluster:any, crop:any):number {
+    let filterAccessions:any[] = this.clusters.filter((prop:any) => prop.cluster_hac == cluster && prop.crop == crop)
+    return filterAccessions.length
+  }
+
+  getCellIdsByClusterAndCrop(cluster:any, crop:any):number {
+    let filterCell:any[] = this.analysis$.filter((prop:any) => prop.cluster_hac == cluster && prop.crop_name == crop)
+    return filterCell.length
   }
 
   getValueFromClusterAndIndicator(
@@ -153,7 +183,6 @@ export class BeginnerClusterAccessionComponent
             this.indicators$.push(res);
           });
         });
-        console.log(data);
       },
       (error: any) => console.log(error)
     );
@@ -182,6 +211,28 @@ export class BeginnerClusterAccessionComponent
   }
 
   plot(crop: any) {
+    let colors = [
+      'green',
+      'blue',
+      'yellow',
+      'red',
+      'brown',
+      'gray',
+      'brown',
+      'Silver',
+      'orange',
+      'purple',
+      'salmon',
+      'DarkKhaki',
+      'violet',
+      'magenta',
+      'MediumSlateBlue',
+      'GreenYellow',
+      'LimeGreen',
+      'Teal',
+      'Aqua',
+      'SandyBrown'
+    ];
     let data: any[] = [];
     let clust: any[] = this.getClusterListByCrop();
     clust.forEach((cluster: any) => {
@@ -190,8 +241,9 @@ export class BeginnerClusterAccessionComponent
       );
       let regularname = cluster + 1
       let obj: any = {
-        label: 'Cluster ' + regularname,
+        label: 'Set ' + regularname,
         value: accessionsFiltered.length,
+        color: colors[cluster]
       };
       data.push(obj);
     });
@@ -209,9 +261,6 @@ export class BeginnerClusterAccessionComponent
           return d.value;
         })
         .showLabels(true);
-        console.log('plot')
-        console.log(this.accessions$);
-        console.log(this.analysis$);
       d3.select(this.chartElem.nativeElement)
         .select('#plote svg')
         .attr('width', width)
@@ -236,6 +285,7 @@ export class BeginnerClusterAccessionComponent
   getAccessionlistByCropAndCluster(cluster: any) {
     // let splitVar = cluster.split(' ');
     // let realName = splitVar[1] -1
+    console.log(cluster);
     let accessionFiltered = this.clusters.filter(
       (prop: any) =>
         prop.cluster_hac == cluster && prop.crop == this.cropSelected
@@ -260,82 +310,9 @@ export class BeginnerClusterAccessionComponent
       ls.push(filtered)
     });
     this.clusters = [].concat.apply([], ls);
+    console.log(this.analysis$);
     this.sendIndicatorSummary(this.clusters);
   }
-
-  // seeVar() {
-  //   const mergeById = (t: any, s: any) =>
-  //     t.map((p: any) =>
-  //       Object.assign(
-  //         {},
-  //         p,
-  //         s.find((q: any) => p.cellid == q.cellid)
-  //       )
-  //     );
-  //   combineLatest([of(this.accessions$), of(this.analysis$)])
-  //     .pipe(map((res: any) => mergeById(res[0], res[1])))
-  //     .subscribe((res: any) => {
-  //       this.mergeAccessionsAndCluster();
-  //       this.clusters = [];
-  //       res.forEach((element: any) => {
-  //         if (element.cluster_hac >= 0) {
-  //           this.clusters.push(element);
-  //         }
-  //       });
-  //       this.clusters = this.clusters.sort(
-  //         (a: any, b: any) => a.cluster - b.cluster
-  //         );
-  //         const ids = this.clusters.map((o:any) => o.id)
-  //         this.clusters =  this.clusters.filter(({id}:any, index:any) => !ids.includes(id, index + 1))
-  //       this.sendIndicatorSummary(this.clusters);
-  //       console.log(this.clusters);
-  //       // this.drawPlot();
-  //       // this.clustersGrouped$ = of(this.clusters).pipe(
-  //       //   switchMap((data: any) =>
-  //       //     from(data).pipe(
-  //       //       groupBy((item: any) => item.cluster_hac),
-  //       //       mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
-  //       //       reduce((acc: any, val: any) => acc.concat([val]), [])
-  //       //     )
-  //       //   )
-  //       // )
-  //       // // .subscribe((res:any) => {
-  //       // //   console.log(res);
-  //       // // })
-  //       // this.test$ = of(this.clusters).pipe(
-  //       //   switchMap((data: any) =>
-  //       //     from(data).pipe(
-  //       //       groupBy((item: any) => item.crop),
-  //       //       mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
-  //       //       // reduce((acc: any, val: any) => acc.concat([val]), []),
-
-  //       //       // map((x:any) => {return x[1]})
-  //       //       mergeMap((array:any) => {// Take each from above array and group each array by manDate
-  //       //         const newArray = from(array[1]).pipe(groupBy(
-  //       //           (val:any) => val.cluster_hac,
-  //       //           ),
-  //       //           mergeMap(group => {
-  //       //             return zip(of(group.key), group.pipe(toArray())); // return the group values as Arrays
-  //       //           }),
-  //       //           reduce((acc: any, val: any) => acc.concat([val]), []),
-  //       //           )
-  //       //           // .subscribe((re:any) => {
-  //       //           //   newArray = re;
-  //       //           // })
-  //       //           array[1] = newArray;
-  //       //           // console.log(array)
-  //       //           return [array]
-  //       //       }),
-  //       //       reduce((acc: any, val: any) => acc.concat([val]), []),
-  //       //       // toArray()
-  //       //     )
-  //       //   )
-  //       // )
-  //       // .subscribe((res:any) => {
-  //       //   console.log(res)
-  //       // })
-  //     });
-  // }
 
   openAccessionDetail(object: any) {
     const dialogRef = this.dialog.open(AccessionsDetailComponent, {

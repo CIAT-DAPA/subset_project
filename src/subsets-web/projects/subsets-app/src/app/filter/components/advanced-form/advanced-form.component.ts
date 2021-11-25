@@ -24,6 +24,7 @@ export class AdvancedFormComponent
   // Observable with the indicators period format
   @Input() cropList: any = [];
   @Input() indicatorPeriods: any;
+  @Input() cellidList: any;
   // Var to check all complete
   allComplete: boolean = false;
   // Passport params
@@ -162,6 +163,7 @@ export class AdvancedFormComponent
                 highValue: minMax[0].max,
                 type: res.indicator_type,
                 indicator: res.name,
+                unit: res.unit,
                 crop: res.crop,
                 pref: res.pref,
                 id: res.id,
@@ -175,6 +177,7 @@ export class AdvancedFormComponent
                 highValue: 30,
                 type: res.indicator_type,
                 indicator: res.name,
+                unit: res.unit,
                 crop: res.crop,
                 pref: res.pref,
                 id: res.id,
@@ -189,6 +192,7 @@ export class AdvancedFormComponent
                   highValue: 1707.2,
                   type: res.indicator_type,
                   indicator: res.name,
+                  unit: res.unit,
                   crop: res.crop,
                   pref: res.pref,
                   id: res.id,
@@ -201,6 +205,7 @@ export class AdvancedFormComponent
                   highValue: 184.1272,
                   type: res.indicator_type,
                   indicator: res.name,
+                  unit: res.unit,
                   crop: res.crop,
                   pref: res.pref,
                   id: res.id,
@@ -213,6 +218,7 @@ export class AdvancedFormComponent
                   highValue: 540.4708,
                   type: res.indicator_type,
                   indicator: res.name,
+                  unit: res.unit,
                   crop: res.crop,
                   pref: res.pref,
                   id: res.id,
@@ -225,6 +231,7 @@ export class AdvancedFormComponent
                   highValue: 94.15,
                   type: res.indicator_type,
                   indicator: res.name,
+                  unit: res.unit,
                   crop: res.crop,
                   pref: res.pref,
                   id: res.id,
@@ -323,6 +330,7 @@ export class AdvancedFormComponent
       finalRequest.push(obj);
     });
     request = {
+      cellid_list:this.cellidList,
       data: finalRequest,
       passport: this.passportParms,
     };
