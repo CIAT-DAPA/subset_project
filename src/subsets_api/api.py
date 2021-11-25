@@ -91,12 +91,13 @@ def accessions_list():
             "month10": x.month10,
             "month11": x.month11,
             "month12": x.month12,
+            "value": x.value,
             "cellid": x.cellid}
             for x in ind_values])
     df_grouped = df.groupby(['indicator'])
     for indx, group in enumerate(df_grouped):
-        min = group[1][month_fields].min().min()
-        max = group[1][month_fields].max().max()
+        min = group[1][month_fields + ["value"]].min(skipna=True).min(skipna=True)
+        max = group[1][month_fields + ["value"]].max(skipna=True).max(skipna=True)
         print(group[0] ,  'min: ', str(min), 'max: ', str(max))
         ob = {'indicator': group[0], 'min': min, 'max':max}        
         min_max.append(ob)
@@ -118,9 +119,9 @@ def accessions_list():
     #print("Quantile",df_bins.shape[0])
     #print(df_bins.head())
     content = {
-        'accessions':json.dumps(result.to_json(orient='records')),
+        'accessions':json.loads(result.to_json(orient='records')),
         'min_max': min_max,
-        'quantile':  json.dumps(df_bins.to_json(orient='records'))
+        'quantile':  json.loads(df_bins.to_json(orient='records'))
     }
 
 
