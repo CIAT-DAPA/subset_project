@@ -23,6 +23,7 @@ app = Flask(__name__)
 @app.route('/api/v1/accessions', methods=['GET', 'POST'])
 @cross_origin()
 def accessions_list():
+    # get the input parameters
     data = request.get_json()
 
     start = time.time()
@@ -30,12 +31,15 @@ def accessions_list():
                       for filter in data if len(data[filter]) > 0]
     print(filter_clauses)
     #accessions = Accession.objects((Q(crop__in = data["crop"])) & (Q(country_name__in = data["country_name"]))).select_related()
+    # Filter accessions by clauses
+    
     accessions = Accession.objects(
         reduce(operator.and_, filter_clauses)).select_related()
     rows = len(accessions)
     end = time.time()
     print("Accessions: " + str(rows) + " time: " + str((end-start)*1000.0))
 
+    # Fixing accessions to the json format
     start = time.time()
     result = [{"name": x.name,
                "number": x.number,
@@ -64,13 +68,19 @@ def accessions_list():
     cell_ids = [x.cellid for x in accessions if x.cellid]
     cell_ids = list(set(cell_ids))
 
-    ind_period = IndicatorPeriod.objects(period__in=['min', 'max']).select_related()
-    print('periods', str(len(ind_period)))
-
+    ind_period = IndicatorPeriod.objects(period__in=['min', 'max']).select_related()    
     ind_periods_ids = []
     ind_periods_ids.extend(x.id for x in ind_period)
+    print('periods', str(len(ind_period)))
+
+    # It filters indicators periods ids, which will be used to create histogram
+    ind_period_hist = IndicatorPeriod.objects(period__in=['mean']).select_related()
+    ind_periods_ids_hist = []
+    ind_periods_ids_hist.extend(x.id for x in ind_period_hist)    
 
     ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=cell_ids).select_related()
+    ind_values_hist = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=cell_ids).select_related()
+    print(ind_values_hist)
     print("MinAndMax: " + str(len(ind_values)) )
     responses = []
     min_max = []
@@ -97,8 +107,11 @@ def accessions_list():
         max = group[1][['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
                 'month10', 'month11', 'month12']].max().max()
         print(group[0] ,  'min: ', str(min), 'max: ', str(max))
-        ob = {'indicator': group[0], 'min': min, 'max':max}
+        ob = {'indicator': group[0], 'min': min, 'max':max}        
         min_max.append(ob)
+        # Calculate bins
+        #bin_range = (max - min) / 20
+
 
     content = {
         'accessions': result,
