@@ -21,6 +21,7 @@ export class SwitchToggleComponent implements OnInit, AfterContentInit {
    rangesValues$:any;
    @Input() cropList:any = []
    @Input() accessions:any = [];
+   @Input() quantile:any = [];
   constructor(
     private _sharedService: SharedService,
     private api: IndicatorService,

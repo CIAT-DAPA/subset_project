@@ -1,89 +1,68 @@
 <div class=" mt-2">
-   
-     <ng-container *ngFor="let x of indicators">
-       <section *ngIf="!['Crop-specific indicators'].includes(x.category)">
-         <p>
-           <mat-checkbox
-             color="primary"
-             [checked]="x.checked"
-             [indeterminate]="someComplete(x)"
-             (change)="setAll($event.checked, x.category,x)"
-             >{{ x.category }}</mat-checkbox
-           >
-         </p>
-         <section class="ml-3" *ngFor="let y of x.indicators">
-           <p>
-             <mat-checkbox *ngIf="y.pref != 'TEXMHT'" color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{ y.name }}</mat-checkbox>
-           </p>
-         </section>
-       </section>
-     </ng-container>
-     <ng-container *ngIf="listCropAvailable.length > 0">
-      <ng-container *ngFor="let x of indicators">
-        <section *ngIf="x.category == 'Crop-specific indicators'">
-        <p>
-          <mat-checkbox
-            color="primary"
-            [checked]="x.checked"
-            [indeterminate]="someComplete(x)"
-            (change)="setAll($event.checked, x.category,x)"
-            >{{ x.category }}</mat-checkbox
-            >
-          </p>
-          <section class="ml-3" *ngFor="let y of x.indicators">
-            <ng-container *ngIf="cropList.includes(y.crop)">
-              <p>
-                <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">{{y.crop}} -- {{ y.name }}</mat-checkbox>
-              </p>
-            </ng-container>
-          </section>
-        </section>
-      </ng-container>
-    </ng-container>
-     <ngx-spinner></ngx-spinner>
-   <!-- </mat-card> -->
-<mat-card class="mt-3">
-  <h3 class="mt-2" >Select a range of values</h3>
-   <ng-container *ngFor="let x of listValues; let i = index">
 
-    <div class="mb-4">
-      <label [for]="'value' + i" class="form-label mt-2"
-      >{{ x.indicator }}</label
-      >
-      <ngx-slider
-      [(value)]="x.minValue"
-      [id]="'value' + i"
-      [(highValue)]="x.highValue"
-      [options]="{
+  <ng-container *ngFor="let x of indicators">
+    <section *ngIf="!['Crop-specific indicators'].includes(x.category)">
+      <p>
+        <mat-checkbox color="primary" [checked]="x.checked" [indeterminate]="someComplete(x)"
+          (change)="setAll($event.checked, x.category,x)">{{ x.category }}</mat-checkbox>
+      </p>
+      <section class="ml-3" *ngFor="let y of x.indicators">
+        <p>
+          <mat-checkbox *ngIf="y.pref != 'TEXMHT'" color="primary" [(ngModel)]="y.checked"
+            (ngModelChange)="updateAllComplete(x, y.checked)">
+            <histogram-chart [data]=quantile [indicator]="y.name" [prefix]="y.pref"></histogram-chart>
+            {{ y.name }}
+          </mat-checkbox>
+        </p>
+      </section>
+    </section>
+  </ng-container>
+  <ng-container *ngIf="listCropAvailable.length > 0">
+    <ng-container *ngFor="let x of indicators">
+      <section *ngIf="x.category == 'Crop-specific indicators'">
+        <p>
+          <mat-checkbox color="primary" [checked]="x.checked" [indeterminate]="someComplete(x)"
+            (change)="setAll($event.checked, x.category,x)">{{ x.category }}</mat-checkbox>
+        </p>
+        <section class="ml-3" *ngFor="let y of x.indicators">
+          <ng-container *ngIf="cropList.includes(y.crop)">
+            <p>
+              <mat-checkbox color="primary" [(ngModel)]="y.checked" (ngModelChange)="updateAllComplete(x, y.checked)">
+                {{y.crop}} -- {{ y.name }}</mat-checkbox>
+            </p>
+          </ng-container>
+        </section>
+      </section>
+    </ng-container>
+  </ng-container>
+  <ngx-spinner></ngx-spinner>
+  <!-- </mat-card> -->
+  <mat-card class="mt-3">
+    <h3 class="mt-2">Select a range of values</h3>
+    <ng-container *ngFor="let x of listValues; let i = index">
+
+      <div class="mb-4">
+        <label [for]="'value' + i" class="form-label mt-2">{{ x.indicator }}</label>
+        <ngx-slider [(value)]="x.minValue" [id]="'value' + i" [(highValue)]="x.highValue" [options]="{
         floor: x.floor,
         ceil:x.ceil,
         showTicksValues: true,
         tickStep: 1,
         tickValueStep: x.ceil
-      }"
-      >
-    </ngx-slider>
-  </div>
-</ng-container>
-</mat-card>
+      }">
+        </ngx-slider>
+      </div>
+    </ng-container>
+  </mat-card>
 
-<mat-card class="mt-3">
+  <mat-card class="mt-3">
     <div>
-        <mat-checkbox
-        color="primary"
-        [checked]="checkedPeriods"
-        (change)="checksPeriods($event.checked)"
-        >Select a range of periods</mat-checkbox
-      >
+      <mat-checkbox color="primary" [checked]="checkedPeriods" (change)="checksPeriods($event.checked)">Select a range
+        of periods</mat-checkbox>
     </div>
     <div class="mt-3 mb-3" *ngIf="checkedPeriods">
       <label for="period" class="form-label">Add a range of years</label>
-      <ngx-slider
-        [(value)]="periodMinValue"
-        id="period"
-        [(highValue)]="periodMaxValue"
-        [options]="periodOptions"
-      >
+      <ngx-slider [(value)]="periodMinValue" id="period" [(highValue)]="periodMaxValue" [options]="periodOptions">
       </ngx-slider>
     </div>
     <div class="mt-4" style="margin-top: 10% !important; width: 98%">
@@ -91,12 +70,7 @@
       <div style="display: flex; width: 100%">
         <div style="width: 48%">
           <label for="firstmonth">Initial month</label>
-          <select
-            class="form-control"
-            name=""
-            id="firstmonth"
-            [(ngModel)]="monthFirt"
-          >
+          <select class="form-control" name="" id="firstmonth" [(ngModel)]="monthFirt">
             <option value="1">January</option>
             <option value="2">Febrary</option>
             <option value="3">March</option>
@@ -113,12 +87,7 @@
         </div>
         <div class="ml-2" style="width: 48%">
           <label for="firstmonth">End month</label>
-          <select
-            class="form-control"
-            name=""
-            id="firstmonth"
-            [(ngModel)]="monthEnd"
-          >
+          <select class="form-control" name="" id="firstmonth" [(ngModel)]="monthEnd">
             <option value="1">January</option>
             <option value="2">Febrary</option>
             <option value="3">March</option>
@@ -138,9 +107,9 @@
     </div>
 
     <button class="btn btn-green mt-3" (click)="getSubsetsOfAccession()">
-        Apply Filters
-      </button>
-  
+      Apply Filters
+    </button>
+
   </mat-card>
-  
-   </div>
+
+</div>

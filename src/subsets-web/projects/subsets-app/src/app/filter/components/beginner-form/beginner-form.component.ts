@@ -18,6 +18,7 @@ export class BeginnerFormComponent implements OnInit, OnChanges, AfterContentIni
   @Input() cropList: any = [];
   @Input() accessions: any = [];
   @Input() formActive: boolean = false;
+  @Input() quantile: any[] = [];
   // Observable with the indicators period format
   @Input() indicatorPeriods$: any;
   // Var to check all complete

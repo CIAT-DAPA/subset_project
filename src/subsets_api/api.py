@@ -113,7 +113,7 @@ def accessions_list():
     #print("Joinend",df_bins.shape[0])
     df_bins = df_bins.groupby(['indicator','cellid','mean'],as_index=False).size()
     #print("Size",df_bins.shape[0])
-    df_bins['quantile'] = pd.qcut(df_bins['mean'], q=10, precision=0)    
+    df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.qcut(x, q=10, precision=0))
     df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
     df_bins["quantile"] = df_bins["quantile"].astype(str)
     #print("Quantile",df_bins.shape[0])

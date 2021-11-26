@@ -144,7 +144,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
     tickStep: 0.5,
     tickValueStep: 30,
   };
-
+  quantile:any[];
   constructor(
     private api: IndicatorService,
     private sharedService: SharedService,
@@ -207,6 +207,8 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
       latitude: [],
       taxonomy_taxon_name: [],
     };
+
+    this.quantile = [];
 
     this.cropParams = {
       names: [],
@@ -367,6 +369,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
             'Warning'
           );
         } else {
+          console.log(data);
           this.cellidList = [];
           this.accessions$ = data.accessions;
           this.crops.forEach((crp: any) => {
@@ -388,6 +391,7 @@ export class FormFilterComponent implements OnInit, AfterContentInit {
           // this.setDataIndicator(data);
           this.setSummary(this.accessions$);
           this.setRangeValues(data.min_max);
+          this.quantile = data.quantile;
           this.setTabIndex(0);
         }
       },
