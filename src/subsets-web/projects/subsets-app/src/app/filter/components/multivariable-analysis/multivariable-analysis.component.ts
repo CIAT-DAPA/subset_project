@@ -73,7 +73,7 @@ export class MultivariableAnalysisComponent
   summaryReduced: any;
   indicators$: any = [];
   accessionsCombined:any = [];
-  cropList: any = [];
+  @Input() cropList: any = [];
   cropSelected: any;
   data:any = []
   dataSummary:any = []
@@ -106,8 +106,6 @@ export class MultivariableAnalysisComponent
       } else {
         this.getSummaryMethodology('hac');
       }
-      console.log(this.multivariable);
-      console.log(this.accessions);
       this.seeVar();
     }
   }
@@ -221,6 +219,7 @@ export class MultivariableAnalysisComponent
   ngAfterContentInit() {
     this._sharedService.sendCropsListObservable.subscribe((res: any) => {
       this.cropList = res;
+      console.log(res);
       this.cropSelected = this.cropList[0];
     });
   }

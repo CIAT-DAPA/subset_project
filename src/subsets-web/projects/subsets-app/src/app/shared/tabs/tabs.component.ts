@@ -41,6 +41,7 @@ export class TabsComponent implements OnInit, AfterContentInit {
   showAdvancedMap = false;
   selectdIndex: number = 0;
   @Input() activeTabs: boolean;
+  cropList:any
   // agglo
   maxCluster: number;
   minCluster: number;
@@ -81,6 +82,7 @@ export class TabsComponent implements OnInit, AfterContentInit {
     this.activeTabs = true;
     this.maxCluster = 5;
     this.minCluster = 2;
+    this.cropList = [];
   }
 
   addAlgorithmsToList() {
@@ -94,6 +96,11 @@ export class TabsComponent implements OnInit, AfterContentInit {
       this.algorithmsList.push('hdbscan');
     }
   }
+
+  setCropList(crop: any) {
+    this._sharedService.sendCropList(crop);
+  }
+
   openAccessionDetail(object: any) {
     const dialogRef = this.dialog.open(AccessionsDetailComponent, {
       data: {
@@ -172,6 +179,9 @@ export class TabsComponent implements OnInit, AfterContentInit {
   }
 
   ngAfterContentInit() {
+    this._sharedService.sendCropsListObservable.subscribe((res: any) => {
+      this.cropList = res;
+    });
     this._sharedService.sendIndicatorsObservable.subscribe((params: any) => {
       this.params = params;
     });
@@ -198,6 +208,9 @@ export class TabsComponent implements OnInit, AfterContentInit {
       this.subsets = {data: this.accessionsFiltered, time: res.univariate.time}
       this.setSubsets(this.subsets)
       this.quantileData = res.quantile;
+      if (this.accessionsFiltered.length > 50) {
+     this.setCropList(this.cropList)
+      }
       // this.sendIndicatorSummary(this.subsets.data)
     });
   };

@@ -75,6 +75,17 @@ export class TableOutcomesComponent implements OnInit, AfterContentInit, OnChang
     saveAs(blob, "accessions.csv");
 }
 
+
+setTabIndex(indx: number) {
+  this._sharedService.setTabSelected(indx);
+}
+
+sendCandidate(cand:any) {
+  this._sharedService.sendCandidate(cand);
+  this.setTabIndex(2)
+}
+
+
 /*   filterAccessionsByIndicator() {
     this.cellids.forEach((element:any) => {
       let accessionsFiltered = this.accessions$.filter((prop:any) => prop.cellid == element);

@@ -1,5 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+import { SharedService } from '../../../core/service/shared.service';
 import { AccessionsDetailComponent } from '../../accessions-detail/accessions-detail.component';
 
 @Component({
@@ -14,7 +15,7 @@ export class RandomSusbsetComponent implements OnInit {
   setAccessionsCandidate:any[];
   numberAccessionsToFilter:number;
   actualPage:number = 1
-  constructor( public dialog: MatDialog) { 
+  constructor( public dialog: MatDialog, private _sharedService:SharedService) { 
     this.headers = ['Number', 'Crop name', 'Taxon', 'Action'];
     this.pivotList = [];
     this.setAccessionsCandidate = [];
@@ -33,8 +34,15 @@ export class RandomSusbsetComponent implements OnInit {
         this.setAccessionsCandidate.push(this.setAccessionsPotential[item])
       }
     }
-    console.log(this.setAccessionsCandidate);
-    console.log(this.setAccessionsCandidate);
+  }
+
+  setTabIndex(indx: number) {
+    this._sharedService.setTabSelected(indx);
+  }
+
+  sendCandidate(cand:any) {
+    this._sharedService.sendCandidate(cand);
+    this.setTabIndex(2)
   }
 
   ngOnInit(): void {

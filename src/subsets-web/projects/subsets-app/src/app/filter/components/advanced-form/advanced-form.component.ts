@@ -335,6 +335,7 @@ export class AdvancedFormComponent
       passport: this.passportParms,
     };
     console.log(request);
+    console.log(this.cropList)
     this.setCropList(this.cropList);
     this.sendIndicatorsParameters(request);
     this.setTabIndex(1);

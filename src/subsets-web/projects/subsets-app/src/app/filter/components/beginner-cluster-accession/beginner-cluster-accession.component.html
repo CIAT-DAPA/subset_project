@@ -97,6 +97,14 @@
 <!-- Pie chart -->
 <!-- End Pie chart -->
 
+<div *ngIf="summSelected == 'Mean' " style="width: 50%;">
+  <ul>
+    <ng-container *ngFor="let x of interpretation">
+      <li class="mt-2">{{x.message}}</li>
+    </ng-container>
+  </ul>
+</div>
+
 <mat-card class="mt-2 mb-2">
   <mat-card-header>
     <mat-card-title>Accessions location</mat-card-title>
@@ -188,6 +196,7 @@
     class="mt-2 btn-green"
     mat-button
     color="primary"
+    (click)="sendCandidate(test$)"
     *ngIf="test$.length <= 50 && test$.length > 0"
   >
     Take like set candidate

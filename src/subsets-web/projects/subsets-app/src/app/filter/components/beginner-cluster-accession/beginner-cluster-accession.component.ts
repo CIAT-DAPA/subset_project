@@ -47,6 +47,8 @@ export class BeginnerClusterAccessionComponent
   indicatorsAvailables: any[];
   variableToEvaluate: any[];
   selectedIndicatorList$: any;
+  variablesWithInterpretation: any;
+  interpretation: any[] = [];
   @ViewChild('plots_pie') private plots!: ElementRef;
   @ViewChild('summary_table') private summaryTable!: ElementRef;
   constructor(
@@ -63,6 +65,12 @@ export class BeginnerClusterAccessionComponent
     this.variableToEvaluate = ['Mean', 'Maximum', 'Minimum'];
     this.summSelected = this.variableToEvaluate[0];
     this.clusters = [];
+    this.variablesWithInterpretation = [
+      't_rain',
+      'ndws',
+      'TN',
+      'TX',
+    ];
   }
 
   ngAfterContentInit() {
@@ -87,7 +95,6 @@ export class BeginnerClusterAccessionComponent
         this.analysis$ = res.data;
         // Set summary data (Min, Max and Mean)
         this.summary$ = res.summary;
-        // this.setInterpretation(this.cropSelected,'Maximum','t_rain')
         // Set the clusters available
         let listTest: any = [];
         this.analysis$.forEach((element: any) => {
@@ -107,22 +114,77 @@ export class BeginnerClusterAccessionComponent
         this.mergeAccessionsAndCluster();
         if (this.cropSelected) {
           this.drawPlot(this.cropSelected);
+          this.setInterpretation(this.cropSelected);
           // this.test$ = [];
         }
       }
     );
   }
 
-  setInterpretation(crop: any, metric: any, indicator: any) {
-    let objFiltered = this.summary$.filter(
-      (prop: any) => prop.indicator == indicator && prop.crop == crop
-    );
-    if (metric == 'Maximum') {
-      let maxCluster = objFiltered.reduce((max: any, obj: any) =>
-        max.max > obj.max ? max : obj
-      );
-      console.log(maxCluster);
-    }
+  setInterpretation(crop: any) {
+    this.interpretation = [];
+    this.indicatorsAvailables.forEach((res: any) => {
+      if (this.variablesWithInterpretation.includes(res)) {
+        let objFiltered = this.summary$.filter(
+          (prop: any) => prop.indicator == res && prop.crop == crop
+        );
+      
+        if (res == 'ndws') {
+          let maxCluster = objFiltered.reduce((max: any, obj: any) =>
+          max.mean > obj.mean ? max : obj
+        );
+        let NewNameCluster = parseInt(maxCluster.cluster) + 1
+          let ob = {
+            message:
+              'Drought Potential subset ' +NewNameCluster+' is the most exposed to drought, as it has '+ maxCluster.mean.toFixed(2) +' days of drought stress on average per month'
+          };
+          this.interpretation.push(ob);
+        }
+        // if (res == 't_rain') {
+        //   let ob = {
+        //     message:
+        //       'Potential subset ' +
+        //       NewNameCluster +
+        //       ' is the most exposed to drought, as it has XX drought stress days on average per month, and XX mm/month of rain. This potential subset is also the second warmest (or the second coolest), with an average monthly maximum (or minimum) temperature of XX ºC.',
+        //   };
+        //   this.interpretation.push(ob);
+        // }
+        if (res == 'TX') {
+          let maxCluster = objFiltered.reduce((max: any, obj: any) =>
+          max.mean > obj.mean ? max : obj
+        );
+        let NewNameCluster = maxCluster.cluster + 1
+          let ob = {
+            message:
+            'Heat stress Potential subset '+ NewNameCluster +' is the most exposed to heat stress, with an average monthly maximum temperature of '+maxCluster.mean.toFixed(2)+' ºC.',
+          };
+          this.interpretation.push(ob);
+        }
+        if (res == 'TN') {
+          let maxCluster = objFiltered.reduce((max: any, obj: any) =>
+          max.mean < obj.mean ? max : obj
+        );
+        let NewNameCluster = maxCluster.cluster + 1
+          let ob = {
+            message:
+              'Cool temperatures Potential subset ' +
+              NewNameCluster +
+              ' is the "coldest" subset, with an average monthly minimum temperature of ' + maxCluster.mean.toFixed(2) + 'ºC.',
+          };
+          this.interpretation.push(ob);
+        }
+      }
+    });
+    console.log(this.interpretation)
+  }
+
+  setTabIndex(indx: number) {
+    this._sharedService.setTabSelected(indx);
+  }
+
+  sendCandidate(cand:any) {
+    this._sharedService.sendCandidate(cand);
+    this.setTabIndex(2)
   }
 
   getIndicatorNameAndUnitByPref(pref: any) {

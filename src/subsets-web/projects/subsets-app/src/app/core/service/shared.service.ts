@@ -9,6 +9,10 @@ export class SharedService {
   private sendSubsetSubject = new Subject<any>();
   sendSubsetObservable = this.sendSubsetSubject.asObservable();
 
+  candidate: any = [];
+  private sendCandidateSubject = new Subject<any>();
+  sendCandidateObservable = this.sendCandidateSubject.asObservable();
+
   sendDataAdvancedMap: any = [];
   private sendDataAdvancedMapSubject = new Subject<any>();
   sendDataAdvancedMapObservable = this.sendDataAdvancedMapSubject.asObservable();
@@ -106,6 +110,11 @@ export class SharedService {
   sendDataAdvancedMaps(data: any) {
     this.sendDataAdvancedMap = data;
     this.sendDataAdvancedMapSubject.next(data);
+  }
+
+  sendCandidate(data: any) {
+    this.candidate = data;
+    this.sendCandidateSubject.next(data);
   }
 
   sendSubsetAdvanced(subset: any) {

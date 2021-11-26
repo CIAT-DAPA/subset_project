@@ -32,7 +32,12 @@ export class SwitchToggleComponent implements OnInit, AfterContentInit {
    }
 
    setExpertNormalMode(en:any) {
+     this.goToGeneral();
      this._sharedService.sendExpertNormal(en)
+   }
+
+   goToGeneral() {
+     this.setTabIndex(0)
    }
 
    setTabIndex(indx: number) {

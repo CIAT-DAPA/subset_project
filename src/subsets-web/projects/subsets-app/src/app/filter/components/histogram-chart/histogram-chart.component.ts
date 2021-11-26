@@ -20,7 +20,9 @@ export class HistogramChartComponent implements OnInit, AfterContentInit, AfterV
   }
 
   ngOnChanges() {
-    this.drawPlot();
+    if(this.data.length > 0) {
+      this.drawPlot();
+    }
   }
 
   ngAfterViewInit() {
