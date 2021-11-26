@@ -3,7 +3,7 @@
   (selectedIndexChange)="selectedIndexChange($event)"
   [selectedIndex]="selectdIndex"
 >
-  <mat-tab *ngIf="accessions$.length > 0" label="General">
+  <mat-tab label="General">
     <!-- <mat-progress-bar mode="determinate" value="40"></mat-progress-bar> -->
     <div *ngIf="accessions$.length > 0" class="">
       <mat-card class="mt-2 mb-2">
@@ -90,7 +90,7 @@
         <table-outcomes></table-outcomes>
         <hr />
       
-        <mat-tab-group *ngIf="accessionsFiltered.length > 50" mat-align-tabs="center">
+        <mat-tab-group *ngIf="accessionsFiltered.length > 50" accessionsFiltered.length mat-align-tabs="center">
           <mat-tab label="Clustering analysis">
             <div >
               <div style="width: 100%" class="mt-2 mr-2 advance-properties">
