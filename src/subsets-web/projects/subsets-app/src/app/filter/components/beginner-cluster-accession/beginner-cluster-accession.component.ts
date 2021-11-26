@@ -136,7 +136,7 @@ export class BeginnerClusterAccessionComponent
         let NewNameCluster = parseInt(maxCluster.cluster) + 1
           let ob = {
             message:
-              'Drought Potential subset ' +NewNameCluster+' is the most exposed to drought, as it has '+ maxCluster.mean.toFixed(2) +' days of drought stress on average per month'
+              'Drought stress: Potential subset ' +NewNameCluster+' is the most exposed to drought, as it has '+ maxCluster.mean.toFixed(2) +' days of drought stress on average per month'
           };
           this.interpretation.push(ob);
         }
@@ -153,10 +153,10 @@ export class BeginnerClusterAccessionComponent
           let maxCluster = objFiltered.reduce((max: any, obj: any) =>
           max.mean > obj.mean ? max : obj
         );
-        let NewNameCluster = maxCluster.cluster + 1
+        let NewNameCluster = parseInt(maxCluster.cluster) + 1
           let ob = {
             message:
-            'Heat stress Potential subset '+ NewNameCluster +' is the most exposed to heat stress, with an average monthly maximum temperature of '+maxCluster.mean.toFixed(2)+' ºC.',
+            'Heat stress: Potential subset '+ NewNameCluster +' is the most exposed to heat stress, with an average monthly maximum temperature of '+maxCluster.mean.toFixed(2)+' ºC.',
           };
           this.interpretation.push(ob);
         }
@@ -164,10 +164,10 @@ export class BeginnerClusterAccessionComponent
           let maxCluster = objFiltered.reduce((max: any, obj: any) =>
           max.mean < obj.mean ? max : obj
         );
-        let NewNameCluster = maxCluster.cluster + 1
+        let NewNameCluster = parseInt(maxCluster.cluster) + 1
           let ob = {
             message:
-              'Cool temperatures Potential subset ' +
+              'Cool temperatures: Potential subset ' +
               NewNameCluster +
               ' is the "coldest" subset, with an average monthly minimum temperature of ' + maxCluster.mean.toFixed(2) + 'ºC.',
           };

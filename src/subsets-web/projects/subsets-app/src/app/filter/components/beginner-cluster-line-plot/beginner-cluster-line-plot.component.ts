@@ -126,7 +126,7 @@ export class BeginnerClusterLinePlotComponent implements OnInit, AfterContentIni
         );
         console.log(sorted)
         let clusterCalculate = parseInt(d.cluster) + 1
-        return { key: 'Cluster ' + clusterCalculate, values: x_y };
+        return { key: 'Set ' + clusterCalculate, values: x_y };
       });
       console.log(plot_data)
 
