@@ -67,7 +67,7 @@ export class BeginnerClusterMapComponent
   listFigures: any[];
   listClusters: any[];
   cropList: any;
-  @Input() cropSelected:any
+  @Input() cropSelected: any;
   constructor(
     private api: IndicatorService,
     private _sharedService: SharedService,
@@ -111,11 +111,10 @@ export class BeginnerClusterMapComponent
     console.log(changes);
     if (changes) {
       if (changes.cropSelected.firstChange == false) {
-
         console.log(changes.cropSelected.currentValue);
-        const container = document.getElementById('beginner-map')
+        const container = document.getElementById('beginner-map');
         if (container) {
-          this.clearDiv()
+          this.clearDiv();
           this.initMap();
         }
       }
@@ -123,13 +122,13 @@ export class BeginnerClusterMapComponent
     }
   }
 
-    clearDiv() {
-      if (this.map ){
-        this.map.eachLayer(function(layer:any){
-            layer.remove();
-        });
-        this.map.remove();
-        this.map = null;
+  clearDiv() {
+    if (this.map) {
+      this.map.eachLayer(function (layer: any) {
+        layer.remove();
+      });
+      this.map.remove();
+      this.map = null;
     }
   }
 
@@ -155,7 +154,6 @@ export class BeginnerClusterMapComponent
       'orange',
       'purple',
       'Salmon',
-
     ];
     this.cropList.forEach((crop: any, index: any) => {
       this.listClusters.forEach((cluster: any, indx: any) => {
@@ -183,7 +181,7 @@ export class BeginnerClusterMapComponent
         setTimeout(() => {
           this.clearDiv();
           this.initMap();
-        }, 3000)
+        }, 3000);
       }
     );
     this._sharedService.sendCropsListObservable.subscribe((res: any) => {
@@ -192,39 +190,45 @@ export class BeginnerClusterMapComponent
   }
 
   getClusterListByCrop() {
-    let filterByCrop = this.summary$.filter((prop:any) => prop.crop == this.cropSelected)
+    let filterByCrop = this.summary$.filter(
+      (prop: any) => prop.crop == this.cropSelected
+    );
     let listCluster: any[] = [];
-     filterByCrop.forEach((element:any) => {
-      listCluster.push(parseInt(element.cluster))
+    filterByCrop.forEach((element: any) => {
+      listCluster.push(parseInt(element.cluster));
     });
     listCluster = [...new Set(listCluster)];
     return listCluster;
   }
 
   mergeAccessionsAndCluster() {
-    let ls:any[] = [];
-    this.analysis$.forEach((element:any) => {
-      let filtered: any[] = this.accessions$.filter((prop:any) => prop.cellid == element.cellid && prop.crop == element.crop_name)
+    let ls: any[] = [];
+    this.analysis$.forEach((element: any) => {
+      if (element.cellid > 0) {
+        let filtered: any[] = this.accessions$.filter(
+          (prop: any) =>
+            prop.cellid == element.cellid && prop.crop == element.crop_name
+        );
 
-      filtered.forEach(e => e.cluster_hac = element.cluster_hac);
-      ls.push(filtered)
+        filtered.forEach((e) => (e.cluster_hac = element.cluster_hac));
+        ls.push(filtered);
+      }
     });
     this.clusters = [].concat.apply([], ls);
     of(this.clusters)
-    .pipe(
-      switchMap((data: any) =>
-        from(data).pipe(
-          groupBy((item: any) => item.cluster_hac),
-          mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
-          reduce((acc: any, val: any) => acc.concat([val]), [])
+      .pipe(
+        switchMap((data: any) =>
+          from(data).pipe(
+            groupBy((item: any) => item.cluster_hac),
+            mergeMap((group) => zip(of(group.key), group.pipe(toArray()))),
+            reduce((acc: any, val: any) => acc.concat([val]), [])
+          )
         )
       )
-    )
-    .subscribe((res: any) => {
-      this.data = res;
-      this.data = this.data.sort((a:any, b:any) => a[0] -b[0])
-    });
-    
+      .subscribe((res: any) => {
+        this.data = res;
+        this.data = this.data.sort((a: any, b: any) => a[0] - b[0]);
+      });
   }
 
   combineData() {
@@ -264,10 +268,9 @@ export class BeginnerClusterMapComponent
           )
           .subscribe((res: any) => {
             this.data = res;
-            this.data = this.data.sort((a:any, b:any) => a[0] -b[0])
+            this.data = this.data.sort((a: any, b: any) => a[0] - b[0]);
             console.log(this.data);
           });
-
       });
   }
 
@@ -292,7 +295,7 @@ export class BeginnerClusterMapComponent
       'LimeGreen',
       'Teal',
       'Aqua',
-      'SandyBrown'
+      'SandyBrown',
     ];
 
     this.map = L.map('beginner-map', {
@@ -318,11 +321,10 @@ export class BeginnerClusterMapComponent
         position: 'bottomright',
       })
       .addTo(this.map);
-    this.colorClusters = []
-    this.data.forEach((element: any, index:any) => {
+    this.colorClusters = [];
+    this.data.forEach((element: any, index: any) => {
       let filtered: any = element[1].filter(
-        (prop: any) =>
-          prop.crop == this.cropSelected
+        (prop: any) => prop.crop == this.cropSelected
       );
 
       if (filtered.length > 0) {
@@ -342,7 +344,7 @@ export class BeginnerClusterMapComponent
             });
             marker.addTo(this.map);
             marker.setStyle({
-              color: colors[index]
+              color: colors[index],
             });
             marker.bindPopup('Name: ' + val.name + ' Crop: ' + val.crop);
             marker.on('mouseover', function (event) {
@@ -462,7 +464,6 @@ export class BeginnerClusterMapComponent
     //   });
     // });
   }
-
 
   openAccessionDetail(object: any) {
     const dialogRef = this.dialog.open(AccessionsDetailComponent, {

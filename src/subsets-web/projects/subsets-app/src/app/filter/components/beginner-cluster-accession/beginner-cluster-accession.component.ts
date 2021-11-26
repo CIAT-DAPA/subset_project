@@ -33,20 +33,20 @@ export class BeginnerClusterAccessionComponent
   cropSelected: any;
   summSelected: any;
   clusters: any[];
-  clusterSelected:any;
+  clusterSelected: any;
   clustersGrouped$: any;
   analysis$: any = [];
   summary$: any = [];
   headers: any[];
   actualpages: any;
   actualpageSummary: number = 1;
-  test$: any[] =  [];
+  test$: any[] = [];
   indicators$: any = [];
   cropList: any = [];
   headerSummary: any[];
   indicatorsAvailables: any[];
-  variableToEvaluate:any[];
-  selectedIndicatorList$:any;
+  variableToEvaluate: any[];
+  selectedIndicatorList$: any;
   @ViewChild('plots_pie') private plots!: ElementRef;
   @ViewChild('summary_table') private summaryTable!: ElementRef;
   constructor(
@@ -76,9 +76,9 @@ export class BeginnerClusterAccessionComponent
       this.accessions$ = data;
     });
     // Get the list of indicators selected
-    this._sharedService.sendIndicatorsListObservable.subscribe((res:any) => {
+    this._sharedService.sendIndicatorsListObservable.subscribe((res: any) => {
       this.selectedIndicatorList$ = res;
-    })
+    });
 
     // Get the clustering analysis from beginner form
     this._sharedService.sendMultivariableBeginnerObservable.subscribe(
@@ -87,8 +87,7 @@ export class BeginnerClusterAccessionComponent
         this.analysis$ = res.data;
         // Set summary data (Min, Max and Mean)
         this.summary$ = res.summary;
-        this.setInterpretation(this.cropSelected,'Maximum','t_rain')
-        console.log(this.summary$)
+        // this.setInterpretation(this.cropSelected,'Maximum','t_rain')
         // Set the clusters available
         let listTest: any = [];
         this.analysis$.forEach((element: any) => {
@@ -114,49 +113,65 @@ export class BeginnerClusterAccessionComponent
     );
   }
 
-  setInterpretation(crop:any, metric:any, indicator:any) {
-    let objFiltered = this.summary$.filter((prop:any) => prop.indicator==indicator && prop.crop==crop);
-    if (metric=='Maximum') {
-      let maxCluster = objFiltered.reduce((max:any, obj:any) => max.max > obj.max ? max : obj);
-      console.log(maxCluster)
+  setInterpretation(crop: any, metric: any, indicator: any) {
+    let objFiltered = this.summary$.filter(
+      (prop: any) => prop.indicator == indicator && prop.crop == crop
+    );
+    if (metric == 'Maximum') {
+      let maxCluster = objFiltered.reduce((max: any, obj: any) =>
+        max.max > obj.max ? max : obj
+      );
+      console.log(maxCluster);
     }
   }
 
-  getIndicatorNameAndUnitByPref(pref:any) {
-    let indcatorListFilter = this.selectedIndicatorList$.filter((prop:any) => prop.pref == pref);
-    let res = indcatorListFilter[0].name + ' (' + indcatorListFilter[0].unit + ')';
+  getIndicatorNameAndUnitByPref(pref: any) {
+    let indcatorListFilter = this.selectedIndicatorList$.filter(
+      (prop: any) => prop.pref == pref
+    );
+    let res =
+      indcatorListFilter[0].name + ' (' + indcatorListFilter[0].unit + ')';
     return res;
   }
 
   getClusterListByCrop() {
-    let filterByCrop = this.summary$.filter((prop:any) => prop.crop == this.cropSelected)
+    let filterByCrop = this.summary$.filter(
+      (prop: any) => prop.crop == this.cropSelected
+    );
     let listCluster: any[] = [];
-     filterByCrop.forEach((element:any) => {
-      listCluster.push(parseInt(element.cluster))
+    filterByCrop.forEach((element: any) => {
+      listCluster.push(parseInt(element.cluster));
     });
     listCluster = [...new Set(listCluster)];
     return listCluster;
   }
 
-  getAccessionByClusterAndCrop(cluster:any, crop:any):number {
-    let filterAccessions:any[] = this.clusters.filter((prop:any) => prop.cluster_hac == cluster && prop.crop == crop)
-    return filterAccessions.length
+  getAccessionByClusterAndCrop(cluster: any, crop: any): number {
+    let filterAccessions: any[] = this.clusters.filter(
+      (prop: any) => prop.cluster_hac == cluster && prop.crop == crop
+    );
+    return filterAccessions.length;
   }
 
-  getCellIdsByClusterAndCrop(cluster:any, crop:any):number {
-    let filterCell:any[] = this.analysis$.filter((prop:any) => prop.cluster_hac == cluster && prop.crop_name == crop)
-    return filterCell.length
+  getCellIdsByClusterAndCrop(cluster: any, crop: any): number {
+    let filterCell: any[] = this.analysis$.filter(
+      (prop: any) => prop.cluster_hac == cluster && prop.crop_name == crop
+    );
+    return filterCell.length;
   }
 
   getValueFromClusterAndIndicator(
     indicator: string,
     nCluster: number,
-    crop:any,
+    crop: any,
     summ: any
   ) {
     let result: any;
     let filteredlist: any = this.summary$.filter(
-      (prop: any) => prop.indicator == indicator && prop.cluster == nCluster && prop.crop == crop
+      (prop: any) =>
+        prop.indicator == indicator &&
+        prop.cluster == nCluster &&
+        prop.crop == crop
     );
     switch (summ) {
       case 'Mean':
@@ -231,7 +246,7 @@ export class BeginnerClusterAccessionComponent
       'LimeGreen',
       'Teal',
       'Aqua',
-      'SandyBrown'
+      'SandyBrown',
     ];
     let data: any[] = [];
     let clust: any[] = this.getClusterListByCrop();
@@ -239,11 +254,11 @@ export class BeginnerClusterAccessionComponent
       let accessionsFiltered: any[] = this.clusters.filter(
         (prop: any) => prop.cluster_hac == cluster && prop.crop == crop
       );
-      let regularname = cluster + 1
+      let regularname = cluster + 1;
       let obj: any = {
         label: 'Set ' + regularname,
         value: accessionsFiltered.length,
-        color: colors[cluster]
+        color: colors[cluster],
       };
       data.push(obj);
     });
@@ -273,7 +288,7 @@ export class BeginnerClusterAccessionComponent
       chart.pie.dispatch.on('elementClick', (e) => {
         // alert("You've clicked " + e.data.label);
         let splitVar = e.data.label.split(' ');
-        let realName = splitVar[1] -1
+        let realName = splitVar[1] - 1;
         this.getAccessionlistByCropAndCluster(realName);
       });
 
@@ -293,24 +308,26 @@ export class BeginnerClusterAccessionComponent
     // this.test$ = of(accessionFiltered);
     this.test$ = accessionFiltered;
     const container = document.getElementById('table-accessions');
-    if (container)
-    container.scrollIntoView();
+    if (container) container.scrollIntoView();
   }
 
-    sendIndicatorSummary(indSum: any) {
+  sendIndicatorSummary(indSum: any) {
     this._sharedService.sendIndicatorSummary(indSum);
   }
 
   mergeAccessionsAndCluster() {
-    let ls:any[] = [];
-    this.analysis$.forEach((element:any) => {
-      let filtered: any[] = this.accessions$.filter((prop:any) => prop.cellid == element.cellid && prop.crop == element.crop_name)
-
-      filtered.forEach(e => e.cluster_hac = element.cluster_hac);
-      ls.push(filtered)
+    let ls: any[] = [];
+    this.analysis$.forEach((element: any) => {
+      if (element.cellid > 0) {
+        let filtered: any[] = this.accessions$.filter(
+          (prop: any) =>
+            prop.cellid === element.cellid && prop.crop === element.crop_name
+        );
+        filtered.forEach((e) => (e.cluster_hac = element.cluster_hac));
+        ls.push(filtered);
+        this.clusters = [].concat.apply([], ls);
+      }
     });
-    this.clusters = [].concat.apply([], ls);
-    console.log(this.analysis$);
     this.sendIndicatorSummary(this.clusters);
   }
 

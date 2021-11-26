@@ -23,31 +23,28 @@ app = Flask(__name__)
 @app.route('/api/v1/accessions', methods=['GET', 'POST'])
 @cross_origin()
 def accessions_list():
+
     # get the input parameters
     data = request.get_json()
-    month_fields = ['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
-                'month10', 'month11', 'month12']
     start = time.time()
     filter_clauses = [Q(**{filter + "__in": data[filter]})
                       for filter in data if len(data[filter]) > 0]
     print(filter_clauses)
     #accessions = Accession.objects((Q(crop__in = data["crop"])) & (Q(country_name__in = data["country_name"]))).select_related()
-    # Filter accessions by clauses
-    accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
+    accessions = Accession.objects(
+        reduce(operator.and_, filter_clauses)).select_related()
     rows = len(accessions)
     end = time.time()
     print("Accessions: " + str(rows) + " time: " + str((end-start)*1000.0))
 
-    # Fixing accessions to the json format
     start = time.time()
-    result = pd.DataFrame([{"name": x.name,
+    result = [{"name": x.name,
                "number": x.number,
                "acq_date": x.acq_date,
                "coll_date": x.coll_date,
                "country_name": x.country_name,
                "institute_fullname": x.institute_fullname,
                "institute_acronym": x.institute_acronym,
-               "id": x.id,
                "crop": x.crop.name,
                "geo_lon": x.geo_lon,
                "geo_lat": x.geo_lat,
@@ -58,26 +55,26 @@ def accessions_list():
                "taxonomy_taxon_name": x.taxonomy_taxon_name,
                "cellid": x.cellid
                }
-              for x in accessions])
-    
-    #rows = len(result)
-    rows = result.shape[0]
+              for x in accessions]
+    rows = len(result)
     end = time.time()
     print("Result " + str(rows) + " time: " + str((end-start)*1000.0))
-    
-    # Calculate range of values
-    #cell_ids = [x.cellid for x in accessions if x.cellid]
-    #cell_ids = list(set(cell_ids))
 
-    ind_period = IndicatorPeriod.objects(period__in=['min', 'max', 'mean']).select_related()    
-    ind_periods_ids = []
-    ind_periods_ids.extend(x.id for x in ind_period)
+    # Calculate range of values
+    cell_ids = [x.cellid for x in accessions if x.cellid]
+    cell_ids = list(set(cell_ids))
+
+    ind_period = IndicatorPeriod.objects(period__in=['min', 'max']).select_related()
     print('periods', str(len(ind_period)))
 
-    #ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=cell_ids).select_related()
-    ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=result.loc[result["cellid"].notnull(),:]["cellid"].unique()).select_related()
-    min_max = []    
-    df = pd.DataFrame([{
+    ind_periods_ids = []
+    ind_periods_ids.extend(x.id for x in ind_period)
+
+    ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=cell_ids).select_related()
+    print("MinAndMax: " + str(len(ind_values)) )
+    responses = []
+    min_max = []
+    responses.extend([{
             "indicator": x.indicator_period.indicator.name,
             "month1": x.month1,
             "month2": x.month2,
@@ -90,37 +87,22 @@ def accessions_list():
             "month9": x.month9,
             "month10": x.month10,
             "month11": x.month11,
-            "month12": x.month12,
-            "cellid": x.cellid}
+            "month12": x.month12,}
             for x in ind_values])
+    df = pd.DataFrame([s for s in responses])
     df_grouped = df.groupby(['indicator'])
     for indx, group in enumerate(df_grouped):
-        min = group[1][month_fields].min().min()
-        max = group[1][month_fields].max().max()
+        min = group[1][['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
+                'month10', 'month11', 'month12']].min().min()
+        max = group[1][['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
+                'month10', 'month11', 'month12']].max().max()
         print(group[0] ,  'min: ', str(min), 'max: ', str(max))
-        ob = {'indicator': group[0], 'min': min, 'max':max}        
+        ob = {'indicator': group[0], 'min': min, 'max':max}
         min_max.append(ob)
-        # Calculate bins
-        #bin_range = (max - min) / 20
-        #avg = group[1][['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
-        #        'month10', 'month11', 'month12']].mean()
-    # 
-    df_bins = df.groupby(['indicator','cellid'],as_index=False)[month_fields].mean()
-    #print("Joinend",df_bins.shape[0])
-    df_bins["mean"] = df_bins.mean(axis=1)
-    df_bins = pd.merge(df_bins,result.loc[:,["cellid","crop"]],how='inner',on='cellid')
-    #print("Joinend",df_bins.shape[0])
-    df_bins = df_bins.groupby(['indicator','cellid','mean'],as_index=False).size()
-    #print("Size",df_bins.shape[0])
-    df_bins['quantile'] = pd.qcut(df_bins['mean'], q=10, precision=0)    
-    df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
-    df_bins["quantile"] = df_bins["quantile"].astype(str)
-    #print("Quantile",df_bins.shape[0])
-    #print(df_bins.head())
+
     content = {
-        'accessions':json.dumps(result.to_json(orient='records')),
-        'min_max': min_max,
-        'quantile':  json.dumps(df_bins.to_json(orient='records'))
+        'accessions': result,
+        'min_max': min_max
     }
 
 
