@@ -81,7 +81,7 @@
       <map-outcomes [acce]="accessions$"></map-outcomes>
     </div>
   </mat-tab>
-  <mat-tab label="Potential subset" *ngIf="expertNormalMode$">
+  <mat-tab label="Potential subsets" *ngIf="expertNormalMode$">
     <mat-tab-group
       mat-align-tabs="start"
       (selectedTabChange)="tabClick($event)"
@@ -263,7 +263,7 @@
 
   <mat-tab *ngIf="!expertNormalMode$">
     <ng-template mat-tab-label>
-      <span>Potential Subset</span>
+      <span>Potential subsets</span>
     </ng-template>
     <beginner-cluster *ngIf="!expertNormalMode$"></beginner-cluster>
   </mat-tab>
