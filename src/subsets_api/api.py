@@ -1571,5 +1571,5 @@ def subsets_kha():
 if __name__ == "__main__":
 
     connect('indicatordb', host='dbmongotst01.cgiarad.org', port=27017)
-    app.run(threaded=True, host='0.0.0.0', port=8437, debug=False)
-    # app.run(threaded=True, port=5001, debug=True)
+    # app.run(threaded=True, host='0.0.0.0', port=8437, debug=False)
+    app.run(threaded=True, port=5001, debug=True)
