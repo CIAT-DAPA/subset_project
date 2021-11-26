@@ -236,7 +236,7 @@
       </mat-step>
       <mat-step [editable]="true" (click)="getAccessions()">
         <ng-template matStepLabel>Set indicators  <a mat-icon-button href="/explore/glosary" target="_blank" ><mat-icon matTooltip="Go to Glossary">help</mat-icon></a></ng-template>
-        <switch-toggle [cellidList]="cellidList" [cropList]="crops" [accessions]="accessions$" [passportParms]="passportParams"></switch-toggle>
+        <switch-toggle [quantile]="quantile" [cellidList]="cellidList" [cropList]="crops" [accessions]="accessions$" [passportParms]="passportParams"></switch-toggle>
       </mat-step>
     </mat-vertical-stepper>
   </div>

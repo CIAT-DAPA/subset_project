@@ -33,7 +33,7 @@ export class AdvancedFormComponent
   listValues: any[];
   pivotList: any[];
   @Input() rangesValues$: any;
-
+  @Input() quantile: any[] = [];
   // period optios
   periodMinValue: number = 1983;
   periodMaxValue: number = 1983;

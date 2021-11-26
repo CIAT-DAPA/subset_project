@@ -41,11 +41,13 @@ import { MapTestComponent } from './components/map-test/map-test.component';
 import 'hammerjs';
 import { AdvancedClusterMapComponent } from './components/advanced-cluster-map/advanced-cluster-map.component';
 import { RandomSusbsetComponent } from './components/random-susbset/random-susbset.component';
+import { HistogramChartComponent } from './components/histogram-chart/histogram-chart.component';
+import { CandidateSubsetComponent } from './components/candidate-subset/candidate-subset.component';
 
 
 
 @NgModule({
-  declarations: [FormFilterComponent, MapOutcomesComponent, PlotOutcomesComponent, TableOutcomesComponent, FormIndicatorComponent, TabsComponent, DensityChartComponent, AddPointMapComponent, CustomDataComponent, AccessionsDetailComponent, SummaryComponent, MultivariableAnalysisComponent, FormSubsetComponent, MaxPipePipe, FormSpecifcPerCropComponent, BeginnerFormComponent, BeginnerClusterComponent, BeginnerClusterAccessionComponent, AdvancedFormComponent, SwitchToggleComponent, BeginnerClusterLinePlotComponent, BeginnerClusterBoxPlotComponent, BeginnerClusterMapComponent, AdvancedSubsetMapComponent, MapTestComponent, AdvancedClusterMapComponent, RandomSusbsetComponent],
+  declarations: [FormFilterComponent, MapOutcomesComponent, PlotOutcomesComponent, TableOutcomesComponent, FormIndicatorComponent, TabsComponent, DensityChartComponent, AddPointMapComponent, CustomDataComponent, AccessionsDetailComponent, SummaryComponent, MultivariableAnalysisComponent, FormSubsetComponent, MaxPipePipe, FormSpecifcPerCropComponent, BeginnerFormComponent, BeginnerClusterComponent, BeginnerClusterAccessionComponent, AdvancedFormComponent, SwitchToggleComponent, BeginnerClusterLinePlotComponent, BeginnerClusterBoxPlotComponent, BeginnerClusterMapComponent, AdvancedSubsetMapComponent, MapTestComponent, AdvancedClusterMapComponent, RandomSusbsetComponent, HistogramChartComponent, CandidateSubsetComponent],
   imports: [
     CommonModule,
     FilterRoutingModule,

@@ -23,28 +23,31 @@ app = Flask(__name__)
 @app.route('/api/v1/accessions', methods=['GET', 'POST'])
 @cross_origin()
 def accessions_list():
-
     # get the input parameters
     data = request.get_json()
+    month_fields = ['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
+                'month10', 'month11', 'month12']
     start = time.time()
     filter_clauses = [Q(**{filter + "__in": data[filter]})
                       for filter in data if len(data[filter]) > 0]
     print(filter_clauses)
     #accessions = Accession.objects((Q(crop__in = data["crop"])) & (Q(country_name__in = data["country_name"]))).select_related()
-    accessions = Accession.objects(
-        reduce(operator.and_, filter_clauses)).select_related()
+    # Filter accessions by clauses
+    accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
     rows = len(accessions)
     end = time.time()
     print("Accessions: " + str(rows) + " time: " + str((end-start)*1000.0))
 
+    # Fixing accessions to the json format
     start = time.time()
-    result = [{"name": x.name,
+    result = pd.DataFrame([{"name": x.name,
                "number": x.number,
                "acq_date": x.acq_date,
                "coll_date": x.coll_date,
                "country_name": x.country_name,
                "institute_fullname": x.institute_fullname,
                "institute_acronym": x.institute_acronym,
+               "id": x.id,
                "crop": x.crop.name,
                "geo_lon": x.geo_lon,
                "geo_lat": x.geo_lat,
@@ -55,26 +58,26 @@ def accessions_list():
                "taxonomy_taxon_name": x.taxonomy_taxon_name,
                "cellid": x.cellid
                }
-              for x in accessions]
-    rows = len(result)
+              for x in accessions])
+    
+    #rows = len(result)
+    rows = result.shape[0]
     end = time.time()
     print("Result " + str(rows) + " time: " + str((end-start)*1000.0))
-
+    
     # Calculate range of values
-    cell_ids = [x.cellid for x in accessions if x.cellid]
-    cell_ids = list(set(cell_ids))
+    #cell_ids = [x.cellid for x in accessions if x.cellid]
+    #cell_ids = list(set(cell_ids))
 
-    ind_period = IndicatorPeriod.objects(period__in=['min', 'max']).select_related()
-    print('periods', str(len(ind_period)))
-
+    ind_period = IndicatorPeriod.objects(period__in=['min', 'max', 'mean']).select_related()    
     ind_periods_ids = []
     ind_periods_ids.extend(x.id for x in ind_period)
+    print('periods', str(len(ind_period)))
 
-    ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=cell_ids).select_related()
-    print("MinAndMax: " + str(len(ind_values)) )
-    responses = []
-    min_max = []
-    responses.extend([{
+    #ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=cell_ids).select_related()
+    ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=result.loc[result["cellid"].notnull(),:]["cellid"].unique()).select_related()
+    min_max = []    
+    df = pd.DataFrame([{
             "indicator": x.indicator_period.indicator.name,
             "month1": x.month1,
             "month2": x.month2,
@@ -87,26 +90,43 @@ def accessions_list():
             "month9": x.month9,
             "month10": x.month10,
             "month11": x.month11,
-            "month12": x.month12,}
+            "month12": x.month12,
+            "value": x.value,
+            "cellid": x.cellid}
             for x in ind_values])
-    df = pd.DataFrame([s for s in responses])
     df_grouped = df.groupby(['indicator'])
     for indx, group in enumerate(df_grouped):
-        min = group[1][['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
-                'month10', 'month11', 'month12']].min().min()
-        max = group[1][['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
-                'month10', 'month11', 'month12']].max().max()
+        min = group[1][month_fields + ["value"]].min(skipna=True).min(skipna=True)
+        max = group[1][month_fields + ["value"]].max(skipna=True).max(skipna=True)
         print(group[0] ,  'min: ', str(min), 'max: ', str(max))
-        ob = {'indicator': group[0], 'min': min, 'max':max}
+        ob = {'indicator': group[0], 'min': min, 'max':max}        
         min_max.append(ob)
-
+        # Calculate bins
+        #bin_range = (max - min) / 20
+        #avg = group[1][['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
+        #        'month10', 'month11', 'month12']].mean()
+    # 
+    df_bins = df.groupby(['indicator','cellid'],as_index=False)[month_fields].mean()
+    #print("Joinend",df_bins.shape[0])
+    df_bins["mean"] = df_bins.mean(axis=1)
+    df_bins = pd.merge(df_bins,result.loc[:,["cellid","crop"]],how='inner',on='cellid')
+    #print("Joinend",df_bins.shape[0])
+    df_bins = df_bins.groupby(['indicator','cellid','mean'],as_index=False).size()
+    #print("Size",df_bins.shape[0])
+    df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.qcut(x, q=10, precision=0))
+    df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
+    df_bins["quantile"] = df_bins["quantile"].astype(str)
+    #print("Quantile",df_bins.shape[0])
+    #print(df_bins.head())
     content = {
-        'accessions': result,
-        'min_max': min_max
+        'accessions':json.loads(result.to_json(orient='records')),
+        'min_max': min_max,
+        'quantile':  json.loads(df_bins.to_json(orient='records'))
     }
 
 
     return jsonify(content)
+
 
 
 @app.route('/api/v1/crops', methods=['GET'])
@@ -576,7 +596,7 @@ def generate_clusters():
                         mini = group[1][[indicator +  '_' + x for x in lst_months]].min()
                         # print(mini.min())
                         obj_min = {x: mini[i] for i,x in enumerate(lst_months)}
-                        obj_min['operator'] = 'min'
+                        obj_min['operator'] = 'Minimum'
                         obj_min['cluster'] = group[0][0]
                         obj_min['indicator'] = indicator
                         obj_min['crop'] = group[0][1]
@@ -584,7 +604,7 @@ def generate_clusters():
                         # Get max
                         maxi = group[1][[indicator +  '_' + x for x in lst_months]].max()
                         obj_max = {x: maxi[i] for i,x in enumerate(lst_months)}
-                        obj_max['operator'] = 'max'
+                        obj_max['operator'] = 'Maximum'
                         obj_max['cluster'] = group[0][0]
                         obj_max['indicator'] = indicator
                         obj_max['crop'] = group[0][1]
@@ -592,7 +612,7 @@ def generate_clusters():
                         # Get mean
                         mean = group[1][[indicator +  '_' + x for x in lst_months]].mean()
                         obj_mean = {x: mean[i] for i,x in enumerate(lst_months)}
-                        obj_mean['operator'] = 'mean'
+                        obj_mean['operator'] = 'Mean'
                         obj_mean['cluster'] = group[0][0]
                         obj_mean['indicator'] = indicator
                         obj_mean['crop'] = group[0][1]
@@ -600,7 +620,7 @@ def generate_clusters():
                         # Get sd
                         sd = group[1][[indicator +  '_' + x for x in lst_months]].std()
                         obj_sd = {x: sd[i] for i,x in enumerate(lst_months)}
-                        obj_sd['operator'] = 'sd'
+                        obj_sd['operator'] = 'Standard desviation'
                         obj_sd['cluster'] = group[0][0]
                         obj_sd['indicator'] = indicator
                         obj_sd['crop'] = group[0][1]
@@ -689,19 +709,19 @@ def generate_clusters():
         content = {}
 
         #Get crops
-        crops = Crop.objects(Q(id__in = passport_params['crop']))
-        result_crops = [{"id":x.id,"name": x.name} for x in crops]
+        # crops = Crop.objects(Q(id__in = passport_params['crop']))
+        # result_crops = [{"id":x.id,"name": x.name} for x in crops]
 
-        # Filter clauses to get accessions in order to parameters
-        filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
-                        for filter in passport_params if len(passport_params[filter]) > 0]
-        # Query to get accessions
-        accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
+        # # Filter clauses to get accessions in order to parameters
+        # filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
+        #                 for filter in passport_params if len(passport_params[filter]) > 0]
+        # # Query to get accessions
+        # accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
 
-        # Cellids found in the accessions objects
-        cell_ids = [x.cellid for x in accessions if x.cellid]
-        # Reduce cellid list
-        cell_ids = list(set(cell_ids))
+        # # Cellids found in the accessions objects
+        # cell_ids = [x.cellid for x in accessions if x.cellid]
+        # # Reduce cellid list
+        # cell_ids = list(set(cell_ids))
 
         for indicator in indicators_params:
             # Indicator periods ids
@@ -860,7 +880,7 @@ def generate_clusters():
                 }
                 print('Method 2')
                 last_time = time.time()
-                total_time = last_time - start_time
+                total_time = last_time
                 print(total_time)
             except ValueError as ve:
                 print(str(ve))
