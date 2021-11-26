@@ -106,18 +106,19 @@ def accessions_list():
         #avg = group[1][['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
         #        'month10', 'month11', 'month12']].mean()
     # 
-    df_bins = df.groupby(['indicator','cellid'],as_index=False)[month_fields].mean()
-    df_bins["cellid"] = df_bins["cellid"].astype(str)
-    #print("Joinend",df_bins.shape[0])
+    df_bins = df.groupby(['indicator','cellid'],as_index=False)[month_fields].mean()    
+    df_bins["cellid"] = df_bins["cellid"].astype(int).astype(str)
     df_bins["mean"] = df_bins.mean(axis=1)
     #df_bins.to_csv('D:\\CIAT\\Code\\Modelling\\subsets_genebank_accessions\\src\\subsets_api\\bins1.csv', index=False)
     result2 = result.loc[:,["cellid","crop"]]
-    result2["cellid"] = result2["cellid"].astype(str)
-    df_bins = pd.merge(df_bins,result2,how='inner',on='cellid')
-    #print("Joinend",df_bins.shape[0])
-    df_bins = df_bins.groupby(['indicator','cellid','mean'],as_index=False).size()
+    result2 = result2.loc[result2["cellid"].notnull(),:]
+    result2["cellid"] = result2["cellid"].astype(int).astype(str)
+    df_bins = pd.merge(df_bins,result2,how='inner',on='cellid')    
+    df_bins = df_bins.groupby(['indicator','mean'],as_index=False).size()
+    #df_bins.to_csv('D:\\CIAT\\Code\\Modelling\\subsets_genebank_accessions\\src\\subsets_api\\bins1.csv', index=False)
     #print("Size",df_bins.shape[0])
     df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.qcut(x, q=10, precision=0))
+    #df_bins.to_csv('D:\\CIAT\\Code\\Modelling\\subsets_genebank_accessions\\src\\subsets_api\\bins.csv', index=False)
     df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
     df_bins["quantile"] = df_bins["quantile"].astype(str)
     #df_bins.to_csv('D:\\CIAT\\Code\\Modelling\\subsets_genebank_accessions\\src\\subsets_api\\bins.csv', index=False)
