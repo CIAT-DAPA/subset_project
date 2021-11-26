@@ -106,7 +106,7 @@ def accessions_list():
         #avg = group[1][['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
         #        'month10', 'month11', 'month12']].mean()
     # 
-    df_bins = df.groupby(['indicator','cellid'],as_index=False)[month_fields].mean()    
+    df_bins = df.groupby(['indicator','cellid'],as_index=False)[month_fields + ["value"]].mean()    
     df_bins["cellid"] = df_bins["cellid"].astype(int).astype(str)
     df_bins["mean"] = df_bins.mean(axis=1)
     #df_bins.to_csv('D:\\CIAT\\Code\\Modelling\\subsets_genebank_accessions\\src\\subsets_api\\bins1.csv', index=False)
