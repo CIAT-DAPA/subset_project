@@ -134,6 +134,73 @@ def accessions_list():
     return jsonify(content)
 
 
+@app.route('/api/v1/indicators-range', methods=['GET', 'POST'])
+@cross_origin()
+def ranges_bins():
+    # get the input parameters
+    data = request.get_json()
+    month_fields = ['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
+                'month10', 'month11', 'month12']
+    start = time.time()
+
+    ind_period = IndicatorPeriod.objects(period__in=['min', 'max']).select_related()    
+    ind_periods_ids = []
+    ind_periods_ids.extend(x.id for x in ind_period)
+    print('periods', str(len(ind_period)))
+
+    cellid_ls = data['cellid_list']
+    cellids = [int(cell) for x in cellid_ls for cell in x['cellids'] if cell]
+    distinct_cellids = list(set(cellids))
+    
+    ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=distinct_cellids).select_related()
+    min_max = []    
+    df = pd.DataFrame([{
+            "indicator": x.indicator_period.indicator.name,
+            "month1": x.month1,
+            "month2": x.month2,
+            "month3": x.month3,
+            "month4": x.month4,
+            "month5": x.month5,
+            "month6": x.month6,
+            "month7": x.month7,
+            "month8": x.month8,
+            "month9": x.month9,
+            "month10": x.month10,
+            "month11": x.month11,
+            "month12": x.month12,
+            "value": x.value,
+            "cellid": x.cellid}
+            for x in ind_values])
+    
+    df_grouped = df.groupby(['indicator'])
+    for indx, group in enumerate(df_grouped):
+        min = group[1][month_fields + ["value"]].min(skipna=True).min(skipna=True)
+        max = group[1][month_fields + ["value"]].max(skipna=True).max(skipna=True)
+        print(group[0] ,  'min: ', str(min), 'max: ', str(max))
+        ob = {'indicator': group[0], 'min': min, 'max':max}        
+        min_max.append(ob)
+    
+    df_bins = df.groupby(['indicator','cellid'],as_index=False)[month_fields + ["value"]].mean()    
+    df_bins["cellid"] = df_bins["cellid"].astype(int).astype(str)
+    df_bins["mean"] = df_bins.mean(axis=1)
+    
+    cellids_df = pd.DataFrame(cellids, columns=['cellid'])
+    cellids_df["cellid"] = cellids_df["cellid"].astype(int).astype(str)
+    df_bins = pd.merge(df_bins, cellids_df, how='inner', on='cellid')    
+    df_bins = df_bins.groupby(['indicator','mean'], as_index=False).size()
+    
+    df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.qcut(x, q=10, precision=0))
+    df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
+    df_bins["quantile"] = df_bins["quantile"].astype(str)
+    
+    content = {
+        'min_max': min_max,
+        'quantile':  json.loads(df_bins.to_json(orient='records'))
+    }
+
+    return jsonify(content)
+
+
 
 @app.route('/api/v1/crops', methods=['GET'])
 @cross_origin()
@@ -1571,6 +1638,7 @@ def subsets_kha():
 
 if __name__ == "__main__":
 
+    #connect('indicatordb', host='localhost', port=27017)
     connect('indicatordb', host='dbmongotst01.cgiarad.org', port=27017)
     # app.run(threaded=True, host='0.0.0.0', port=8437, debug=False)
     app.run(threaded=True, port=5001, debug=True)
