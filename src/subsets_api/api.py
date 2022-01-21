@@ -189,7 +189,7 @@ def ranges_bins():
     df_bins = pd.merge(df_bins, cellids_df, how='inner', on='cellid')    
     df_bins = df_bins.groupby(['indicator','mean'], as_index=False).size()
     
-    df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.qcut(x, q=10, precision=0))
+    df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.cut(x, bins=10, precision=0))
     df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
     df_bins["quantile"] = df_bins["quantile"].astype(str)
     
