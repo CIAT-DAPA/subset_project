@@ -148,8 +148,7 @@ def ranges_bins():
     ind_periods_ids.extend(x.id for x in ind_period)
     print('periods', str(len(ind_period)))
 
-    cellid_ls = data['cellid_list']
-    cellids = [int(cell) for x in cellid_ls for cell in x['cellids'] if cell]
+    cellids = [int(cell) for cell in data['cellid_list'] if cell]
     distinct_cellids = list(set(cellids))
     
     ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=distinct_cellids).select_related()
