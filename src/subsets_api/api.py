@@ -143,7 +143,7 @@ def ranges_bins():
                 'month10', 'month11', 'month12']
     start = time.time()
 
-    ind_period = IndicatorPeriod.objects(period__in=['min', 'max']).select_related()    
+    ind_period = IndicatorPeriod.objects(period__in=['min', 'max', 'mean']).select_related()    
     ind_periods_ids = []
     ind_periods_ids.extend(x.id for x in ind_period)
     print('periods', str(len(ind_period)))
