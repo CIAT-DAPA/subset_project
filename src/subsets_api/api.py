@@ -141,18 +141,16 @@ def ranges_bins():
     data = request.get_json()
     month_fields = ['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
                 'month10', 'month11', 'month12']
-    start = time.time()
 
-    ind_period = IndicatorPeriod.objects(period__in=['min', 'max', 'mean']).select_related()    
+    ind_period_obj = IndicatorPeriod.objects(period__in=['min', 'max', 'mean']).only('id').select_related() 
     ind_periods_ids = []
-    ind_periods_ids.extend(x.id for x in ind_period)
-    print('periods', str(len(ind_period)))
+    ind_periods_ids.extend(x.id for x in ind_period_obj)
 
     cellids = [int(cell) for cell in data['cellid_list'] if cell]
     distinct_cellids = list(set(cellids))
     
     ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=distinct_cellids).select_related()
-    min_max = []    
+    min_max = []   
     df = pd.DataFrame([{
             "indicator": x.indicator_period.indicator.name,
             "month1": x.month1,
@@ -267,7 +265,6 @@ def indicator_list():
 
 
 """Get indicator_period objects"""
-
 
 @app.route('/api/v1/indicator-period', methods=['GET'])
 @cross_origin()
@@ -615,7 +612,7 @@ def generate_clusters():
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
                         "cellid": x.cellid,
-                         "month1": x.value,
+                        "month1": x.value,
                         "month2": x.value,
                         "month3": x.value,
                         "month4": x.value,
@@ -960,6 +957,7 @@ def generate_clusters():
 
         
     return (content)
+
 
 
 # """ Service to create clusters """
