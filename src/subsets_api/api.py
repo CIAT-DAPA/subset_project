@@ -1,4 +1,3 @@
-from calendar import month
 import sys
 from pandas._libs.missing import NA
 from pandas.core import groupby
@@ -363,9 +362,10 @@ def filterData(crops, cell_ids, indicators_params):
         elif indicator['type'] == 'extracted':
             print(indicator['name'])
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
-            gte_months_clause = map(lambda kv: Q(**{'value__gte': kv[1][0]}), months_filter[0].items())
-            lte_months_clause = map(lambda kv: Q(**{'value__lte': kv[1][1]}), months_filter[0].items())
-            query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
+            range = list(months_filter[0].values())[0]
+            gte_value_clause = [Q(**{'value__gte': range[0]})]
+            lte_value_clause = [Q(**{'value__lte': range[1]})]
+            query_clause = indicator_periods_clauses + gte_value_clause + lte_value_clause
 
             #print(query_clause)
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
