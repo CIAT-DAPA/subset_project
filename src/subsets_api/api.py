@@ -327,16 +327,20 @@ def filterData(crops, cell_ids, indicators_params):
                     "month12": x.month12,
                     "period": x.indicator_period.period}
                     for x in indicator_periods_values if  x.cellid in cell_ids])
+            #print("generic subset", subset)
 
         elif indicator['type'] == 'specific':
             print(indicator['name'])
             crp = indicator['crop']
-            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp is x['crop']]
+            #print(crp)
+            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop']]
+            #print(cell_id_crop)
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
             gte_months_clause = map(lambda kv: Q(**{'{}__gte'.format(kv[0]): kv[1][0]}), months_filter[0].items())
             lte_months_clause = map(lambda kv: Q(**{'{}__lte'.format(kv[0]): kv[1][1]}), months_filter[0].items())
 
             query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
+            #print(reduce(operator.and_, query_clause))
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
             
             subset.extend([{
@@ -360,7 +364,7 @@ def filterData(crops, cell_ids, indicators_params):
                 for x in indicator_periods_values if  x.cellid in cell_id_crop])
 
         elif indicator['type'] == 'extracted':
-            print(indicator['name'])
+            #print(indicator['name'])
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
             range = list(months_filter[0].values())[0]
             gte_value_clause = [Q(**{'value__gte': range[0]})]
@@ -377,20 +381,10 @@ def filterData(crops, cell_ids, indicators_params):
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid,
-                    "month1": x.value,
-                    "month2": x.value,
-                    "month3": x.value,
-                    "month4": x.value,
-                    "month5": x.value,
-                    "month6": x.value,
-                    "month7": x.value,
-                    "month8": x.value,
-                    "month9": x.value,
-                    "month10": x.value,
-                    "month11": x.value,
-                    "month12": x.value,
+                    "value": x.value,
                     "period": x.indicator_period.period}
                     for x in indicator_periods_values if  x.cellid in cell_ids])
+            #print("extracted ", subset)
 
     return subset
 
@@ -496,24 +490,15 @@ def getAccessionsFiltered(crops,cell_ids,indicators_params):
 @app.route('/api/v1/subset', methods=['GET', 'POST'])
 @cross_origin()
 def subset():
-    # Start
-    total_time_subsets = -1
-    lst_df_univariate = []
     univariate_parsed = []
     data = request.get_json()
-    # Passport paramns
+   
     cellid_ls = data['cellid_list']
     cellids = [int(cell) for x in cellid_ls for cell in x['cellids']]
     cellids = list(set(cellids))
-    passport_params = data['passport']
+    
     # Indicators params
     indicators_params = data['data']
-
-    period = indicators_params[0]['period']
-    
-    # Months list calculated
-    ob = [k for k in indicators_params[0] if "month" in str(k)]
-    #print(ob)
 
     content = {}
 
@@ -523,89 +508,54 @@ def subset():
     end_time_subsets = time.time()
   
     if result:
-        """  df_multivariate = pd.DataFrame([s for s in result])
-        df_groupby = df_multivariate.groupby(['indicator'], sort=False)
-        #print(df_multivariate)
-        for indx, group in enumerate(df_groupby):
-            months_filter = [{x: indicators_params[indx][x] for x in indicators_params[indx] if 'month' in x}]
-            # Query to filter the univariate data
-            query_gt = ' & '.join([f'{k}>={v[0]}' for k, v in months_filter[0].items()])
-            query_lt = ' & '.join([f'{k}<={v[1]}' for k, v in months_filter[0].items()])
-            query = query_gt + ' & ' + query_lt
-
-            # Filter univariate data from query
-            univ = group[1].query(query)
-
-            lst_df_univariate.append(univ)
-            # lst_values = lst_values + cluster_values
-        
-        #End query to univariate analysis
-
-        # Data for univariate analysis
-        univariate_data = pd.concat(lst_df_univariate) """
         univariate_data = pd.DataFrame([s for s in result])
-        #print(df_multivariate['indicator'].unique())
-        accessions_list = list(set(univariate_data['cellid'].tolist()))
-        #print(len(list(set(df_multivariate['cellid'].tolist()))))        
+        colnames = univariate_data.columns.values.tolist()
+        
+        months = [k for k in colnames if "month" in str(k)]
+        value = [k for k in colnames if "value" in str(k)]
+
+        accessions_list = list(set(univariate_data['cellid'].tolist()))       
 
         univariate_result = univariate_data.to_json(orient = "records")
         univariate_parsed = json.loads(univariate_result)
 
         if univariate_parsed:
-            #start_time_quantile = time.time()
             df = pd.DataFrame([s for s in univariate_parsed])
-            # print(df)
-            #month_columns = df.columns.difference(['indicator', 'period', 'crop','cellid','pref_indicator'])
-            #df_groupby_indicator = df.groupby(['indicator', 'period', 'crop'])[ob].quantile([0.25,0.5,0.75])
-
-            # convert quantile index to quantile column
-            #df_groupby_indicator.reset_index(level=3, inplace=True)
-            #df_groupby_indicator.rename(columns={'level_3': 'quantile'}, inplace=True)
-
-            #convert indexes to column names
-            #df_groupby_indicator.reset_index(inplace = True)
-            #qt_month_columns = df_groupby_indicator.columns.difference(['indicator', 'period', 'crop','cellid','pref_indicator'])
-
-            """ df_to_json = (df_groupby_indicator.groupby(['indicator', 'period', 'crop'])[qt_month_columns]
-            .apply(lambda x: x.to_dict('r'))
-            .reset_index(name='data')
-            .to_json(orient='records')) """
             
             df_grouped_indicator = df.groupby(['indicator', 'period', 'crop'])
+
             lst_box_data = []
+            it = []
             for group in df_grouped_indicator:
-                for month in ob:
-                      # indicator_month = indicator + "_month1"
-                        df_groupby = group[1][[month]].quantile([0.25,0.5,0.75])
-                        # Whisker low
-                        whisker_low = group[1][[month]].min()
-                        # Whisker low
-                        whisker_high = group[1][[month]].max()
-                        # convert quantile index to quantile column
-                        df_groupby.reset_index(inplace=True)
-                        # df_groupby_indicator.rename(columns={'level_1': 'quantile'}, inplace=True)
-                        df_groupby.columns = ['quantile', month]
+                it = months
+                if value and not group[1]['value'].isnull().all():
+                    it = value
+                for month in it:
+                    df_groupby = group[1][[month]].quantile([0.25,0.5,0.75])
+                    # Whisker low
+                    whisker_low = group[1][[month]].min()
+                    # Whisker low
+                    whisker_high = group[1][[month]].max()
+                    # convert quantile index to quantile column
+                    df_groupby.reset_index(inplace=True)
+                    df_groupby.columns = ['quantile', month]
 
-                        #quantile_list = list(df_groupby_indicator[month].tolist())
-                        quantile_list = list(df_groupby[month].tolist())
+                    quantile_list = list(df_groupby[month].tolist())
 
-                        obj = {'Q1': quantile_list[0], 'Q2': quantile_list[1], 'Q3': quantile_list[2], 'month': month, 'indicator': group[0][0],
-                        'period':group[0][1], 'crop':group[0][2], 'whisker_low': whisker_low[0], 'whisker_high': whisker_high[0]}
-                        lst_box_data.append(obj)
+                    obj = {'Q1': quantile_list[0], 'Q2': quantile_list[1], 'Q3': quantile_list[2], 'month': month, 'indicator': group[0][0],
+                    'period':group[0][1], 'crop':group[0][2], 'whisker_low': whisker_low[0], 'whisker_high': whisker_high[0]}
+                    lst_box_data.append(obj)
 
             df_quantiles = pd.DataFrame([s for s in lst_box_data])
-            #print(df_quantiles)
+            
             lst_field_quantiles = ['Q1', 'Q2', 'Q3', 'month', 'whisker_low', 'whisker_high']
             df_quantiles_grouped = (df_quantiles.groupby(['indicator','period', 'crop'])[lst_field_quantiles]
             .apply(lambda x: x.to_dict('r'))
             .reset_index(name='data')
             .to_json(orient='records'))
-            # dicti = df_multivariate.pivot('indicator','operator').to_dict('index')
-            quantile_data = json.loads(df_quantiles_grouped)
-            print(quantile_data)
 
-            #quantiles = json.loads(df_to_json)
-            # print(quantiles)
+            quantile_data = json.loads(df_quantiles_grouped)
+            #print(quantile_data)
             
             content = {
                 'univariate': {'data': accessions_list},
