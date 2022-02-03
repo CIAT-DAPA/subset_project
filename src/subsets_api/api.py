@@ -291,23 +291,24 @@ def filterData(crops, cell_ids, indicators_params):
     for indicator in indicators_params:
         # Indicator periods ids
         periods_ids = indicator["indicator"]
-
-        months_filter = [{x: indicator[x] for x in indicator if 'month' in x}]
+        months_filter = indicator["months"]
+        range_values = indicator["range"]
 
         if indicator['type'] == 'generic':
             print(indicator['name'])
             # Clauses to get the indicators data subset
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]            
-            gte_months_clause = map(lambda kv: Q(**{'{}__gte'.format(kv[0]): kv[1][0]}), months_filter[0].items())
-            lte_months_clause = map(lambda kv: Q(**{'{}__lte'.format(kv[0]): kv[1][1]}), months_filter[0].items())
+            gte_months_clause = map(lambda kv: Q(**{'month{}__gte'.format(kv): range_values[0]}), months_filter)
+            lte_months_clause = map(lambda kv: Q(**{'month{}__lte'.format(kv): range_values[1]}), months_filter)
 
-            query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)            
+            query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
             #get filtered indicator value objects
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
             
             #loop for each crop present in the request params
             for crop in crops:
                 # Dict to multivariate analysis
+                cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
                 subset.extend([{
                     "crop": crop['crop'],
                     "pref_indicator": x.indicator_period.indicator.pref,
@@ -326,21 +327,19 @@ def filterData(crops, cell_ids, indicators_params):
                     "month11": x.month11,
                     "month12": x.month12,
                     "period": x.indicator_period.period}
-                    for x in indicator_periods_values if  x.cellid in cell_ids])
+                    for x in indicator_periods_values if x.cellid in cell_id_crop])
             #print("generic subset", subset)
 
         elif indicator['type'] == 'specific':
             print(indicator['name'])
             crp = indicator['crop']
-            #print(crp)
             cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop']]
-            #print(cell_id_crop)
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
-            gte_months_clause = map(lambda kv: Q(**{'{}__gte'.format(kv[0]): kv[1][0]}), months_filter[0].items())
-            lte_months_clause = map(lambda kv: Q(**{'{}__lte'.format(kv[0]): kv[1][1]}), months_filter[0].items())
 
+            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
+            gte_months_clause = map(lambda kv: Q(**{'month{}__gte'.format(kv): range_values[0]}), months_filter)
+            lte_months_clause = map(lambda kv: Q(**{'month{}__lte'.format(kv): range_values[1]}), months_filter)
             query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
-            #print(reduce(operator.and_, query_clause))
+
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
             
             subset.extend([{
@@ -361,21 +360,21 @@ def filterData(crops, cell_ids, indicators_params):
                 "month11": x.month11,
                 "month12": x.month12,
                 "period": x.indicator_period.period}
-                for x in indicator_periods_values if  x.cellid in cell_id_crop])
+                for x in indicator_periods_values if x.cellid in cell_id_crop])
 
         elif indicator['type'] == 'extracted':
             #print(indicator['name'])
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
-            range = list(months_filter[0].values())[0]
-            gte_value_clause = [Q(**{'value__gte': range[0]})]
-            lte_value_clause = [Q(**{'value__lte': range[1]})]
+            gte_value_clause = [Q(**{'value__gte': range_values[0]})]
+            lte_value_clause = [Q(**{'value__lte': range_values[1]})]
             query_clause = indicator_periods_clauses + gte_value_clause + lte_value_clause
 
             #print(query_clause)
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
-            #print(indicator_periods_values)
+
             # loop for each crop present in the query
             for crop in crops:
+                cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop == x['crop']]
                 subset.extend([{
                     "crop": crop['crop'],
                     "pref_indicator": x.indicator_period.indicator.pref,
@@ -383,7 +382,7 @@ def filterData(crops, cell_ids, indicators_params):
                     "cellid": x.cellid,
                     "value": x.value,
                     "period": x.indicator_period.period}
-                    for x in indicator_periods_values if  x.cellid in cell_ids])
+                    for x in indicator_periods_values if x.cellid in cell_id_crop])
             #print("extracted ", subset)
 
     return subset
@@ -514,7 +513,13 @@ def subset():
         months = [k for k in colnames if "month" in str(k)]
         value = [k for k in colnames if "value" in str(k)]
 
-        accessions_list = list(set(univariate_data['cellid'].tolist()))       
+        crop_group = univariate_data.groupby(['crop'])
+        accessions_list = list(set(univariate_data['cellid'].tolist()))
+        #accessions_list = []
+        for crop in crop_group:
+            cellids_crop = crop[1]['cellid'].tolist()
+            cellids_crop = set(cellids_crop)
+            print(cellids_crop)
 
         univariate_result = univariate_data.to_json(orient = "records")
         univariate_parsed = json.loads(univariate_result)
@@ -556,6 +561,7 @@ def subset():
 
             quantile_data = json.loads(df_quantiles_grouped)
             #print(quantile_data)
+            #print(accessions_list)
             
             content = {
                 'univariate': {'data': accessions_list},
