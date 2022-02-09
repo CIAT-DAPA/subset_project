@@ -185,7 +185,6 @@ def ranges_bins():
         min_max.append(ob)
     
     categorical_df_grouped = categorical_df.groupby(['indicator'])
-
     for indx, group in enumerate(categorical_df_grouped):
         min = group[1]['value'].min(skipna=True)
         max = group[1]['value'].max(skipna=True)
@@ -306,15 +305,15 @@ def getNameIndicatorByPref(pref):
 
 def filterData(crops, cell_ids, indicators_params):
     subset = []
-
+    
     for indicator in indicators_params:
         # Indicator periods ids
         periods_ids = indicator["indicator"]
         months_filter = indicator["months"]
-        range_values = indicator["range"] 
-    
+        range_values = indicator["range"]
+
         if indicator['type'] == 'generic':
-            #print(indicator['name'])
+            print(indicator['name'])
             # Clauses to get the indicators data subset
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]            
             gte_months_clause = map(lambda kv: Q(**{'month{}__gte'.format(kv): range_values[0]}), months_filter)
@@ -349,7 +348,7 @@ def filterData(crops, cell_ids, indicators_params):
                     for x in indicator_periods_values if x.cellid in cell_id_crop])
 
         elif indicator['type'] == 'specific':
-            #print(indicator['name'])
+            print(indicator['name'])
             crp = indicator['crop']
             cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop']]
 
@@ -381,6 +380,7 @@ def filterData(crops, cell_ids, indicators_params):
                 for x in indicator_periods_values if x.cellid in cell_id_crop])
 
         elif indicator['type'] == 'extracted':
+            print(indicator['name'])
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
             gte_value_clause = [Q(**{'value__gte': range_values[0]})]
             lte_value_clause = [Q(**{'value__lte': range_values[1]})]
@@ -399,7 +399,27 @@ def filterData(crops, cell_ids, indicators_params):
                     "value": x.value,
                     "period": x.indicator_period.period}
                     for x in indicator_periods_values if x.cellid in cell_id_crop])
+        
+        elif indicator['type'] == 'categorical':
+            print(indicator['name'])
+            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+            value_in_clause = [Q(**{'value__in': range_values})]
+            query_clause = indicator_periods_clauses + value_in_clause
 
+            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
+            
+            # loop for each crop present in the query
+            for crop in crops:
+                cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
+                subset.extend([{
+                    "crop": crop['crop'],
+                    "pref_indicator": x.indicator_period.indicator.pref,
+                    "indicator": x.indicator_period.indicator.name,
+                    "cellid": x.cellid,
+                    "value": x.value,
+                    "period": x.indicator_period.period}
+                    for x in indicator_periods_values if x.cellid in cell_id_crop])
+    
     return subset
 
 def getAccessionsFiltered(crops,cell_ids,indicators_params):
