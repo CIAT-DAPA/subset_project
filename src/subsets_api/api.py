@@ -150,7 +150,8 @@ def ranges_bins():
     distinct_cellids = list(set(cellids))
     
     ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=distinct_cellids).select_related()
-    min_max = []   
+    min_max = []
+
     df = pd.DataFrame([{
             "indicator": x.indicator_period.indicator.name,
             "month1": x.month1,
@@ -167,13 +168,27 @@ def ranges_bins():
             "month12": x.month12,
             "value": x.value,
             "cellid": x.cellid}
-            for x in ind_values])
+            for x in ind_values if x.indicator_period.indicator.indicator_type.name != "categorical"])
+    
+    categorical_df = pd.DataFrame([{
+            "indicator": x.indicator_period.indicator.name,
+            "value": x.value,
+            "cellid": x.cellid}
+            for x in ind_values if x.indicator_period.indicator.indicator_type.name == "categorical"])
     
     df_grouped = df.groupby(['indicator'])
     for indx, group in enumerate(df_grouped):
         min = group[1][month_fields + ["value"]].min(skipna=True).min(skipna=True)
         max = group[1][month_fields + ["value"]].max(skipna=True).max(skipna=True)
         print(group[0] ,  'min: ', str(min), 'max: ', str(max))
+        ob = {'indicator': group[0], 'min': min, 'max':max}        
+        min_max.append(ob)
+    
+    categorical_df_grouped = categorical_df.groupby(['indicator'])
+
+    for indx, group in enumerate(categorical_df_grouped):
+        min = group[1]['value'].min(skipna=True)
+        max = group[1]['value'].max(skipna=True)
         ob = {'indicator': group[0], 'min': min, 'max':max}        
         min_max.append(ob)
     
@@ -189,10 +204,14 @@ def ranges_bins():
     df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.cut(x, bins=10, precision=0))
     df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
     df_bins["quantile"] = df_bins["quantile"].astype(str)
-    
+
+    proportions = categorical_df.groupby(['indicator'])['value'].value_counts(normalize = True).rename('proportion')
+    proportions = pd.DataFrame(proportions).reset_index()
+
     content = {
         'min_max': min_max,
-        'quantile':  json.loads(df_bins.to_json(orient='records'))
+        'quantile':  json.loads(df_bins.to_json(orient='records')),
+        'proportion': json.loads(proportions.to_json(orient='records'))
     }
 
     return jsonify(content)
@@ -292,10 +311,10 @@ def filterData(crops, cell_ids, indicators_params):
         # Indicator periods ids
         periods_ids = indicator["indicator"]
         months_filter = indicator["months"]
-        range_values = indicator["range"]
-
+        range_values = indicator["range"] 
+    
         if indicator['type'] == 'generic':
-            print(indicator['name'])
+            #print(indicator['name'])
             # Clauses to get the indicators data subset
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]            
             gte_months_clause = map(lambda kv: Q(**{'month{}__gte'.format(kv): range_values[0]}), months_filter)
@@ -328,10 +347,9 @@ def filterData(crops, cell_ids, indicators_params):
                     "month12": x.month12,
                     "period": x.indicator_period.period}
                     for x in indicator_periods_values if x.cellid in cell_id_crop])
-            #print("generic subset", subset)
 
         elif indicator['type'] == 'specific':
-            print(indicator['name'])
+            #print(indicator['name'])
             crp = indicator['crop']
             cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop']]
 
@@ -368,7 +386,6 @@ def filterData(crops, cell_ids, indicators_params):
             lte_value_clause = [Q(**{'value__lte': range_values[1]})]
             query_clause = indicator_periods_clauses + gte_value_clause + lte_value_clause
 
-            #print(query_clause)
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
             
             # loop for each crop present in the query
@@ -382,7 +399,6 @@ def filterData(crops, cell_ids, indicators_params):
                     "value": x.value,
                     "period": x.indicator_period.period}
                     for x in indicator_periods_values if x.cellid in cell_id_crop])
-            #print("extracted ", subset)
 
     return subset
 
@@ -507,18 +523,13 @@ def subset():
   
     if result:
         univariate_data = pd.DataFrame([s for s in result])
+        #print(univariate_data)
         colnames = univariate_data.columns.values.tolist()
         
         months = [k for k in colnames if "month" in str(k)]
         value = [k for k in colnames if "value" in str(k)]
 
-        #crop_group = univariate_data.groupby(['crop'])
         accessions_list = list(set(univariate_data['cellid'].tolist()))
-        #accessions_list = []
-        """ for crop in crop_group:
-            cellids_crop = crop[1]['cellid'].tolist()
-            cellids_crop = set(cellids_crop)
-            print(cellids_crop) """
 
         univariate_result = univariate_data.to_json(orient = "records")
         univariate_parsed = json.loads(univariate_result)
