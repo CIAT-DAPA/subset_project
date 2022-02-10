@@ -10,7 +10,7 @@ import hdbscan
 from sklearn.metrics import silhouette_score
 import numpy as np
 import inspect
-from gower import gower_distances
+from .gower import gower_distances
 
 
 # transform time series data to slope, sd and mean
@@ -207,7 +207,7 @@ def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_
         ind_data["crop_name"] = crop
         #return unscaled data
         clust_colnames = [col for col in ind_data.columns if 'cluster' in col]
-        cluster_data = ind_data[value_colname+category_colname+clust_colnames+['crop_name']]
+        cluster_data = ind_data[cat_features+clust_colnames+['crop_name']]
         result = pd.concat([gr['cellid'], numeric_data, cluster_data], axis=1)
         
         analysis_res = analysis_res.append(result)
