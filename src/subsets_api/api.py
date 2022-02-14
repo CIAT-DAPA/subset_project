@@ -1,7 +1,6 @@
 import sys
 from pandas._libs.missing import NA
 from pandas.core import groupby
-from pytest import skip
 import requests
 from flask import Flask, request, jsonify, make_response
 from flask_cors import cross_origin, CORS
@@ -394,7 +393,7 @@ def filterData(crops, cell_ids, indicators_params):
         elif indicator['type'] == 'categorical':
             print(indicator['name'])
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
-            value_in_clause = [Q(**{'value__in': range_values})]
+            value_in_clause = [Q(**{'value_c__in': range_values})]
             query_clause = indicator_periods_clauses + value_in_clause
 
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
@@ -407,7 +406,7 @@ def filterData(crops, cell_ids, indicators_params):
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid,
-                    "value": x.value,
+                    "category": x.value_c,
                     "period": x.indicator_period.period}
                     for x in indicator_periods_values if x.cellid in cell_id_crop])
     
@@ -539,6 +538,7 @@ def subset():
         
         months = [k for k in colnames if "month" in str(k)]
         value = [k for k in colnames if "value" in str(k)]
+        category = [k for k in colnames if 'category' in str(k)]
 
         accessions_list = list(set(univariate_data['cellid'].tolist()))
 
@@ -551,9 +551,18 @@ def subset():
             df_grouped_indicator = df.groupby(['indicator', 'period', 'crop'])
 
             lst_box_data = []
+            proportion_data = []
             it = []
             for group in df_grouped_indicator:
                 it = months
+                if category and not group[1]['category'].isnull().all():
+                    proportions = group[1]['category'].value_counts(normalize = True).rename('proportion')
+                    proportions.index.name = 'category'
+                    proportions = pd.DataFrame(proportions).reset_index()
+                    proportion_dict = dict(zip(proportions.category, proportions.proportion))
+                    proportion_obj = {'indicator': group[0][0], 'period': group[0][1], 'crop': group[0][2], 'proportion': proportion_dict}
+                    proportion_data.append(proportion_obj)
+                    continue
                 if value and not group[1]['value'].isnull().all():
                     it = value
                 for month in it:
@@ -586,7 +595,8 @@ def subset():
             
             content = {
                 'univariate': {'data': accessions_list},
-                'quantile': quantile_data
+                'quantile': quantile_data,
+                'proportion': proportion_data
                 # 'quantile': {'data': quantiles_list, 'time': total_time_quantile},
             }
 
