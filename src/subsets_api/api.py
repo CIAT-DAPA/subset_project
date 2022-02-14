@@ -1,6 +1,7 @@
 import sys
 from pandas._libs.missing import NA
 from pandas.core import groupby
+from pytest import skip
 import requests
 from flask import Flask, request, jsonify, make_response
 from flask_cors import cross_origin, CORS
@@ -145,11 +146,11 @@ def ranges_bins():
     ind_period_obj = IndicatorPeriod.objects(period__in=['min', 'max', 'mean']).only('id').select_related() 
     ind_periods_ids = []
     ind_periods_ids.extend(x.id for x in ind_period_obj)
-
+    
     cellids = [int(cell) for cell in data['cellid_list'] if cell]
     distinct_cellids = list(set(cellids))
     
-    ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=distinct_cellids).select_related()
+    ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=distinct_cellids).select_related() 
     min_max = []
 
     df = pd.DataFrame([{
@@ -167,52 +168,42 @@ def ranges_bins():
             "month11": x.month11,
             "month12": x.month12,
             "value": x.value,
+            "category": x.value_c,
             "cellid": x.cellid}
-            for x in ind_values if x.indicator_period.indicator.indicator_type.name != "categorical"])
-    
-    categorical_df = pd.DataFrame([{
-            "indicator": x.indicator_period.indicator.name,
-            "value": x.value,
-            "cellid": x.cellid}
-            for x in ind_values if x.indicator_period.indicator.indicator_type.name == "categorical"])
+            for x in ind_values])
     
     df_grouped = df.groupby(['indicator'])
     for indx, group in enumerate(df_grouped):
+        if not group[1]['category'].isnull().all():
+            continue
         min = group[1][month_fields + ["value"]].min(skipna=True).min(skipna=True)
         max = group[1][month_fields + ["value"]].max(skipna=True).max(skipna=True)
         print(group[0] ,  'min: ', str(min), 'max: ', str(max))
         ob = {'indicator': group[0], 'min': min, 'max':max}        
         min_max.append(ob)
-    
-    categorical_df_grouped = categorical_df.groupby(['indicator'])
-    for indx, group in enumerate(categorical_df_grouped):
-        min = group[1]['value'].min(skipna=True)
-        max = group[1]['value'].max(skipna=True)
-        ob = {'indicator': group[0], 'min': min, 'max':max}        
-        min_max.append(ob)
-    
+
     df_bins = df.groupby(['indicator','cellid'],as_index=False)[month_fields + ["value"]].mean()    
     df_bins["cellid"] = df_bins["cellid"].astype(int).astype(str)
     df_bins["mean"] = df_bins.mean(axis=1)
-    
+
     cellids_df = pd.DataFrame(cellids, columns=['cellid'])
     cellids_df["cellid"] = cellids_df["cellid"].astype(int).astype(str)
     df_bins = pd.merge(df_bins, cellids_df, how='inner', on='cellid')    
     df_bins = df_bins.groupby(['indicator','mean'], as_index=False).size()
-    
+
     df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.cut(x, bins=10, precision=0))
     df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
     df_bins["quantile"] = df_bins["quantile"].astype(str)
 
-    proportions = categorical_df.groupby(['indicator'])['value'].value_counts(normalize = True).rename('proportion')
+    proportions = df.groupby(['indicator'])['category'].value_counts(normalize = True).rename('proportion')
     proportions = pd.DataFrame(proportions).reset_index()
 
     content = {
         'min_max': min_max,
-        'quantile':  json.loads(df_bins.to_json(orient='records')),
+        'quantile': json.loads(df_bins.to_json(orient='records')),
         'proportion': json.loads(proportions.to_json(orient='records'))
     }
-
+    
     return jsonify(content)
 
 
