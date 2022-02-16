@@ -16,6 +16,7 @@ from multivariate_analysis.clustering_analysis import clustering_analysis
 import pandas as pd
 from itertools import groupby
 import time
+from multivariate_analysis.core_collection import stratcc
 
 app = Flask(__name__)
 
@@ -719,9 +720,9 @@ def generate_clusters():
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
                         "cellid": x.cellid,
-                        "category": x.value}
+                        "category": x.value_c}
                         for x in indicator_periods_values if  x.cellid in crop['cellids']])
-
+        
         # Create a df from multivariate analysis dict
         if multivariate_values:
             try:
@@ -1071,6 +1072,30 @@ def generate_clusters():
 
         
     return (content)
+
+
+""" Service to get core collection of the selected subset """
+@app.route('/api/v1/core-collection', methods=['GET', 'POST'])
+@cross_origin()
+def get_core_collection():
+    data = request.get_json()
+
+    cluster_data = data['data']
+    selected_cluster = data['selected_cluster']
+    fraction = data['fraction']
+
+    cluster_df = pd.DataFrame([s for s in cluster_data])
+
+    if 'cluster_hac' in cluster_df.columns:
+        core_collection = stratcc(x=cluster_df, groups=cluster_df['cluster_hac'], fraction=fraction)
+        cc_selected_cluser = core_collection.loc[core_collection['cluster_hac']==selected_cluster,]
+        cc_cellids = cc_selected_cluser['cellid']
+
+        content = {
+            'cellids': list(cc_cellids)
+        }
+
+    return content
 
 
 @app.route('/api/v1/subsets', methods=['GET', 'POST'])
