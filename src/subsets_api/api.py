@@ -4,6 +4,7 @@ from pandas.core import groupby
 import requests
 from flask import Flask, request, jsonify, make_response
 from flask_cors import cross_origin, CORS
+import werkzeug
 import numpy as np
 
 from mongoengine import *
@@ -313,13 +314,47 @@ def filterData(crops, cell_ids, indicators_params):
             query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
             #get filtered indicator value objects
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
+            if indicator_periods_values:
+                #loop for each crop present in the request params
+                for crop in crops:
+                    # Dict to multivariate analysis
+                    cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
+                    subset.extend([{
+                        "crop": crop['crop'],
+                        "pref_indicator": x.indicator_period.indicator.pref,
+                        "indicator": x.indicator_period.indicator.name,
+                        "cellid": x.cellid,
+                        "month1": x.month1,
+                        "month2": x.month2,
+                        "month3": x.month3,
+                        "month4": x.month4,
+                        "month5": x.month5,
+                        "month6": x.month6,
+                        "month7": x.month7,
+                        "month8": x.month8,
+                        "month9": x.month9,
+                        "month10": x.month10,
+                        "month11": x.month11,
+                        "month12": x.month12,
+                        "period": x.indicator_period.period}
+                        for x in indicator_periods_values if x.cellid in cell_id_crop])
+            else:
+                raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
+        elif indicator['type'] == 'specific':
+            print(indicator['name'])
+            crp = indicator['crop']
+            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop']]
+
+            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
+            gte_months_clause = map(lambda kv: Q(**{'month{}__gte'.format(kv): range_values[0]}), months_filter)
+            lte_months_clause = map(lambda kv: Q(**{'month{}__lte'.format(kv): range_values[1]}), months_filter)
+            query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
+
+            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
             
-            #loop for each crop present in the request params
-            for crop in crops:
-                # Dict to multivariate analysis
-                cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
+            if indicator_periods_values:
                 subset.extend([{
-                    "crop": crop['crop'],
+                    "crop": indicator['crop'],
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid,
@@ -337,39 +372,9 @@ def filterData(crops, cell_ids, indicators_params):
                     "month12": x.month12,
                     "period": x.indicator_period.period}
                     for x in indicator_periods_values if x.cellid in cell_id_crop])
-
-        elif indicator['type'] == 'specific':
-            print(indicator['name'])
-            crp = indicator['crop']
-            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop']]
-
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
-            gte_months_clause = map(lambda kv: Q(**{'month{}__gte'.format(kv): range_values[0]}), months_filter)
-            lte_months_clause = map(lambda kv: Q(**{'month{}__lte'.format(kv): range_values[1]}), months_filter)
-            query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
-
-            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
-            
-            subset.extend([{
-                "crop": indicator['crop'],
-                "pref_indicator": x.indicator_period.indicator.pref,
-                "indicator": x.indicator_period.indicator.name,
-                "cellid": x.cellid,
-                "month1": x.month1,
-                "month2": x.month2,
-                "month3": x.month3,
-                "month4": x.month4,
-                "month5": x.month5,
-                "month6": x.month6,
-                "month7": x.month7,
-                "month8": x.month8,
-                "month9": x.month9,
-                "month10": x.month10,
-                "month11": x.month11,
-                "month12": x.month12,
-                "period": x.indicator_period.period}
-                for x in indicator_periods_values if x.cellid in cell_id_crop])
-
+            else:
+                raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
+        
         elif indicator['type'] == 'extracted':
             print(indicator['name'])
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
@@ -378,19 +383,20 @@ def filterData(crops, cell_ids, indicators_params):
             query_clause = indicator_periods_clauses + gte_value_clause + lte_value_clause
 
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
-            
-            # loop for each crop present in the query
-            for crop in crops:
-                cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
-                subset.extend([{
-                    "crop": crop['crop'],
-                    "pref_indicator": x.indicator_period.indicator.pref,
-                    "indicator": x.indicator_period.indicator.name,
-                    "cellid": x.cellid,
-                    "value": x.value,
-                    "period": x.indicator_period.period}
-                    for x in indicator_periods_values if x.cellid in cell_id_crop])
-        
+            if indicator_periods_values:
+                # loop for each crop present in the query
+                for crop in crops:
+                    cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
+                    subset.extend([{
+                        "crop": crop['crop'],
+                        "pref_indicator": x.indicator_period.indicator.pref,
+                        "indicator": x.indicator_period.indicator.name,
+                        "cellid": x.cellid,
+                        "value": x.value,
+                        "period": x.indicator_period.period}
+                        for x in indicator_periods_values if x.cellid in cell_id_crop])
+            else:
+                raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
         elif indicator['type'] == 'categorical':
             print(indicator['name'])
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
@@ -398,18 +404,20 @@ def filterData(crops, cell_ids, indicators_params):
             query_clause = indicator_periods_clauses + value_in_clause
 
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
-            
-            # loop for each crop present in the query
-            for crop in crops:
-                cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
-                subset.extend([{
-                    "crop": crop['crop'],
-                    "pref_indicator": x.indicator_period.indicator.pref,
-                    "indicator": x.indicator_period.indicator.name,
-                    "cellid": x.cellid,
-                    "category": x.value_c,
-                    "period": x.indicator_period.period}
-                    for x in indicator_periods_values if x.cellid in cell_id_crop])
+            if indicator_periods_values:
+                # loop for each crop present in the query
+                for crop in crops:
+                    cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
+                    subset.extend([{
+                        "crop": crop['crop'],
+                        "pref_indicator": x.indicator_period.indicator.pref,
+                        "indicator": x.indicator_period.indicator.name,
+                        "cellid": x.cellid,
+                        "category": x.value_c,
+                        "period": x.indicator_period.period}
+                        for x in indicator_periods_values if x.cellid in cell_id_crop])
+            else:
+                raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
     
     return subset
 
@@ -429,9 +437,7 @@ def getAccessionsFiltered(crops,cell_ids,indicators_params):
 
             # loop for each crop present in the query
             for crop in crops:
-                # cell_id_crop = [x.cellid for x in accessions if x.cellid and x.crop.id == crop['id']]
-                # cellid list from crop
-                # cell_id_crop = list(set(cell_id_crop))
+                cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
                 # Dict to multivariate analysis
                 multivariate_values.extend([{
                     "crop": crop['crop'],
@@ -451,10 +457,11 @@ def getAccessionsFiltered(crops,cell_ids,indicators_params):
                     "month11": x.month11,
                     "month12": x.month12,
                     "period": x.indicator_period.period}
-                    for x in indicator_periods_values if  x.cellid in cell_ids])
+                    for x in indicator_periods_values if  x.cellid in cell_id_crop])
+        
         elif indicator['type'] == 'specific':
             crp = indicator['crop']
-            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp is x['crop']]
+            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop']]
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
 
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
@@ -482,30 +489,37 @@ def getAccessionsFiltered(crops,cell_ids,indicators_params):
         elif indicator['type'] == 'extracted':
             print(indicator['name'])
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
-                # Filtering values of indicator to multivariate analysis
+            # Filtering values of indicator to multivariate analysis
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
             # loop for each crop present in the query
             for crop in crops:
+                cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
                 # Dict to multivariate analysis
                 multivariate_values.extend([{
                     "crop": crop['crop'],
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid,
-                    "month1": x.value,
-                    "month2": x.value,
-                    "month3": x.value,
-                    "month4": x.value,
-                    "month5": x.value,
-                    "month6": x.value,
-                    "month7": x.value,
-                    "month8": x.value,
-                    "month9": x.value,
-                    "month10": x.value,
-                    "month11": x.value,
-                    "month12": x.value,
+                    "value": x.value,
                     "period": x.indicator_period.period}
-                    for x in indicator_periods_values if  x.cellid in cell_ids])
+                    for x in indicator_periods_values if  x.cellid in cell_id_crop])
+        
+        elif indicator['type'] == 'categorical':
+            print(indicator['name'])
+            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
+            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+            
+            # loop for each crop present in the query
+            for crop in crops:
+                cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
+                multivariate_values.extend([{
+                    "crop": crop['crop'],
+                    "pref_indicator": x.indicator_period.indicator.pref,
+                    "indicator": x.indicator_period.indicator.name,
+                    "cellid": x.cellid,
+                    "category": x.value_c,
+                    "period": x.indicator_period.period}
+                    for x in indicator_periods_values if x.cellid in cell_id_crop])
 
     return multivariate_values
 
@@ -514,8 +528,8 @@ def getAccessionsFiltered(crops,cell_ids,indicators_params):
 """ Service to get subsets of accessions """
 @app.route('/api/v1/subset', methods=['GET', 'POST'])
 @cross_origin()
+@app.errorhandler(werkzeug.exceptions.BadRequest)
 def subset():
-    univariate_parsed = []
     data = request.get_json()
    
     cellid_ls = data['cellid_list']
@@ -527,29 +541,47 @@ def subset():
 
     content = {}
 
-    start_time_subsets = time.time()
-    result = filterData(crops = cellid_ls, cell_ids = cellids, indicators_params = indicators_params)
-    #result = getAccessionsFiltered(crops=cellid_ls,cell_ids=cellids,indicators_params=indicators_params)
-    end_time_subsets = time.time()
+    try:
+        #start_time_subsets = time.time()
+        result = filterData(crops = cellid_ls, cell_ids = cellids, indicators_params = indicators_params)
+        #result = getAccessionsFiltered(crops=cellid_ls,cell_ids=cellids,indicators_params=indicators_params)
+        #end_time_subsets = time.time()
+        #print('filtering time: ',end_time_subsets-start_time_subsets)
   
-    if result:
-        univariate_data = pd.DataFrame([s for s in result])
-        #print(univariate_data)
-        colnames = univariate_data.columns.values.tolist()
+        if result:
+            univariate_data = pd.DataFrame([s for s in result])
+
+            univariate_data_crop = univariate_data.groupby(['crop'])
+
+            subset_dfs = []
+            for crop_grouped in univariate_data_crop:
+                frames_ind = [gr[1] for gr in crop_grouped[1].groupby(['indicator'])]
+                #get the intersection between the indicators data frames_ind
+                df_merged = reduce(lambda  left,right: pd.merge(left,right,on=['cellid','crop'],
+                                            how='inner'), frames_ind)
+    
+                ind_data_dfs = [df.loc[lambda df: df['cellid'].isin(df_merged['cellid'].values)] for df in frames_ind]
+                subset_dfs.extend(ind_data_dfs)
         
-        months = [k for k in colnames if "month" in str(k)]
-        value = [k for k in colnames if "value" in str(k)]
-        category = [k for k in colnames if 'category' in str(k)]
+            filtered_data = pd.concat(subset_dfs)
+            if filtered_data.empty:
+                raise ValueError('No data matching the selected filters!')
+        
+            colnames = filtered_data.columns.values.tolist()
+        
+            months = [k for k in colnames if "month" in str(k)]
+            value = [k for k in colnames if "value" in str(k)]
+            category = [k for k in colnames if 'category' in str(k)]
 
-        accessions_list = list(set(univariate_data['cellid'].tolist()))
+            accessions_list = list(set(filtered_data['cellid'].tolist()))
 
-        univariate_result = univariate_data.to_json(orient = "records")
-        univariate_parsed = json.loads(univariate_result)
+            #univariate_result = univariate_data.to_json(orient = "records")
+            #univariate_parsed = json.loads(univariate_result)
 
-        if univariate_parsed:
-            df = pd.DataFrame([s for s in univariate_parsed])
+            #if univariate_parsed:
+            #df = pd.DataFrame([s for s in univariate_parsed])
             
-            df_grouped_indicator = df.groupby(['indicator', 'period', 'crop'])
+            df_grouped_indicator = filtered_data.groupby(['indicator', 'period', 'crop'])
 
             lst_box_data = []
             proportion_data = []
@@ -593,13 +625,15 @@ def subset():
             quantile_data = json.loads(df_quantiles_grouped)
             #print(quantile_data)
             #print(accessions_list)
-            
-            content = {
-                'univariate': {'data': accessions_list},
-                'quantile': quantile_data,
-                'proportion': proportion_data
-                # 'quantile': {'data': quantiles_list, 'time': total_time_quantile},
-            }
+
+    except ValueError as ve:
+        return('Bad request! '+str(ve), 400)
+
+    content = {
+        'univariate': {'data': accessions_list},
+        'quantile': quantile_data,
+        'proportion': proportion_data
+        }
 
     return jsonify(content)
 
