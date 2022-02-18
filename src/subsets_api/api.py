@@ -143,8 +143,10 @@ def ranges_bins():
     data = request.get_json()
     month_fields = ['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
                 'month10', 'month11', 'month12']
-
-    ind_period_obj = IndicatorPeriod.objects(period__in=['min', 'max', 'mean']).only('id').select_related() 
+    #t1 = time.time()
+    ind_period_obj = IndicatorPeriod.objects(period__in=['mean']).only('id').select_related() 
+    #t2=time.time()
+    #print("ind periods..", t2-t1)
     ind_periods_ids = []
     ind_periods_ids.extend(x.id for x in ind_period_obj)
     
@@ -152,6 +154,8 @@ def ranges_bins():
     distinct_cellids = list(set(cellids))
     
     ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=distinct_cellids).select_related() 
+    #t3=time.time()
+    #print("ind values..", t3-t2)
     min_max = []
 
     df = pd.DataFrame([{
@@ -173,6 +177,8 @@ def ranges_bins():
             "cellid": x.cellid}
             for x in ind_values])
     
+    #t4=time.time()
+    #print("df..", t4-t3)
     df_grouped = df.groupby(['indicator'])
     for indx, group in enumerate(df_grouped):
         if not group[1]['category'].isnull().all():
@@ -183,10 +189,13 @@ def ranges_bins():
         ob = {'indicator': group[0], 'min': min, 'max':max}        
         min_max.append(ob)
 
+    #t5=time.time()
+    #print("min max..", t5-t4)
     df_bins = df.groupby(['indicator','cellid'],as_index=False)[month_fields + ["value"]].mean()    
     df_bins["cellid"] = df_bins["cellid"].astype(int).astype(str)
     df_bins["mean"] = df_bins.mean(axis=1)
-
+    #t6=time.time()
+    #print("mean..", t6-t5)
     cellids_df = pd.DataFrame(cellids, columns=['cellid'])
     cellids_df["cellid"] = cellids_df["cellid"].astype(int).astype(str)
     df_bins = pd.merge(df_bins, cellids_df, how='inner', on='cellid')    
@@ -195,10 +204,12 @@ def ranges_bins():
     df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.cut(x, bins=10, precision=0))
     df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
     df_bins["quantile"] = df_bins["quantile"].astype(str)
-
+    #t7=time.time()
+    #print("bins..", t7-t6)
     proportions = df.groupby(['indicator'])['category'].value_counts(normalize = True).rename('proportion')
     proportions = pd.DataFrame(proportions).reset_index()
-
+    #t8=time.time()
+    #print("proportions..", t8-t7)
     content = {
         'min_max': min_max,
         'quantile': json.loads(df_bins.to_json(orient='records')),
@@ -673,7 +684,7 @@ def generate_clusters():
             # Clauses to get data for multivariate analysis
             if indicator['type'] == 'generic':
                 indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
-                    # Filtering values of indicator to multivariate analysis
+                # Filtering values of indicator to multivariate analysis
                 indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
                 # loop for each crop present in the query
                 for crop in cellid_ls:
@@ -700,7 +711,6 @@ def generate_clusters():
             
             elif indicator['type'] == 'specific':
                 crp = indicator['crop']
-                # cell_id_crop = getAccessionByCrop(crop=indicator['crop'], data=accessions)
                 cell_id_crop = [cell for x in cellid_ls for cell in x['cellids'] if crp == x['crop']]
                 indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
 
@@ -728,7 +738,7 @@ def generate_clusters():
             elif indicator['type'] == 'extracted':
                 print(indicator['name'])
                 indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
-                    # Filtering values of indicator to multivariate analysis
+                # Filtering values of indicator to multivariate analysis
                 indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
                 # loop for each crop present in the query
                 for crop in cellid_ls:
@@ -764,7 +774,7 @@ def generate_clusters():
                 lst_summary = []
                 lst_indicators = []
                 lst_months = []
-                others_columns = []
+                other_columns = []
                 category_columns = []
                 analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, max_cluster=hyperparameters['n_clusters'], min_cluster=hyperparameters['min_cluster'])
                 # from df to dict
@@ -781,8 +791,9 @@ def generate_clusters():
                             lst_indicators.append(fields[0])
                             lst_months.append(fields[1])
                     elif 'cluster' in col:
-                        others_columns.append(col)
+                        other_columns.append(col)
                     elif 'category' in col:
+                        lst_indicators.append(col.split('_')[0])
                         category_columns.append(col)
                 
                 lst_indicators = list(set(lst_indicators))
@@ -791,14 +802,24 @@ def generate_clusters():
                 lst_months.sort()
 
                 analysis_columns = [col for col in analysis.columns]
+                print(other_columns)
                 # Calculate Min Max Mean and Sd
                 # for methd in others_columns:
-                df = analysis.groupby([others_columns[0], 'crop_name'])
+                df = analysis.groupby([other_columns[0], 'crop_name'])
+                proportion_data = []
                 for group in df:
                     for indicator in lst_indicators:
                         # Get min
                         # getNameIndicatorByPref(indicator)
-                        if any(indicator+'_month' in col for col in analysis_columns):
+                        if indicator+'_category' in analysis_columns:
+                            proportions = group[1][indicator+'_category'].value_counts(normalize = True).rename('proportion')
+                            proportions.index.name = 'category'
+                            proportions = pd.DataFrame(proportions).reset_index()
+                            proportion_dict = dict(zip(proportions.category, proportions.proportion))
+                            proportion_obj = {'indicator': indicator, 'crop': group[0][-1], "cluster":str(group[0][0]), 'proportion': proportion_dict}
+                            proportion_data.append(proportion_obj)
+                            continue
+                        elif any(indicator+'_month' in col for col in analysis_columns):
                             lst_months_val = [x for x in lst_months if 'month' in x]
                         elif indicator+'_value' in analysis_columns:
                             lst_months_val = [x for x in lst_months if 'value' in x]
@@ -867,8 +888,9 @@ def generate_clusters():
                 #     methds = methd.split('_')
                 for group in df:
                     for indicator in lst_indicators:
-
-                        if any(indicator+'_month' in col for col in analysis_columns):
+                        if indicator+'_category' in analysis_columns:
+                            continue
+                        elif any(indicator+'_month' in col for col in analysis_columns):
                             lst_months_quantiles = [x for x in lst_months if 'month' in x]
 
                         elif indicator+'_value' in analysis_columns:
@@ -907,7 +929,8 @@ def generate_clusters():
                     # 'time': total_time_multi_ana,
                     'calculate': min_max_mean_sd,
                     'quantile': quantile_data,
-                    'summary': final_dictionary
+                    'summary': final_dictionary,
+                    'proportion': proportion_data
                 }
                 print('Method 1')
                 last_time = time.time()
@@ -925,21 +948,6 @@ def generate_clusters():
         # months number calculated
         nMonths = len(ob)
         content = {}
-
-        #Get crops
-        # crops = Crop.objects(Q(id__in = passport_params['crop']))
-        # result_crops = [{"id":x.id,"name": x.name} for x in crops]
-
-        # # Filter clauses to get accessions in order to parameters
-        # filter_clauses = [Q(**{filter + "__in": passport_params[filter]})
-        #                 for filter in passport_params if len(passport_params[filter]) > 0]
-        # # Query to get accessions
-        # accessions = Accession.objects(reduce(operator.and_, filter_clauses)).select_related()
-
-        # # Cellids found in the accessions objects
-        # cell_ids = [x.cellid for x in accessions if x.cellid]
-        # # Reduce cellid list
-        # cell_ids = list(set(cell_ids))
 
         for indicator in indicators_params:
             # Indicator periods ids
