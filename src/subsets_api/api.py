@@ -149,7 +149,8 @@ def ranges_bins():
     #print("ind periods..", t2-t1)
     ind_periods_ids = []
     ind_periods_ids.extend(x.id for x in ind_period_obj)
-    
+    #print(len(ind_periods_ids))
+
     cellids = [int(cell) for cell in data['cellid_list'] if cell]
     distinct_cellids = list(set(cellids))
     
@@ -1123,15 +1124,16 @@ def get_core_collection():
     data = request.get_json()
 
     cluster_data = data['data']
-    selected_cluster = data['selected_cluster']
+    #selected_cluster = data['selected_cluster']
     fraction = data['fraction']
 
     cluster_df = pd.DataFrame([s for s in cluster_data])
+    cluster_column = [col for col in cluster_df if 'cluster' in col][0]
 
-    if 'cluster_hac' in cluster_df.columns:
-        core_collection = stratcc(x=cluster_df, groups=cluster_df['cluster_hac'], fraction=fraction)
-        cc_selected_cluser = core_collection.loc[core_collection['cluster_hac']==selected_cluster,]
-        cc_cellids = cc_selected_cluser['cellid']
+    if cluster_column:
+        core_collection = stratcc(x=cluster_df, groups=cluster_df[cluster_column], fraction=fraction)
+        #cc_selected_cluser = core_collection.loc[core_collection[cluster_column]==selected_cluster,]
+        cc_cellids = core_collection['cellid']
 
         content = {
             'cellids': list(cc_cellids)
