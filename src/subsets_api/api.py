@@ -585,7 +585,9 @@ def subset():
             value = [k for k in colnames if "value" in str(k)]
             category = [k for k in colnames if 'category' in str(k)]
 
-            accessions_list = list(set(filtered_data['cellid'].tolist()))
+            filtered_cellids = (filtered_data.groupby(['crop'])['cellid']
+            .apply(lambda x: list(set(x.to_list())))
+            .reset_index().to_json(orient='records'))
 
             #univariate_result = univariate_data.to_json(orient = "records")
             #univariate_parsed = json.loads(univariate_result)
@@ -635,14 +637,12 @@ def subset():
             .to_json(orient='records'))
 
             quantile_data = json.loads(df_quantiles_grouped)
-            #print(quantile_data)
-            #print(accessions_list)
 
     except ValueError as ve:
         return('Bad request! '+str(ve), 400)
 
     content = {
-        'univariate': {'data': accessions_list},
+        'filtered_cellids': json.loads(filtered_cellids),
         'quantile': quantile_data,
         'proportion': proportion_data
         }
