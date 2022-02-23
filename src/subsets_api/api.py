@@ -1125,14 +1125,15 @@ def get_core_collection():
 
     cluster_data = data['data']
     #selected_cluster = data['selected_cluster']
-    fraction = data['fraction']
+    amount = data['amount']
 
     cluster_df = pd.DataFrame([s for s in cluster_data])
     cluster_column = [col for col in cluster_df if 'cluster' in col][0]
 
+    #cluster_df = cluster_df.loc[cluster_df[cluster_column]==selected_cluster,]
+    
     if cluster_column:
-        core_collection = stratcc(x=cluster_df, groups=cluster_df[cluster_column], fraction=fraction)
-        #cc_selected_cluser = core_collection.loc[core_collection[cluster_column]==selected_cluster,]
+        core_collection = stratcc(x=cluster_df, groups=cluster_df[cluster_column], nb_entries=amount)
         cc_cellids = core_collection['cellid']
 
         content = {

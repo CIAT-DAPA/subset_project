@@ -28,16 +28,27 @@ def _alloc(df, groups, fraction):
 
     return result
 
-def stratcc(x, groups, fraction, clustering=True):
+def stratcc(x, groups, nb_entries=None, fraction=None, clustering=True):
     
     def _clustered_sampling(data, clGrpID, alloID):
         alloData = data.loc[clGrpID == alloID, ]
         result = alloData.sample(1)
         return result
     
-    allocated = _alloc(x, groups, fraction)
-    #print(allocated)
     grpIDs = list(set(groups))
+
+    if fraction and nb_entries:
+        raise ValueError('Please provide value for one argument: nb_entries or fraction!')
+    
+    elif fraction and not nb_entries:
+        allocated = _alloc(x, groups, fraction)
+    
+    elif nb_entries and not fraction:
+        if len(grpIDs)>1:
+            raise ValueError('Please provide the fraction value not the nb_entries value: Data contain more than one group!')
+        else:
+            allocated = pd.DataFrame(grpIDs+[nb_entries], index=['cluster_id','newSize']).T
+    #print(allocated)
     
     frames = []
     for id in grpIDs:
