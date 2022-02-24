@@ -332,23 +332,12 @@ def filterData(crops, cell_ids, indicators_params):
                     # Dict to multivariate analysis
                     cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
                     subset.extend([{
-                        "crop": crop['crop'],
+                        **{"crop": crop['crop'],
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
-                        "cellid": x.cellid,
-                        "month1": x.month1,
-                        "month2": x.month2,
-                        "month3": x.month3,
-                        "month4": x.month4,
-                        "month5": x.month5,
-                        "month6": x.month6,
-                        "month7": x.month7,
-                        "month8": x.month8,
-                        "month9": x.month9,
-                        "month10": x.month10,
-                        "month11": x.month11,
-                        "month12": x.month12,
-                        "period": x.indicator_period.period}
+                        "cellid": x.cellid},
+                        **{f"month_{month}": getattr(x, f"month{month}") for month in months_filter},
+                        **{"period": x.indicator_period.period}}
                         for x in indicator_periods_values if x.cellid in cell_id_crop])
             else:
                 raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
@@ -366,23 +355,12 @@ def filterData(crops, cell_ids, indicators_params):
             
             if indicator_periods_values:
                 subset.extend([{
-                    "crop": indicator['crop'],
+                    **{"crop": indicator['crop'],
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
-                    "cellid": x.cellid,
-                    "month1": x.month1,
-                    "month2": x.month2,
-                    "month3": x.month3,
-                    "month4": x.month4,
-                    "month5": x.month5,
-                    "month6": x.month6,
-                    "month7": x.month7,
-                    "month8": x.month8,
-                    "month9": x.month9,
-                    "month10": x.month10,
-                    "month11": x.month11,
-                    "month12": x.month12,
-                    "period": x.indicator_period.period}
+                    "cellid": x.cellid},
+                    **{f"month_{month}": getattr(x, f"month{month}") for month in months_filter},
+                    **{"period": x.indicator_period.period}}
                     for x in indicator_periods_values if x.cellid in cell_id_crop])
             else:
                 raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
@@ -665,7 +643,7 @@ def generate_clusters():
     analysis_params = data['analysis']
 
     period = indicators_params[0]['period']
-
+    months_filter = data['months']
     # Algorithms list to use
     algorithms = analysis_params['algorithm']
     # hyperparameters to the multivariate analysis
@@ -692,22 +670,11 @@ def generate_clusters():
                     
                     multivariate_values.extend([{
                         # "crop": crop['name'],
-                        "crop": crop['crop'],
+                        **{"crop": crop['crop'],
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
-                        "cellid": x.cellid,
-                        "month1": x.month1,
-                        "month2": x.month2,
-                        "month3": x.month3,
-                        "month4": x.month4,
-                        "month5": x.month5,
-                        "month6": x.month6,
-                        "month7": x.month7,
-                        "month8": x.month8,
-                        "month9": x.month9,
-                        "month10": x.month10,
-                        "month11": x.month11,
-                        "month12": x.month12}
+                        "cellid": x.cellid},
+                        **{f"month{month}": getattr(x, f"month{month}") for month in months_filter}}
                         for x in indicator_periods_values if  x.cellid in crop['cellids']])
             
             elif indicator['type'] == 'specific':
@@ -718,22 +685,11 @@ def generate_clusters():
                 indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
                 # Dict to multivariate analysis
                 multivariate_values.extend([{
-                    "crop": indicator['crop'],
+                    **{"crop": indicator['crop'],
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
-                    "cellid": x.cellid,
-                    "month1": x.month1,
-                    "month2": x.month2,
-                    "month3": x.month3,
-                    "month4": x.month4,
-                    "month5": x.month5,
-                    "month6": x.month6,
-                    "month7": x.month7,
-                    "month8": x.month8,
-                    "month9": x.month9,
-                    "month10": x.month10,
-                    "month11": x.month11,
-                    "month12": x.month12}
+                    "cellid": x.cellid},
+                    **{f"month{month}": getattr(x, f"month{month}") for month in months_filter}}
                     for x in indicator_periods_values if  x.cellid in cell_id_crop])
             
             elif indicator['type'] == 'extracted':
@@ -782,7 +738,6 @@ def generate_clusters():
                 response_analysis = analysis.to_json(orient='records')
 
                 for k,col in enumerate(analysis.columns):
-                    """  """
                     if 'month' in col or 'value' in col:
                         fields = col.split('_')
                         if len(fields) >= 3:
@@ -803,7 +758,6 @@ def generate_clusters():
                 lst_months.sort()
 
                 analysis_columns = [col for col in analysis.columns]
-                print(other_columns)
                 # Calculate Min Max Mean and Sd
                 # for methd in others_columns:
                 df = analysis.groupby([other_columns[0], 'crop_name'])
@@ -1032,7 +986,7 @@ def generate_clusters():
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
                         "cellid": x.cellid,
-                         "month1": x.value,
+                        "month1": x.value,
                         "month2": x.value,
                         "month3": x.value,
                         "month4": x.value,
