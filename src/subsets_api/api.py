@@ -1128,6 +1128,12 @@ def get_core_collection():
     amount = data['amount']
 
     cluster_df = pd.DataFrame([s for s in cluster_data])
+
+    for col in cluster_df.columns:
+        if isinstance(cluster_df[col].iloc[0], list):
+            cluster_df[[col+'_month_'+str(idx+1) for idx in range(0,len(cluster_df[col].values[0]))]]=cluster_df[col].to_list()
+            cluster_df.drop(labels = [col], axis = "columns", inplace = True)
+    
     cluster_column = [col for col in cluster_df if 'cluster' in col][0]
 
     #cluster_df = cluster_df.loc[cluster_df[cluster_column]==selected_cluster,]
