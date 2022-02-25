@@ -313,7 +313,9 @@ def filterData(crops, cell_ids, indicators_params):
     for indicator in indicators_params:
         # Indicator periods ids
         periods_ids = indicator["indicator"]
-        months_filter = indicator["months"]
+        months_filter_range = indicator["months"]
+        if months_filter_range:
+            months_filter = list(range(months_filter_range[0], months_filter_range[1]+1))
         range_values = indicator["range"]
 
         if indicator['type'] == 'generic':
@@ -643,7 +645,9 @@ def generate_clusters():
     analysis_params = data['analysis']
 
     period = indicators_params[0]['period']
-    months_filter = data['months']
+    months_filter_range = data['months']
+
+    months_filter = list(range(months_filter_range[0], months_filter_range[1]+1))
     # Algorithms list to use
     algorithms = analysis_params['algorithm']
     # hyperparameters to the multivariate analysis
@@ -669,7 +673,6 @@ def generate_clusters():
                 for crop in cellid_ls:
                     
                     multivariate_values.extend([{
-                        # "crop": crop['name'],
                         **{"crop": crop['crop'],
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
@@ -731,9 +734,12 @@ def generate_clusters():
                 lst_summary = []
                 lst_indicators = []
                 lst_months = []
-                other_columns = []
+                cluster_columns = []
                 category_columns = []
-                analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, max_cluster=hyperparameters['n_clusters'], min_cluster=hyperparameters['min_cluster'])
+                
+                analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, 
+                                            max_cluster=hyperparameters['n_clusters'], 
+                                            min_cluster=hyperparameters['min_cluster'])
                 # from df to dict
                 response_analysis = analysis.to_json(orient='records')
 
@@ -747,7 +753,7 @@ def generate_clusters():
                             lst_indicators.append(fields[0])
                             lst_months.append(fields[1])
                     elif 'cluster' in col:
-                        other_columns.append(col)
+                        cluster_columns.append(col)
                     elif 'category' in col:
                         lst_indicators.append(col.split('_')[0])
                         category_columns.append(col)
@@ -760,7 +766,7 @@ def generate_clusters():
                 analysis_columns = [col for col in analysis.columns]
                 # Calculate Min Max Mean and Sd
                 # for methd in others_columns:
-                df = analysis.groupby([other_columns[0], 'crop_name'])
+                df = analysis.groupby(cluster_columns + ['crop_name'])
                 proportion_data = []
                 for group in df:
                     for indicator in lst_indicators:
