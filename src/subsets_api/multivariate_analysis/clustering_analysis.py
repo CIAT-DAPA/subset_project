@@ -75,8 +75,8 @@ def transform_data(data, n_months, n_years):
     return trnsformed_res
 
 
-def dbscan_func(dist_matrix, eps = 20, minPts = 10):
-    db = DBSCAN(eps = eps, min_samples = minPts, metric = "precomputed").fit(dist_matrix)
+def dbscan_func(dist_matrix, epsilon = 20, minpts = 10):
+    db = DBSCAN(eps = epsilon, min_samples = minpts, metric = "precomputed").fit(dist_matrix)
     labels = db.labels_
     return labels
 

@@ -652,6 +652,9 @@ def generate_clusters():
     algorithms = analysis_params['algorithm']
     # hyperparameters to the multivariate analysis
     hyperparameters = analysis_params['hyperparameter']
+    
+    hyperparameters={"max_cluster" if k == 'n_clusters' else k:v for k,v in hyperparameters.items()}
+    
     setSummary = analysis_params['summary']
     
     if setSummary:
@@ -737,9 +740,8 @@ def generate_clusters():
                 cluster_columns = []
                 category_columns = []
                 
-                analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, 
-                                            max_cluster=hyperparameters['n_clusters'], 
-                                            min_cluster=hyperparameters['min_cluster'])
+                analysis = clustering_analysis(algorithms=algorithms,data=multivariate_values,summary=True, **hyperparameters)
+                
                 # from df to dict
                 response_analysis = analysis.to_json(orient='records')
 
@@ -764,10 +766,15 @@ def generate_clusters():
                 lst_months.sort()
 
                 analysis_columns = [col for col in analysis.columns]
-                # Calculate Min Max Mean and Sd
-                # for methd in others_columns:
-                df = analysis.groupby(cluster_columns + ['crop_name'])
+
+                # transform cluster columns to rows
+                analysis_wide2long = analysis.melt(id_vars= list(set(analysis_columns) - set(cluster_columns)),
+                                                value_vars=cluster_columns,
+                                                var_name='method', value_name='cluster')
+                
+                df = analysis_wide2long.groupby(['method','cluster','crop_name'])
                 proportion_data = []
+                
                 for group in df:
                     for indicator in lst_indicators:
                         # Get min
@@ -777,7 +784,7 @@ def generate_clusters():
                             proportions.index.name = 'category'
                             proportions = pd.DataFrame(proportions).reset_index()
                             proportion_dict = dict(zip(proportions.category, proportions.proportion))
-                            proportion_obj = {'indicator': indicator, 'crop': group[0][-1], "cluster":str(group[0][0]), 'proportion': proportion_dict}
+                            proportion_obj = {'indicator': indicator, 'crop': group[0][2], group[0][0]:int(group[0][1]), 'proportion': proportion_dict}
                             proportion_data.append(proportion_obj)
                             continue
                         elif any(indicator+'_month' in col for col in analysis_columns):
@@ -789,50 +796,47 @@ def generate_clusters():
                         # print(mini.min())
                         obj_min = {x: mini[i] for i,x in enumerate(lst_months_val)}
                         obj_min['operator'] = 'Minimum'
-                        obj_min['cluster'] = group[0][0]
+                        obj_min[group[0][0]] = int(group[0][1])
                         obj_min['indicator'] = indicator
-                        obj_min['crop'] = group[0][1]
+                        obj_min['crop'] = group[0][2]
                         lst_calculates.append(obj_min)
                         # Get max
                         maxi = group[1][[indicator +  '_' + x for x in lst_months_val]].max()
                         obj_max = {x: maxi[i] for i,x in enumerate(lst_months_val)}
                         obj_max['operator'] = 'Maximum'
-                        obj_max['cluster'] = group[0][0]
+                        obj_max[group[0][0]] = int(group[0][1])
                         obj_max['indicator'] = indicator
-                        obj_max['crop'] = group[0][1]
+                        obj_max['crop'] = group[0][2]
                         lst_calculates.append(obj_max)
                         # Get mean
                         mean = group[1][[indicator +  '_' + x for x in lst_months_val]].mean()
                         obj_mean = {x: mean[i] for i,x in enumerate(lst_months_val)}
                         obj_mean['operator'] = 'Mean'
-                        obj_mean['cluster'] = group[0][0]
+                        obj_mean[group[0][0]] = int(group[0][1])
                         obj_mean['indicator'] = indicator
-                        obj_mean['crop'] = group[0][1]
+                        obj_mean['crop'] = group[0][2]
                         lst_calculates.append(obj_mean)
                         # Get sd
                         sd = group[1][[indicator +  '_' + x for x in lst_months_val]].std()
                         obj_sd = {x: sd[i] for i,x in enumerate(lst_months_val)}
                         obj_sd['operator'] = 'Standard deviation'
-                        obj_sd['cluster'] = group[0][0]
+                        obj_sd[group[0][0]] = int(group[0][1])
                         obj_sd['indicator'] = indicator
-                        obj_sd['crop'] = group[0][1]
+                        obj_sd['crop'] = group[0][2]
                         lst_calculates.append(obj_sd)
 
-                        obj_summary = {"mean":mean.mean(), "min":mini.min(), "max":maxi.max(), "cluster":str(group[0][0]), "crop":group[0][1], "indicator": indicator}
+                        obj_summary = {"mean":mean.mean(), "min":mini.min(), "max":maxi.max(), group[0][0]:int(group[0][1]), "crop":group[0][2], "indicator": indicator}
                         lst_summary.append(obj_summary)
-                # print(lst_calculates)
+                
                 df_multivariate = pd.DataFrame([s for s in lst_calculates])
                 
-                lst_months_grouped = lst_months
-                lst_months_grouped.append('cluster')
-                #lst_months_grouped.append('crop')
-                df_multivariate = df_multivariate[['indicator', 'cluster', 'crop', 'operator']+lst_months]
+                df_multivariate = df_multivariate[['indicator','crop', 'operator']+cluster_columns+lst_months]
                 
-                df_calculate = (df_multivariate.groupby(['indicator','operator', 'crop'])[lst_months_grouped]
-                .apply(lambda x: x.to_dict('r'))
+                df_calculate = (df_multivariate.groupby(['indicator','operator', 'crop'])[lst_months+cluster_columns]
+                .apply(lambda x: x.stack().groupby(level=0).agg(lambda y : y.reset_index(level=0,drop=True).to_dict()).tolist())
                 .reset_index(name='data')
                 .to_json(orient='records'))
-
+                
                 # # dicti = df_multivariate.pivot('indicator','operator').to_dict('index')
                 min_max_mean_sd = json.loads(df_calculate)
                 response_analysis_json = json.loads(response_analysis)
@@ -844,9 +848,7 @@ def generate_clusters():
                 
                 # # # Calculate quantiles by month
                 obj_list_quantiles = []
-                # for methd in others_columns:
-                #     df = analysis.groupby([methd])
-                #     methds = methd.split('_')
+                
                 for group in df:
                     for indicator in lst_indicators:
                         if indicator+'_category' in analysis_columns:
@@ -871,14 +873,15 @@ def generate_clusters():
 
                             quantile_list = list(df_groupby_indicator[month].tolist())
                             obj = {'Q1': quantile_list[0], 'Q2': quantile_list[1], 'Q3': quantile_list[2], 'month': month, 'indicator': indicator,
-                            'cluster': group[0][0], 'whisker_low': whisker_low[0], 'whisker_high': whisker_high[0], 'crop': group[0][1]}
+                            group[0][0]: int(group[0][1]), 'whisker_low': whisker_low[0], 'whisker_high': whisker_high[0], 'crop': group[0][2]}
 
                             obj_list_quantiles.append(obj)
 
                 df_quantiles = pd.DataFrame([s for s in obj_list_quantiles])
                 lst_field_quantiles = ['Q1', 'Q2', 'Q3', 'month', 'whisker_low', 'whisker_high']
-                df_quantiles_grouped = (df_quantiles.groupby(['indicator','cluster', 'crop'])[lst_field_quantiles]
-                .apply(lambda x: x.to_dict('r'))
+                
+                df_quantiles_grouped = (df_quantiles.groupby(['indicator','crop'])[cluster_columns+lst_field_quantiles]
+                .apply(lambda x: x.stack().groupby(level=0).agg(lambda y : y.reset_index(level=0,drop=True).to_dict()).tolist())
                 .reset_index(name='data')
                 .to_json(orient='records'))
                 # dicti = df_multivariate.pivot('indicator','operator').to_dict('index')
