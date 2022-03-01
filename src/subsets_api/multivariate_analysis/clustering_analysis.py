@@ -75,7 +75,7 @@ def transform_data(data, n_months, n_years):
     return trnsformed_res
 
 
-def dbscan_func(dist_matrix, epsilon = 20, minpts = 10):
+def dbscan_func(dist_matrix, epsilon = 0.2, minpts = 10):
     db = DBSCAN(eps = epsilon, min_samples = minpts, metric = "precomputed").fit(dist_matrix)
     labels = db.labels_
     return labels
@@ -115,16 +115,12 @@ def hdbscan_func(dist_matrix, min_cluster_size = 10):
     labels = clusterer.labels_
     return labels
 
-def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_months = None, n_years = None, **kwargs):
-    """ data: should contain indicators data. They can be the multi-year average of each specific month values, 
-    or the values of specific months in specifc years
+def clustering_analysis(data, algorithms = ['agglomerative'], **kwargs):
+    """ data: should contain cellids and indicators data.
     algorithms: the list of the clustering algorithms to use. Three options can be provided: 'agglomerative' for HAC,
     'dbscan' for DBSCAN and 'hdbscan' for HDBSCAN
-    summary: if True data should be the multi-year average for each month.
-    n_months: if summary = True, n_months is None. If summary = False, n_months should be provided
-    n_years: if summary = True, n_years is None. If summary = False, n_years should be provided
     **kwargs: parameters to pass to the clustering functions: dbscan_func, agglomerative_func and hdbscan_func;
-    to define custom values for their default parameters """
+    to define custom values for their hyperparameters """
 
     #flatten data to a dataframe
     df = pd.DataFrame([flatten(x) for x in data])
@@ -145,41 +141,40 @@ def clustering_analysis(data, algorithms = ['agglomerative'], summary = True, n_
         gr = (df.groupby(['crop'])).get_group(crop)
         gr.drop(labels = ['crop'], axis = "columns", inplace = True)
         
-        if summary:
-            merged_slices = pd.DataFrame([])
+        merged_slices = pd.DataFrame([])
 
-            months_slice = gr.loc[:, ['cellid','pref_indicator']+months_colnames].copy()
-            value_slice = gr.loc[:, ['cellid','pref_indicator']+value_colname].copy()
-            category_slice = gr.loc[:, ['cellid','pref_indicator']+category_colname].copy()
+        months_slice = gr.loc[:, ['cellid','pref_indicator']+months_colnames].copy()
+        value_slice = gr.loc[:, ['cellid','pref_indicator']+value_colname].copy()
+        category_slice = gr.loc[:, ['cellid','pref_indicator']+category_colname].copy()
 
-            for slice in [months_slice, value_slice, category_slice]:
-                slice.dropna(inplace=True)
-                slice = slice.pivot(index = 'cellid', columns = ['pref_indicator'])
-                slice = slice.swaplevel(0, 1, axis = 1)
-                slice.columns = slice.columns.map('_'.join)
-                slice = slice.reset_index()
+        for slice in [months_slice, value_slice, category_slice]:
+            slice.dropna(inplace=True)
+            slice = slice.pivot(index = 'cellid', columns = ['pref_indicator'])
+            slice = slice.swaplevel(0, 1, axis = 1)
+            slice.columns = slice.columns.map('_'.join)
+            slice = slice.reset_index()
 
-                if merged_slices.empty:
-                    merged_slices = slice
-                else:
-                    merged_slices = slice.merge(merged_slices, on='cellid')
+            if merged_slices.empty:
+                merged_slices = slice
+            else:
+                merged_slices = slice.merge(merged_slices, on='cellid')
 
-            merged_slices.dropna(inplace=True)
-            merged_slices.reset_index(drop=True, inplace=True)
-            gr = merged_slices          
-        
-        else:
-            gr['period'] = gr['period'].apply(str)
-            gr = transform_data(gr, n_months, n_years)
+        merged_slices.dropna(inplace=True)
+        merged_slices.reset_index(drop=True, inplace=True)
+        gr = merged_slices          
         
         numeric_colnames = [col for col in gr.columns if 'value' in col or 'month' in col]
         numeric_data = gr[numeric_colnames]
-
-        #min-max scale indicators data
-        scaled_data = pd.DataFrame(MinMaxScaler().fit_transform(numeric_data), columns = numeric_data.columns)
-        
         cat_features = [col for col in gr.columns if 'category' in col]
-        ind_data = pd.concat([scaled_data, gr[cat_features]], axis=1)
+
+        if numeric_data.empty:
+            ind_data = gr[cat_features]
+        
+        else:
+            #min-max scale indicators data
+            scaled_data = pd.DataFrame(MinMaxScaler().fit_transform(numeric_data), 
+                                    columns = numeric_data.columns)
+            ind_data = pd.concat([scaled_data, gr[cat_features]], axis=1)
         
         gower_dist = gower_distances(ind_data, categorical_features=cat_features, scale=False)
         

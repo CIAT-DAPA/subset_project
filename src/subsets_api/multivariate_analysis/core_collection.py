@@ -62,16 +62,22 @@ def stratcc(x, groups, nb_entries=None, fraction=None, clustering=True):
             else:
                 #apply hierarchical clustering to grpData
                 numeric_colnames = [col for col in grpData.columns if 'value' in col or 'month' in col]
+                cat_features = [col for col in grpData.columns if 'category' in col or 'cluster' in col]
                 numeric_data = grpData[numeric_colnames]
                 
-                #min-max scale indicators data
-                scaled_data = pd.DataFrame(MinMaxScaler().fit_transform(numeric_data),index=numeric_data.index, columns = numeric_data.columns)
-                cat_features = [col for col in grpData.columns if 'category' in col or 'cluster' in col]
+                if numeric_data.empty:
+                    ind_data = grpData[cat_features]
+                
+                else:
+                    #min-max scale indicators data
+                    scaled_data = pd.DataFrame(MinMaxScaler().fit_transform(numeric_data),
+                                            index=numeric_data.index, columns = numeric_data.columns)
             
-                ind_data = pd.concat([scaled_data, grpData[cat_features]], axis=1)
-            
+                    ind_data = pd.concat([scaled_data, grpData[cat_features]], axis=1)
+
                 gower_dist = gower_distances(ind_data, categorical_features=cat_features, scale=False)
-                model = AgglomerativeClustering(n_clusters = nb_entries, affinity = 'precomputed', linkage = 'complete')
+                model = AgglomerativeClustering(n_clusters = nb_entries, affinity = 'precomputed',
+                                            linkage = 'complete')
                 model.fit(gower_dist)
                 labels = model.labels_
             
