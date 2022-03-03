@@ -345,14 +345,15 @@ def filterData(crops, cell_ids, indicators_params):
                 raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
         elif indicator['type'] == 'specific':
             print(indicator['name'])
-            crp = indicator['crop']
-            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop']]
+            crp = indicator['crop'].lower()
+            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop'].lower()]
 
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
             gte_months_clause = map(lambda kv: Q(**{'month{}__gte'.format(kv): range_values[0]}), months_filter)
             lte_months_clause = map(lambda kv: Q(**{'month{}__lte'.format(kv): range_values[1]}), months_filter)
             query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
 
+            #print(query_clause)
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
             
             if indicator_periods_values:
@@ -452,8 +453,8 @@ def getAccessionsFiltered(crops,cell_ids,indicators_params):
                     for x in indicator_periods_values if  x.cellid in cell_id_crop])
         
         elif indicator['type'] == 'specific':
-            crp = indicator['crop']
-            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop']]
+            crp = indicator['crop'].lower()
+            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop'].lower()]
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
 
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
@@ -681,8 +682,8 @@ def generate_clusters():
             
         elif indicator['type'] == 'specific':
             print(indicator['name'])
-            crp = indicator['crop']
-            cell_id_crop = [cell for x in cellid_ls for cell in x['cellids'] if crp == x['crop']]
+            crp = indicator['crop'].lower()
+            cell_id_crop = [cell for x in cellid_ls for cell in x['cellids'] if crp == x['crop'].lower()]
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
 
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
