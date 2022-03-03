@@ -332,9 +332,9 @@ def filterData(crops, cell_ids, indicators_params):
                 #loop for each crop present in the request params
                 for crop in crops:
                     # Dict to multivariate analysis
-                    cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
+                    cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'].capitalize() == x['crop'].capitalize()]
                     subset.extend([{
-                        **{"crop": crop['crop'],
+                        **{"crop": crop['crop'].capitalize(),
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
                         "cellid": x.cellid},
@@ -345,8 +345,8 @@ def filterData(crops, cell_ids, indicators_params):
                 raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
         elif indicator['type'] == 'specific':
             print(indicator['name'])
-            crp = indicator['crop'].lower()
-            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop'].lower()]
+            crp = indicator['crop'].capitalize()
+            cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop'].capitalize()]
 
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
             gte_months_clause = map(lambda kv: Q(**{'month{}__gte'.format(kv): range_values[0]}), months_filter)
@@ -358,7 +358,7 @@ def filterData(crops, cell_ids, indicators_params):
             
             if indicator_periods_values:
                 subset.extend([{
-                    **{"crop": indicator['crop'],
+                    **{"crop": crp,
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid},
@@ -379,9 +379,9 @@ def filterData(crops, cell_ids, indicators_params):
             if indicator_periods_values:
                 # loop for each crop present in the query
                 for crop in crops:
-                    cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
+                    cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'].capitalize() == x['crop'].capitalize()]
                     subset.extend([{
-                        "crop": crop['crop'],
+                        "crop": crop['crop'].capitalize(),
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
                         "cellid": x.cellid,
@@ -400,9 +400,9 @@ def filterData(crops, cell_ids, indicators_params):
             if indicator_periods_values:
                 # loop for each crop present in the query
                 for crop in crops:
-                    cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'] == x['crop']]
+                    cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'].capitalize() == x['crop'].capitalize()]
                     subset.extend([{
-                        "crop": crop['crop'],
+                        "crop": crop['crop'].capitalize(),
                         "pref_indicator": x.indicator_period.indicator.pref,
                         "indicator": x.indicator_period.indicator.name,
                         "cellid": x.cellid,
@@ -673,7 +673,7 @@ def generate_clusters():
             for crop in cellid_ls:
                     
                 multivariate_values.extend([{
-                    **{"crop": crop['crop'],
+                    **{"crop": crop['crop'].capitalize(),
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid},
@@ -682,14 +682,14 @@ def generate_clusters():
             
         elif indicator['type'] == 'specific':
             print(indicator['name'])
-            crp = indicator['crop'].lower()
-            cell_id_crop = [cell for x in cellid_ls for cell in x['cellids'] if crp == x['crop'].lower()]
+            crp = indicator['crop'].capitalize()
+            cell_id_crop = [cell for x in cellid_ls for cell in x['cellids'] if crp == x['crop'].capitalize()]
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
 
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
             # Dict to multivariate analysis
             multivariate_values.extend([{
-                **{"crop": indicator['crop'],
+                **{"crop": crp,
                 "pref_indicator": x.indicator_period.indicator.pref,
                 "indicator": x.indicator_period.indicator.name,
                 "cellid": x.cellid},
@@ -705,7 +705,7 @@ def generate_clusters():
             for crop in cellid_ls:
                 # Dict to multivariate analysis
                 multivariate_values.extend([{
-                    "crop": crop['crop'],
+                    "crop": crop['crop'].capitalize(),
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid,
@@ -713,7 +713,7 @@ def generate_clusters():
                     for x in indicator_periods_values if  x.cellid in crop['cellids']])
             
         elif indicator['type'] == 'categorical':
-            print(indicator['name'])
+            print('categorical: ', indicator['name'])
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
             # Filtering values of indicator to multivariate analysis
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
@@ -721,7 +721,7 @@ def generate_clusters():
             for crop in cellid_ls:
                 # Dict to multivariate analysis
                 multivariate_values.extend([{
-                    "crop": crop['crop'],
+                    "crop": crop['crop'].capitalize(),
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "indicator": x.indicator_period.indicator.name,
                     "cellid": x.cellid,
@@ -746,7 +746,7 @@ def generate_clusters():
 
             for k,col in enumerate(analysis.columns):
                 if 'month' in col or 'value' in col:
-                    fields = col.split('_')
+                    """ fields = col.split('_')
                     
                     if len(fields) >= 3:
                         lst_indicators.append(fields[0] + '_' + fields[1])
@@ -754,13 +754,15 @@ def generate_clusters():
                     
                     else:
                         lst_indicators.append(fields[0])
-                        lst_months.append(fields[1])
+                        lst_months.append(fields[1]) """
+                    lst_indicators.append(col.rsplit('_',1)[0])
+                    lst_months.append(col.rsplit('_',1)[1])
                 
                 elif 'cluster' in col:
                     cluster_columns.append(col)
                 
                 elif 'category' in col:
-                    lst_indicators.append(col.split('_')[0])
+                    lst_indicators.append(col.rsplit('_',1)[0])
                     category_columns.append(col)
                 
             lst_indicators = list(set(lst_indicators))
@@ -795,51 +797,52 @@ def generate_clusters():
                         proportion_data.append(proportion_obj)
                         continue
                     
-                    elif any(indicator+'_month' in col for col in analysis_columns):
-                        lst_months_val = [x for x in lst_months if 'month' in x]
+                    else:
+                        if any(indicator+'_month' in col for col in analysis_columns):
+                            lst_months_val = [x for x in lst_months if 'month' in x]
                     
-                    elif indicator+'_value' in analysis_columns:
-                        lst_months_val = [x for x in lst_months if 'value' in x]
+                        elif indicator+'_value' in analysis_columns:
+                            lst_months_val = [x for x in lst_months if 'value' in x]
                         
-                    if lst_months_val:
-                        # Get min
-                        mini = group[1][[indicator +  '_' + x for x in lst_months_val]].min()
-                        # print(mini.min())
-                        obj_min = {x: mini[i] for i,x in enumerate(lst_months_val)}
-                        obj_min['operator'] = 'Minimum'
-                        obj_min[group[0][0]] = int(group[0][1])
-                        obj_min['indicator'] = indicator
-                        obj_min['crop'] = group[0][2]
-                        lst_calculates.append(obj_min)
-                        # Get max
-                        maxi = group[1][[indicator +  '_' + x for x in lst_months_val]].max()
-                        obj_max = {x: maxi[i] for i,x in enumerate(lst_months_val)}
-                        obj_max['operator'] = 'Maximum'
-                        obj_max[group[0][0]] = int(group[0][1])
-                        obj_max['indicator'] = indicator
-                        obj_max['crop'] = group[0][2]
-                        lst_calculates.append(obj_max)
-                        # Get mean
-                        mean = group[1][[indicator +  '_' + x for x in lst_months_val]].mean()
-                        obj_mean = {x: mean[i] for i,x in enumerate(lst_months_val)}
-                        obj_mean['operator'] = 'Mean'
-                        obj_mean[group[0][0]] = int(group[0][1])
-                        obj_mean['indicator'] = indicator
-                        obj_mean['crop'] = group[0][2]
-                        lst_calculates.append(obj_mean)
-                        # Get sd
-                        sd = group[1][[indicator +  '_' + x for x in lst_months_val]].std()
-                        obj_sd = {x: sd[i] for i,x in enumerate(lst_months_val)}
-                        obj_sd['operator'] = 'Standard deviation'
-                        obj_sd[group[0][0]] = int(group[0][1])
-                        obj_sd['indicator'] = indicator
-                        obj_sd['crop'] = group[0][2]
-                        lst_calculates.append(obj_sd)
+                        if lst_months_val:
+                            # Get min
+                            mini = group[1][[indicator +  '_' + x for x in lst_months_val]].min()
+                            # print(mini.min())
+                            obj_min = {x: mini[i] for i,x in enumerate(lst_months_val)}
+                            obj_min['operator'] = 'Minimum'
+                            obj_min[group[0][0]] = int(group[0][1])
+                            obj_min['indicator'] = indicator
+                            obj_min['crop'] = group[0][2]
+                            lst_calculates.append(obj_min)
+                            # Get max
+                            maxi = group[1][[indicator +  '_' + x for x in lst_months_val]].max()
+                            obj_max = {x: maxi[i] for i,x in enumerate(lst_months_val)}
+                            obj_max['operator'] = 'Maximum'
+                            obj_max[group[0][0]] = int(group[0][1])
+                            obj_max['indicator'] = indicator
+                            obj_max['crop'] = group[0][2]
+                            lst_calculates.append(obj_max)
+                            # Get mean
+                            mean = group[1][[indicator +  '_' + x for x in lst_months_val]].mean()
+                            obj_mean = {x: mean[i] for i,x in enumerate(lst_months_val)}
+                            obj_mean['operator'] = 'Mean'
+                            obj_mean[group[0][0]] = int(group[0][1])
+                            obj_mean['indicator'] = indicator
+                            obj_mean['crop'] = group[0][2]
+                            lst_calculates.append(obj_mean)
+                            # Get sd
+                            sd = group[1][[indicator +  '_' + x for x in lst_months_val]].std()
+                            obj_sd = {x: sd[i] for i,x in enumerate(lst_months_val)}
+                            obj_sd['operator'] = 'Standard deviation'
+                            obj_sd[group[0][0]] = int(group[0][1])
+                            obj_sd['indicator'] = indicator
+                            obj_sd['crop'] = group[0][2]
+                            lst_calculates.append(obj_sd)
 
-                        obj_summary = {"mean":mean.mean(), "min":mini.min(), "max":maxi.max(), 
+                            obj_summary = {"mean":mean.mean(), "min":mini.min(), "max":maxi.max(), 
                                         group[0][0]:int(group[0][1]), "crop":group[0][2], 
                                         "indicator": indicator}
-                        lst_summary.append(obj_summary)
+                            lst_summary.append(obj_summary)
                 
             if lst_calculates:
                 df_multivariate = pd.DataFrame([s for s in lst_calculates])
