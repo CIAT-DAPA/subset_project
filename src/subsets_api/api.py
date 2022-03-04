@@ -159,7 +159,7 @@ def ranges_bins():
     #t3=time.time()
     #print("ind values..", t3-t2)
     min_max = []
-    specific_df = []
+    specific_ind = []
     min_max_specific = []
 
     df = pd.DataFrame([{
@@ -182,7 +182,7 @@ def ranges_bins():
             for x in ind_values if x.indicator_period.indicator.indicator_type.name != 'specific'])
     
     for crop in cellids_crops:
-        specific_df.extend([{
+        specific_ind.extend([{
             "crop": crop['crop'].lower(),
             "indicator": x.indicator_period.indicator.name,
             "month1": x.month1,
@@ -202,32 +202,33 @@ def ranges_bins():
                     and x.indicator_period.indicator.crop.name.lower() == crop['crop'].lower()
                     and x.indicator_period.indicator.indicator_type.name == 'specific'])
     
-    specific_df = pd.DataFrame(specific_df)
-    for group in specific_df.groupby(['crop','indicator']):
-        min = group[1][month_fields].min(skipna=True).min(skipna=True)
-        max = group[1][month_fields].max(skipna=True).max(skipna=True)
-        print(group[0] ,  'min: ', str(min), 'max: ', str(max))
-        ob = {'crop':group[0][0], 'indicator': group[0][1], 'min': min, 'max':max}        
-        min_max_specific.append(ob)
+    if specific_ind:
+        specific_df = pd.DataFrame(specific_ind)
+        for group in specific_df.groupby(['crop','indicator']):
+            min = group[1][month_fields].min(skipna=True).min(skipna=True)
+            max = group[1][month_fields].max(skipna=True).max(skipna=True)
+            print(group[0] ,  'min: ', str(min), 'max: ', str(max))
+            ob = {'crop':group[0][0], 'indicator': group[0][1], 'min': min, 'max':max}        
+            min_max_specific.append(ob)
     
-    specific_df_bins = specific_df.groupby(['crop','indicator','cellid'],as_index=False)[month_fields].mean()
-    specific_df_bins["cellid"] = specific_df_bins["cellid"].astype(int).astype(str)
-    specific_df_bins["mean"] = specific_df_bins.mean(axis=1)
-    #t6=time.time()
-    #print("mean..", t6-t5)
+        specific_df_bins = specific_df.groupby(['crop','indicator','cellid'],as_index=False)[month_fields].mean()
+        specific_df_bins["cellid"] = specific_df_bins["cellid"].astype(int).astype(str)
+        specific_df_bins["mean"] = specific_df_bins.mean(axis=1)
+        #t6=time.time()
+        #print("mean..", t6-t5)
     
-    cellids_crops_df = pd.DataFrame(cellids_crops).explode('cellids')
-    cellids_crops_df["cellids"] = cellids_crops_df["cellids"].astype(int).astype(str)
-    cellids_crops_df.columns = ['crop', 'cellid']
-    cellids_crops_df['crop'] = cellids_crops_df['crop'].str.lower()
+        cellids_crops_df = pd.DataFrame(cellids_crops).explode('cellids')
+        cellids_crops_df["cellids"] = cellids_crops_df["cellids"].astype(int).astype(str)
+        cellids_crops_df.columns = ['crop', 'cellid']
+        cellids_crops_df['crop'] = cellids_crops_df['crop'].str.lower()
 
-    specific_df_bins["cellid"] = specific_df_bins["cellid"].astype(int).astype(str)
-    specific_df_bins = pd.merge(cellids_crops_df, specific_df_bins, how='inner', on=['crop','cellid'])
-    specific_df_bins = specific_df_bins.groupby(['crop','indicator','mean'], as_index=False).size()
+        specific_df_bins["cellid"] = specific_df_bins["cellid"].astype(int).astype(str)
+        specific_df_bins = pd.merge(cellids_crops_df, specific_df_bins, how='inner', on=['crop','cellid'])
+        specific_df_bins = specific_df_bins.groupby(['crop','indicator','mean'], as_index=False).size()
 
-    specific_df_bins['quantile'] = specific_df_bins.groupby(['crop','indicator'])['mean'].transform(lambda x:pd.cut(x, bins=10, precision=0))
-    specific_df_bins = specific_df_bins.groupby(['crop','indicator','quantile'], as_index=False)['size'].sum()
-    specific_df_bins["quantile"] = specific_df_bins["quantile"].astype(str)
+        specific_df_bins['quantile'] = specific_df_bins.groupby(['crop','indicator'])['mean'].transform(lambda x:pd.cut(x, bins=10, precision=0))
+        specific_df_bins = specific_df_bins.groupby(['crop','indicator','quantile'], as_index=False)['size'].sum()
+        specific_df_bins["quantile"] = specific_df_bins["quantile"].astype(str)
 
     #t4=time.time()
     #print("df..", t4-t3)
@@ -266,7 +267,7 @@ def ranges_bins():
         'min_max': min_max,
         'specific_min_max': min_max_specific,
         'quantile': json.loads(df_bins.to_json(orient='records')),
-        'specific_quantile': json.loads(specific_df_bins.to_json(orient='records')),
+        'specific_quantile': json.loads(specific_df_bins.to_json(orient='records')) if specific_ind else [],
         'proportion': json.loads(proportions.to_json(orient='records'))
     }
     
