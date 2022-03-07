@@ -361,15 +361,31 @@ def getNameIndicatorByPref(pref):
     indicator = Indicator.objects(pref=pref).first()
     print(indicator)
 
+def restrict_months_list(low, up):
+        months_list = []
+        if low<up:
+            months_list = list(range(low, up+1))
+        elif low>up:
+            months_list = list(range(low, 13))
+            months_list.extend(list(range(1,up+1))) if up != 1 else months_list.append(1)
+        else:
+            months_list = [low]
+        return months_list
+
 def filterData(crops, cell_ids, indicators_params):
+    
     subset = []
     
     for indicator in indicators_params:
         # Indicator periods ids
         periods_ids = indicator["indicator"]
         months_filter_range = indicator["months"]
+        
         if months_filter_range:
-            months_filter = list(range(months_filter_range[0], months_filter_range[1]+1))
+            low = months_filter_range[0]
+            up = months_filter_range[1]
+            months_filter = restrict_months_list(low, up)
+        
         range_values = indicator["range"]
 
         if indicator['type'] == 'generic':
@@ -397,6 +413,7 @@ def filterData(crops, cell_ids, indicators_params):
                         for x in indicator_periods_values if x.cellid in cell_id_crop])
             else:
                 raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
+        
         elif indicator['type'] == 'specific':
             print(indicator['name'])
             crp = indicator['crop'].lower()
@@ -444,6 +461,7 @@ def filterData(crops, cell_ids, indicators_params):
                         for x in indicator_periods_values if x.cellid in cell_id_crop])
             else:
                 raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
+        
         elif indicator['type'] == 'categorical':
             print(indicator['name'])
             indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]
@@ -702,7 +720,10 @@ def generate_clusters():
     months_filter_range = data['months']
 
     if months_filter_range:
-        months_filter = list(range(months_filter_range[0], months_filter_range[1]+1))
+        low = months_filter_range[0]
+        up = months_filter_range[1]
+        months_filter = restrict_months_list(low, up)
+    
     # Algorithms list to use
     algorithms = analysis_params['algorithm']
     # hyperparameters to the multivariate analysis
@@ -904,7 +925,7 @@ def generate_clusters():
                             lst_summary.append(obj_summary)
                 
             if lst_calculates:
-                df_multivariate = pd.DataFrame([s for s in lst_calculates])
+                df_multivariate = pd.DataFrame(lst_calculates)
                 
                 df_multivariate = df_multivariate[['indicator','crop', 'operator']+cluster_columns+lst_months]
                 
@@ -915,8 +936,8 @@ def generate_clusters():
                 
                 min_max_mean_sd = json.loads(df_calculate)
                 
-            else:
-                min_max_mean_sd = []
+            """ else:
+                min_max_mean_sd = [] """
                 
             summary_json = json.dumps(lst_summary)
             # converting string to json
@@ -958,7 +979,7 @@ def generate_clusters():
                             obj_list_quantiles.append(obj)
 
             if obj_list_quantiles:
-                df_quantiles = pd.DataFrame([s for s in obj_list_quantiles])
+                df_quantiles = pd.DataFrame(obj_list_quantiles)
                 lst_field_quantiles = ['Q1', 'Q2', 'Q3', 'month', 'whisker_low', 'whisker_high']
                 
                 df_quantiles_grouped = (df_quantiles.groupby(['indicator','crop'])[cluster_columns+lst_field_quantiles]
@@ -968,13 +989,13 @@ def generate_clusters():
                 # dicti = df_multivariate.pivot('indicator','operator').to_dict('index')
                 quantile_data = json.loads(df_quantiles_grouped)
                 
-            else:
-                quantile_data = []
+            """ else:
+                quantile_data = [] """
             
             content = {
                 'data': response_analysis_json,
-                'calculate': min_max_mean_sd,
-                'quantile': quantile_data,
+                'calculate': min_max_mean_sd if lst_calculates else [],
+                'quantile': quantile_data if obj_list_quantiles else [],
                 'summary': final_dictionary,
                 'proportion': proportion_data
             }
