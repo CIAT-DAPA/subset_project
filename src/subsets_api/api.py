@@ -18,9 +18,12 @@ import pandas as pd
 from itertools import groupby
 import time
 from multivariate_analysis.core_collection import stratcc
+#from werkzeug.middleware.profiler import ProfilerMiddleware
+#import io
+import random 
+
 
 app = Flask(__name__)
-
 
 @app.route('/api/v1/accessions', methods=['GET', 'POST'])
 @cross_origin()
@@ -149,9 +152,11 @@ def ranges_bins():
     #print("ind periods..", t2-t1)
     ind_periods_ids = []
     ind_periods_ids.extend(x.id for x in ind_period_obj)
-    #print(len(ind_periods_ids))
-
+    
+    random.seed(1234)
     cellids_crops = data['cellid_list']
+    cellids_crops = [{"crop":x['crop'], "cellids":random.sample(lst:=list(set(x['cellids'])), round(len(lst)*0.3))} for x in cellids_crops]
+
     cellids = [int(cell) for x in cellids_crops for cell in x['cellids']]
     distinct_cellids = list(set(cellids))
     
@@ -198,9 +203,10 @@ def ranges_bins():
             "month11": x.month11,
             "month12": x.month12,
             "cellid": x.cellid}
-            for x in ind_values if x.cellid in crop['cellids']
+            for x in ind_values if x.indicator_period.indicator.indicator_type.name == 'specific'
+                    and x.cellid in crop['cellids']
                     and x.indicator_period.indicator.crop.name.lower() == crop['crop'].lower()
-                    and x.indicator_period.indicator.indicator_type.name == 'specific'])
+                    ])
     
     if specific_ind:
         specific_df = pd.DataFrame(specific_ind)
@@ -228,8 +234,9 @@ def ranges_bins():
 
         specific_df_bins['quantile'] = specific_df_bins.groupby(['crop','indicator'])['mean'].transform(lambda x:pd.cut(x, bins=10, precision=0))
         specific_df_bins = specific_df_bins.groupby(['crop','indicator','quantile'], as_index=False)['size'].sum()
+        specific_df_bins['size'] = specific_df_bins.groupby(['crop','indicator'], as_index=False)['size'].transform(lambda x: x/x.sum())
         specific_df_bins["quantile"] = specific_df_bins["quantile"].astype(str)
-
+        
     #t4=time.time()
     #print("df..", t4-t3)
     df_grouped = df.groupby(['indicator'])
@@ -256,6 +263,7 @@ def ranges_bins():
 
     df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.cut(x, bins=10, precision=0))
     df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
+    df_bins['size'] = df_bins.groupby(['indicator'], as_index=False)['size'].transform(lambda x: x/x.sum())
     df_bins["quantile"] = df_bins["quantile"].astype(str)
     #t7=time.time()
     #print("bins..", t7-t6)
@@ -1540,5 +1548,7 @@ if __name__ == "__main__":
 
     #connect('indicatordb', host='localhost', port=27017)
     connect('indicatordb', host='dbmongotst01.cgiarad.org', port=27017)
-    # app.run(threaded=True, host='0.0.0.0', port=8437, debug=False)
+    #app.run(threaded=True, host='0.0.0.0', port=8437, debug=False)
+
+    #app.wsgi_app = ProfilerMiddleware(app.wsgi_app, sort_by=('time', 'calls'), restrictions=[60], profile_dir='.')
     app.run(threaded=True, port=5001, debug=True)
