@@ -1024,23 +1024,81 @@ def generate_clusters():
 def get_core_collection():
     data = request.get_json()
 
-    cluster_data = data['data']
-    #selected_cluster = data['selected_cluster']
+    indicators_params = data['indicators']
     amount = data['amount']
+    cellids = data['cellIds']
+    cellids = list(set(cellids))
+    months_range = data['months']
 
-    cluster_df = pd.DataFrame([s for s in cluster_data])
-
-    for col in cluster_df.columns:
-        if isinstance(cluster_df[col].iloc[0], list):
-            cluster_df[[col+'_month_'+str(idx+1) for idx in range(0,len(cluster_df[col].values[0]))]]=cluster_df[col].to_list()
-            cluster_df.drop(labels = [col], axis = "columns", inplace = True)
+    if months_range:
+        low = months_range[0]
+        up = months_range[1]
+        months_filter = restrict_months_list(low, up)
     
-    cluster_column = [col for col in cluster_df if 'cluster' in col][0]
+    #get indicators data
+    indicators_data = []
+    for indicator in indicators_params:
+        
+        periods_ids = indicator["indicator"]
+        if indicator['type'] == 'generic' or indicator['type'] == 'specific':
+            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
+            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+                   
+            indicators_data.extend([{
+                **{"pref_indicator": x.indicator_period.indicator.pref,
+                "cellid": x.cellid},
+                **{f"month{month}": getattr(x, f"month{month}") for month in months_filter}}
+                for x in indicator_periods_values])
+            
+        elif indicator['type'] == 'extracted':
+            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
+            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+            
+            indicators_data.extend([{
+                    "pref_indicator": x.indicator_period.indicator.pref,
+                    "cellid": x.cellid,
+                    "value": x.value}
+                    for x in indicator_periods_values])
+            
+        elif indicator['type'] == 'categorical':
+            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
+            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+            
+            indicators_data.extend([{
+                "pref_indicator": x.indicator_period.indicator.pref,
+                "cellid": x.cellid,
+                "category": x.value_c}
+                for x in indicator_periods_values])
 
-    #cluster_df = cluster_df.loc[cluster_df[cluster_column]==selected_cluster,]
+    indicators_df = pd.DataFrame(indicators_data)
+
+    months_colnames = [col for col in indicators_df.columns if 'month' in col]
+    value_colname = [col for col in indicators_df.columns if 'value' in col]
+    category_colname = [col for col in indicators_df.columns if 'category' in col]
+
+    months_slice = indicators_df[['cellid','pref_indicator']+months_colnames]
+    value_slice = indicators_df[['cellid','pref_indicator']+value_colname]
+    category_slice = indicators_df[['cellid','pref_indicator']+category_colname]
+
+    merged_slices = pd.DataFrame([])
+
+    for s in [months_slice, value_slice, category_slice]:
+        s = s.dropna()
+        s = s.pivot(index = 'cellid', columns = ['pref_indicator'])
+        s = s.swaplevel(0, 1, axis = 1)
+        s.columns = s.columns.map('_'.join)
+        s = s.reset_index()
+
+        merged_slices = s if merged_slices.empty else s.merge(merged_slices, on='cellid')
+
+    merged_slices.reset_index(drop=True, inplace=True)
+    merged_slices['cluster'] = 1
+    ind_data = merged_slices
+    
+    cluster_column = [col for col in ind_data if 'cluster' in col][0]
     
     if cluster_column:
-        core_collection = stratcc(x=cluster_df, groups=cluster_df[cluster_column], nb_entries=amount)
+        core_collection = stratcc(x=ind_data, groups=ind_data[cluster_column], nb_entries=amount)
         cc_cellids = core_collection['cellid']
 
         content = {

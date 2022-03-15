@@ -147,17 +147,17 @@ def clustering_analysis(data, algorithms = ['agglomerative'], **kwargs):
         value_slice = gr.loc[:, ['cellid','pref_indicator']+value_colname].copy()
         category_slice = gr.loc[:, ['cellid','pref_indicator']+category_colname].copy()
 
-        for slice in [months_slice, value_slice, category_slice]:
-            slice.dropna(inplace=True)
-            slice = slice.pivot(index = 'cellid', columns = ['pref_indicator'])
-            slice = slice.swaplevel(0, 1, axis = 1)
-            slice.columns = slice.columns.map('_'.join)
-            slice = slice.reset_index()
+        for s in [months_slice, value_slice, category_slice]:
+            s = s.dropna()
+            s = s.pivot(index = 'cellid', columns = ['pref_indicator'])
+            s = s.swaplevel(0, 1, axis = 1)
+            s.columns = s.columns.map('_'.join)
+            s = s.reset_index()
 
             if merged_slices.empty:
-                merged_slices = slice
+                merged_slices = s
             else:
-                merged_slices = slice.merge(merged_slices, on='cellid')
+                merged_slices = s.merge(merged_slices, on='cellid')
 
         merged_slices.dropna(inplace=True)
         merged_slices.reset_index(drop=True, inplace=True)
