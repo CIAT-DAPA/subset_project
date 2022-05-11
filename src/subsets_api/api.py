@@ -10,6 +10,8 @@ import numpy as np
 from mongoengine import *
 from models_subsets import *
 from mongoengine.queryset.visitor import Q
+from bson import ObjectId
+
 from functools import reduce
 import operator
 import json
@@ -18,9 +20,6 @@ import pandas as pd
 from itertools import groupby
 import time
 from multivariate_analysis.core_collection import stratcc
-#from werkzeug.middleware.profiler import ProfilerMiddleware
-#import io
-import random 
 
 
 app = Flask(__name__)
@@ -138,7 +137,6 @@ def accessions_list():
 
     return jsonify(content)
 
-
 @app.route('/api/v1/indicators-range', methods=['GET', 'POST'])
 @cross_origin()
 def ranges_bins():
@@ -146,141 +144,190 @@ def ranges_bins():
     data = request.get_json()
     month_fields = ['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
                 'month10', 'month11', 'month12']
-    #t1 = time.time()
-    ind_period_obj = IndicatorPeriod.objects(period__in=['mean']).only('id').select_related() 
-    #t2=time.time()
-    #print("ind periods..", t2-t1)
-    ind_periods_ids = []
-    ind_periods_ids.extend(x.id for x in ind_period_obj)
     
-    random.seed(1234)
+    ind_periods_ids = data['ind_periods']
+    ind_periods_ids = [ObjectId(id) for id in ind_periods_ids]
+
     cellids_crops = data['cellid_list']
-    cellids_crops = [{"crop":x['crop'], "cellids":random.sample(lst:=list(set(x['cellids'])), round(len(lst)*0.3))} for x in cellids_crops]
+    all_distinct_cellids = [int(cell) for x in cellids_crops for cell in x['cellids']]
+   
+    #t1= time.time()
+    min_max_pipeline = [
+            { 
+                "$match": {
+                    "$and": [
+                        {"indicator_period": {"$in": ind_periods_ids}}, 
+                        {"cellid": {"$in": all_distinct_cellids}},
+                        {'value_c': { '$exists': False}}
+                    ]
+                } 
+            }, {
+                "$group": {
+                    "_id":"$indicator_period",
+                    **{f"min_{month}": {"$min": f"${month}"} for month in month_fields},
+                    "min_value": {"$min": "$value"},
+                    **{f"max_{month}": {"$max": f"${month}"} for month in month_fields},
+                    "max_value": {"$max": "$value"}
+                }
+            }, {
+                "$lookup": {
+                    "from": "indicators_indicatorperiod", 
+                    "localField": "_id", 
+                    "foreignField": "_id", 
+                    "as": "indicator_period"
+                }
+            }, {
+                "$lookup": {
+                    "from": "indicators_indicator", 
+                    "localField": "indicator_period.indicator", 
+                    "foreignField": "_id", 
+                    "as": "indicator_name"
+                }
+            }, {
+                "$unwind": "$indicator_name"
+            }, {
+                "$project": {
+                    "indicator": "$indicator_name.name",
+                    "min": {"$min": [f"$min_{month}" for month in month_fields] + ["$min_value"]},
+                    "max": {"$max": [f"$max_{month}" for month in month_fields] + ["$max_value"]}
+                }
+            },
+    ]
 
-    cellids = [int(cell) for x in cellids_crops for cell in x['cellids']]
-    distinct_cellids = list(set(cellids))
+    min_max_result = list(IndicatorValue.objects.aggregate(*min_max_pipeline))
     
-    ind_values = IndicatorValue.objects(indicator_period__in=ind_periods_ids, cellid__in=distinct_cellids).select_related() 
-    #t3=time.time()
-    #print("ind values..", t3-t2)
-    min_max = []
-    specific_ind = []
-    min_max_specific = []
+    """ t2=time.time()
+    print("min max...", t2-t1) """
 
-    df = pd.DataFrame([{
-            "indicator": x.indicator_period.indicator.name,
-            "month1": x.month1,
-            "month2": x.month2,
-            "month3": x.month3,
-            "month4": x.month4,
-            "month5": x.month5,
-            "month6": x.month6,
-            "month7": x.month7,
-            "month8": x.month8,
-            "month9": x.month9,
-            "month10": x.month10,
-            "month11": x.month11,
-            "month12": x.month12,
-            "value": x.value,
-            "category": x.value_c,
-            "cellid": x.cellid}
-            for x in ind_values if x.indicator_period.indicator.indicator_type.name != 'specific'])
-    
-    for crop in cellids_crops:
-        specific_ind.extend([{
-            "crop": crop['crop'].lower(),
-            "indicator": x.indicator_period.indicator.name,
-            "month1": x.month1,
-            "month2": x.month2,
-            "month3": x.month3,
-            "month4": x.month4,
-            "month5": x.month5,
-            "month6": x.month6,
-            "month7": x.month7,
-            "month8": x.month8,
-            "month9": x.month9,
-            "month10": x.month10,
-            "month11": x.month11,
-            "month12": x.month12,
-            "cellid": x.cellid}
-            for x in ind_values if x.indicator_period.indicator.indicator_type.name == 'specific'
-                    and x.cellid in crop['cellids']
-                    and x.indicator_period.indicator.crop.name.lower() == crop['crop'].lower()
-                    ])
-    
-    if specific_ind:
-        specific_df = pd.DataFrame(specific_ind)
-        for group in specific_df.groupby(['crop','indicator']):
-            min = group[1][month_fields].min(skipna=True).min(skipna=True)
-            max = group[1][month_fields].max(skipna=True).max(skipna=True)
-            print(group[0] ,  'min: ', str(min), 'max: ', str(max))
-            ob = {'crop':group[0][0], 'indicator': group[0][1], 'min': min, 'max':max}        
-            min_max_specific.append(ob)
-    
-        specific_df_bins = specific_df.groupby(['crop','indicator','cellid'],as_index=False)[month_fields].mean()
-        specific_df_bins["cellid"] = specific_df_bins["cellid"].astype(int).astype(str)
-        specific_df_bins["mean"] = specific_df_bins.mean(axis=1)
-        #t6=time.time()
-        #print("mean..", t6-t5)
-    
-        cellids_crops_df = pd.DataFrame(cellids_crops).explode('cellids')
-        cellids_crops_df["cellids"] = cellids_crops_df["cellids"].astype(int).astype(str)
-        cellids_crops_df.columns = ['crop', 'cellid']
-        cellids_crops_df['crop'] = cellids_crops_df['crop'].str.lower()
+    min_max = [{key: value for key, value in dict.items() if key != '_id'} for dict in min_max_result]
 
-        specific_df_bins["cellid"] = specific_df_bins["cellid"].astype(int).astype(str)
-        specific_df_bins = pd.merge(cellids_crops_df, specific_df_bins, how='inner', on=['crop','cellid'])
-        specific_df_bins = specific_df_bins.groupby(['crop','indicator','mean'], as_index=False).size()
-
-        specific_df_bins['quantile'] = specific_df_bins.groupby(['crop','indicator'])['mean'].transform(lambda x:pd.cut(x, bins=10, precision=0))
-        specific_df_bins = specific_df_bins.groupby(['crop','indicator','quantile'], as_index=False)['size'].sum()
-        specific_df_bins['size'] = specific_df_bins.groupby(['crop','indicator'], as_index=False)['size'].transform(lambda x: x/x.sum())
-        specific_df_bins["quantile"] = specific_df_bins["quantile"].astype(str)
+    quantile_result = []
+    for ind in min_max_result:
+        bin_size = (ind['max'] - ind['min'])/5
         
-    #t4=time.time()
-    #print("df..", t4-t3)
-    df_grouped = df.groupby(['indicator'])
-    for indx, group in enumerate(df_grouped):
-        if not group[1]['category'].isnull().all():
-            continue
-        min = group[1][month_fields + ["value"]].min(skipna=True).min(skipna=True)
-        max = group[1][month_fields + ["value"]].max(skipna=True).max(skipna=True)
-        print(group[0] ,  'min: ', str(min), 'max: ', str(max))
-        ob = {'indicator': group[0], 'min': min, 'max':max}        
-        min_max.append(ob)
+        bins_boundaries= np.arange(ind['min'], ind['max'], bin_size)
+        bins_boundaries = np.append(bins_boundaries,ind['max'])
+        bins_boundaries = list(bins_boundaries)
+        
+        for idx, elt in enumerate(bins_boundaries):
+            if idx < len(bins_boundaries)-2:
+                count_pipeline = [
+                { 
+                    "$match": {
+                        "$and": [
+                            {"indicator_period": {"$in": [ObjectId(ind['_id'])]}}, 
+                            {"cellid": {"$in": all_distinct_cellids}},
+                            {'value_c': { '$exists': False}}
+                        ],
+                        "$or": [
+                            {f"{month}": {"$gte": bins_boundaries[idx], "$lt":bins_boundaries[idx+1]}} for month in month_fields
+                        ] + [{"value": {"$gte": bins_boundaries[idx], "$lt":bins_boundaries[idx+1]}}]
+                    } 
+                }, {
+                    "$count": "cellid"                    
+                }]
 
-    #t5=time.time()
-    #print("min max..", t5-t4)
-    df_bins = df.groupby(['indicator','cellid'],as_index=False)[month_fields + ["value"]].mean()    
-    df_bins["cellid"] = df_bins["cellid"].astype(int).astype(str)
-    df_bins["mean"] = df_bins.mean(axis=1)
-    #t6=time.time()
-    #print("mean..", t6-t5)
-    cellids_df = pd.DataFrame(cellids, columns=['cellid'])
-    cellids_df["cellid"] = cellids_df["cellid"].astype(int).astype(str)
-    df_bins = pd.merge(df_bins, cellids_df, how='inner', on='cellid')    
-    df_bins = df_bins.groupby(['indicator','mean'], as_index=False).size()
+            elif idx == len(bins_boundaries)-2:
+                count_pipeline = [
+                { 
+                    "$match": {
+                        "$and": [
+                            {"indicator_period": {"$in": [ObjectId(ind['_id'])]}}, 
+                            {"cellid": {"$in": all_distinct_cellids}},
+                            {'value_c': { '$exists': False}}
+                        ],
+                        "$or": [
+                            {f"{month}": {"$gte": bins_boundaries[idx], "$lte":bins_boundaries[idx+1]}} for month in month_fields
+                        ] + [{"value": {"$gte": bins_boundaries[idx], "$lt":bins_boundaries[idx+1]}}]
+                    } 
+                }, {
+                    "$count": "cellid"                    
+                }]
+            else:
+                break
 
-    df_bins['quantile'] = df_bins.groupby(['indicator'])['mean'].transform(lambda x:pd.cut(x, bins=10, precision=0))
-    df_bins = df_bins.groupby(['indicator','quantile'], as_index=False)['size'].sum()
-    df_bins['size'] = df_bins.groupby(['indicator'], as_index=False)['size'].transform(lambda x: x/x.sum())
-    df_bins["quantile"] = df_bins["quantile"].astype(str)
-    #t7=time.time()
-    #print("bins..", t7-t6)
-    proportions = df.groupby(['indicator'])['category'].value_counts(normalize = True).rename('proportion')
-    proportions = pd.DataFrame(proportions).reset_index()
-    #t8=time.time()
-    #print("proportions..", t8-t7)
+            count_result = list(IndicatorValue.objects.aggregate(*count_pipeline))
+            
+            quantile_result.extend([{
+                "indicator": ind['indicator'],
+                "quantile": "({},{}]".format(bins_boundaries[idx],bins_boundaries[idx+1]), 
+                "size": count_result[0]['cellid']
+            }])
+    
+    """ t3=time.time()
+    print("bins....", t3-t2) """
+
+    #pipeline to get categories proportions for categorical indicators
+    percentage_pipeline = [{ 
+                "$match": {
+                    "$and": [
+                        {"indicator_period": {"$in": ind_periods_ids}}, 
+                        {"cellid": {"$in": all_distinct_cellids}},
+                        {'value_c': { '$exists': True}}
+                    ]
+                } 
+                }, {
+                "$group": {
+                    "_id": {"indicator": "$indicator_period",
+                            "category": "$value_c"},
+                    "count": {"$sum": 1}                    
+                }
+                }, {
+                "$group": {
+                    "_id": "$_id.indicator",
+                    "abs_total": {"$sum": "$count"},
+                    "categories": { 
+                        "$push": { 
+                            "category":"$_id.category",
+                            "total":"$count"
+                        }
+                    }                  
+                } 
+                }, {
+                "$unwind": "$categories"
+                }, {
+                "$project": {
+                    "category":"$categories.category",
+                    "percent": {"$multiply":[{"$divide":["$categories.total","$abs_total"]},100]}
+                    }
+                }, {
+                "$lookup": {
+                    "from": "indicators_indicatorperiod", 
+                    "localField": "_id", 
+                    "foreignField": "_id", 
+                    "as": "indicator_period"
+                }
+                }, {
+                "$lookup": {
+                    "from": "indicators_indicator", 
+                    "localField": "indicator_period.indicator", 
+                    "foreignField": "_id", 
+                    "as": "indicator_name"
+                }
+                }, {
+                "$unwind": "$indicator_name"
+                }, {
+                "$project": {
+                    "indicator": "$indicator_name.name",
+                    "category": "$category",
+                    "proportion": "$percent"
+                }
+            }]
+    
+    percentage_result = list(IndicatorValue.objects.aggregate(*percentage_pipeline))
+    proportion = [{key: value for key, value in dict.items() if key != '_id'} for dict in percentage_result]
+    
+    """ t4=time.time()
+    print("percentage...", t4-t3)
+    print(percentage_result) """
+ 
     content = {
         'min_max': min_max,
-        'specific_min_max': min_max_specific,
-        'quantile': json.loads(df_bins.to_json(orient='records')),
-        'specific_quantile': json.loads(specific_df_bins.to_json(orient='records')) if specific_ind else [],
-        'proportion': json.loads(proportions.to_json(orient='records'))
+        'quantile': quantile_result,
+        'proportion': proportion
     }
     
     return jsonify(content)
-
 
 
 @app.route('/api/v1/crops', methods=['GET'])
@@ -404,6 +451,7 @@ def filterData(crops, cell_ids, indicators_params):
             lte_months_clause = map(lambda kv: Q(**{'month{}__lte'.format(kv): range_values[1]}), months_filter)
 
             query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
+            print(query_clause)
             #get filtered indicator value objects
             indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
             if indicator_periods_values:
