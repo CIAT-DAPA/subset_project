@@ -183,10 +183,26 @@ def ranges_bins():
                     "foreignField": "_id", 
                     "as": "indicator_name"
                 }
-            }, {
-                "$unwind": "$indicator_name"
+            }, 
+            {
+                "$lookup": {
+                    "from": "crop", 
+                    "localField": "indicator_name.crop", 
+                    "foreignField": "_id", 
+                    "as": "crop_name"
+                }
+            }, 
+            {
+                "$unwind": {"path": "$crop_name",
+                        "includeArrayIndex": 'crop_index'}
+            },
+            {
+                "$unwind": {"path": "$indicator_name",
+                    "includeArrayIndex": 'ind_index'
+                }
             }, {
                 "$project": {
+                    "crop": "$crop_name.name",
                     "indicator": "$indicator_name.name",
                     "min": {"$min": [f"$min_{month}" for month in month_fields] + ["$min_value"]},
                     "max": {"$max": [f"$max_{month}" for month in month_fields] + ["$max_value"]}
@@ -250,6 +266,7 @@ def ranges_bins():
             count_result = list(IndicatorValue.objects.aggregate(*count_pipeline))
             
             quantile_result.extend([{
+                "crop": ind['crop'],
                 "indicator": ind['indicator'],
                 "quantile": "({},{}]".format(bins_boundaries[idx],bins_boundaries[idx+1]), 
                 "size": count_result[0]['cellid'] if count_result else 0
