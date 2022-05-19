@@ -238,7 +238,7 @@ def ranges_bins():
                         ],
                         "$or": [
                             {f"{month}": {"$gte": bins_boundaries[idx], "$lte":bins_boundaries[idx+1]}} for month in month_fields
-                        ] + [{"value": {"$gte": bins_boundaries[idx], "$lt":bins_boundaries[idx+1]}}]
+                        ] + [{"value": {"$gte": bins_boundaries[idx], "$lte":bins_boundaries[idx+1]}}]
                     } 
                 }, {
                     "$count": "cellid"                    
