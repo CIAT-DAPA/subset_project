@@ -203,11 +203,12 @@ def ranges_bins():
 
     quantile_result = []
     for ind in min_max_result:
-        bin_size = (ind['max'] - ind['min'])/5
-        
-        bins_boundaries= np.arange(ind['min'], ind['max'], bin_size)
-        bins_boundaries = np.append(bins_boundaries,ind['max'])
-        bins_boundaries = list(bins_boundaries)
+        bins = 5
+        if ind['max'] == ind['min']:
+            bins_boundaries = [ind['min'], ind['max']]
+        else:
+            bins_boundaries = np.linspace(ind['min'], ind['max'], bins+1)
+            bins_boundaries = list(bins_boundaries)
         
         for idx, elt in enumerate(bins_boundaries):
             if idx < len(bins_boundaries)-2:
