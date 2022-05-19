@@ -252,7 +252,7 @@ def ranges_bins():
             quantile_result.extend([{
                 "indicator": ind['indicator'],
                 "quantile": "({},{}]".format(bins_boundaries[idx],bins_boundaries[idx+1]), 
-                "size": count_result[0]['cellid']
+                "size": count_result[0]['cellid'] if count_result else 0
             }])
     
     """ t3=time.time()
