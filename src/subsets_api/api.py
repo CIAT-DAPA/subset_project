@@ -111,9 +111,10 @@ def ranges_bins():
         else:
             bins_boundaries = np.linspace(ind['min'], ind['max'], bins+1)
             bins_boundaries = list(bins_boundaries)
+            rounded_bins_boundaries = [round(elt, 3) for elt in bins_boundaries]
         
-        for idx, elt in enumerate(bins_boundaries):
-            if idx < len(bins_boundaries)-2:
+        for idx, elt in enumerate(rounded_bins_boundaries):
+            if idx < len(rounded_bins_boundaries)-2:
                 count_pipeline = [
                 { 
                     "$match": {
@@ -123,14 +124,14 @@ def ranges_bins():
                             {'value_c': { '$exists': False}}
                         ],
                         "$or": [
-                            {f"{month}": {"$gte": bins_boundaries[idx], "$lt":bins_boundaries[idx+1]}} for month in month_fields
-                        ] + [{"value": {"$gte": bins_boundaries[idx], "$lt":bins_boundaries[idx+1]}}]
+                            {f"{month}": {"$gte": rounded_bins_boundaries[idx], "$lt":rounded_bins_boundaries[idx+1]}} for month in month_fields
+                        ] + [{"value": {"$gte": rounded_bins_boundaries[idx], "$lt":rounded_bins_boundaries[idx+1]}}]
                     } 
                 }, {
                     "$count": "cellid"                    
                 }]
 
-            elif idx == len(bins_boundaries)-2:
+            elif idx == len(rounded_bins_boundaries)-2:
                 count_pipeline = [
                 { 
                     "$match": {
@@ -140,8 +141,8 @@ def ranges_bins():
                             {'value_c': { '$exists': False}}
                         ],
                         "$or": [
-                            {f"{month}": {"$gte": bins_boundaries[idx], "$lte":bins_boundaries[idx+1]}} for month in month_fields
-                        ] + [{"value": {"$gte": bins_boundaries[idx], "$lte":bins_boundaries[idx+1]}}]
+                            {f"{month}": {"$gte": rounded_bins_boundaries[idx], "$lte":rounded_bins_boundaries[idx+1]}} for month in month_fields
+                        ] + [{"value": {"$gte": rounded_bins_boundaries[idx], "$lte":rounded_bins_boundaries[idx+1]}}]
                     } 
                 }, {
                     "$count": "cellid"                    
@@ -154,7 +155,7 @@ def ranges_bins():
             quantile_result.extend([{
                 "crop": ind['crop'],
                 "indicator": ind['indicator'],
-                "quantile": "({},{}]".format(bins_boundaries[idx],bins_boundaries[idx+1]), 
+                "quantile": "({},{}]".format(rounded_bins_boundaries[idx],rounded_bins_boundaries[idx+1]),
                 "size": count_result[0]['cellid'] if count_result else 0
             }])
     
