@@ -547,7 +547,6 @@ def generate_clusters():
     
     hyperparameters={"max_cluster" if k == 'n_clusters' else k:v for k,v in hyperparameters.items()}    
     
-    first_time = time.time()
     content = {}
 
     multivariate_values = []
@@ -801,9 +800,6 @@ def generate_clusters():
                 'proportion': proportion_data
             }
                 
-            last_time = time.time()
-            total_time = last_time - first_time
-            print(total_time)
         except ValueError as ve:
             print(str(ve))
         
