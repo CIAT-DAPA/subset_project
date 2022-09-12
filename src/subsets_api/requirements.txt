@@ -16,7 +16,7 @@ djongo-mongo-version-fix==1.2.32
 Flask==2.0.1
 Flask-Cors==3.0.10
 flatten-json==0.1.13
-hdbscan @ file:///C:/Users/juangarcia/Downloads/hdbscan-0.8.27-cp38-cp38-win32.whl
+hdbscan==0.8.28
 idna==3.2
 itsdangerous==2.0.1
 Jinja2==3.0.1
@@ -26,6 +26,7 @@ mongoengine==0.23.1
 numpy==1.21.1
 pandas==1.2.3
 pep517==0.11.0
+prince==0.7.1
 PyJWT==1.7.1
 pymongo==3.11.1
 python-dateutil==2.8.1
