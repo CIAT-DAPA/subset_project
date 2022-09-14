@@ -858,7 +858,7 @@ def get_core_collection():
                 "category": x.value_c}
                 for x in indicator_periods_values])
 
-    indicators_df = pd.DataFrame(indicators_data)
+    indicators_df = pd.DataFrame(indicators_data, dtype='object')
 
     months_colnames = [col for col in indicators_df.columns if 'month' in col]
     value_colname = [col for col in indicators_df.columns if 'value' in col]
@@ -880,18 +880,17 @@ def get_core_collection():
         merged_slices = s if merged_slices.empty else s.merge(merged_slices, on='cellid')
 
     merged_slices.reset_index(drop=True, inplace=True)
-    merged_slices['cluster'] = 1
     ind_data = merged_slices
     
-    cluster_column = [col for col in ind_data if 'cluster' in col][0]
+    ind_data = ind_data.dropna(axis=0)
+    ind_data.reset_index(drop=True, inplace=True)
     
-    if cluster_column:
-        core_collection = stratcc(x=ind_data, groups=ind_data[cluster_column], nb_entries=amount)
-        cc_cellids = core_collection['cellid']
+    core_collection = stratcc(x=ind_data, nb_entries=amount)
+    cc_cellids = core_collection['cellid']
 
-        content = {
-            'cellids': list(cc_cellids)
-        }
+    content = {
+        'cellids': list(cc_cellids)
+    }
 
     return content
 
