@@ -48,12 +48,46 @@ def ranges_bins():
                     ]
                 } 
             }, {
+                "$addFields": {
+                    "months_data": {"$objectToArray": "$$ROOT"}
+                }
+            }, {
+                "$addFields":{
+                    "months_data": {
+                        "$filter": {
+                            "input": "$months_data",
+                            "as": "tuple",
+                            "cond": {
+                                "$eq": [{"$substrBytes": ["$$tuple.k", 0, 5]},"month"]
+                            },
+                        },
+                    },
+                }
+            }, {
+                "$addFields": {
+                    "months_data": {
+                        "$concatArrays":["$months_data", [{"k":"average","v":{"$avg": "$months_data.v"}}]]
+                    },
+                }
+            }, {
+                "$addFields": {
+                    "months_data": {"$arrayToObject":"$months_data"}
+                }
+            }, {
                 "$group": {
-                    "_id":"$indicator_period",
-                    **{f"min_{month}": {"$min": f"${month}"} for month in month_fields},
-                    "min_value": {"$min": "$value"},
-                    **{f"max_{month}": {"$max": f"${month}"} for month in month_fields},
-                    "max_value": {"$max": "$value"}
+                    "_id": "$indicator_period",
+                    "min_avg": {
+                        "$min": "$months_data.average",
+                    },
+                    "max_avg": {
+                        "$max": "$months_data.average",
+                    },
+                    "min_value": {
+                        "$min": "$value"
+                    },
+                    "max_value": {
+                        "$max": "$value"
+                    }
                 }
             }, {
                 "$lookup": {
@@ -90,8 +124,10 @@ def ranges_bins():
                 "$project": {
                     "crop": "$crop_name.name",
                     "indicator": "$indicator_name.name",
-                    "min": {"$min": [f"$min_{month}" for month in month_fields] + ["$min_value"]},
-                    "max": {"$max": [f"$max_{month}" for month in month_fields] + ["$max_value"]}
+                    "min_avg": "$min_avg",
+                    "max_avg": "$max_avg",
+                    "min_value": "$min_value",
+                    "max_value": "$max_value"
                 }
             },
     ]
@@ -101,8 +137,10 @@ def ranges_bins():
     """ t2=time.time()
     print("min max...", t2-t1) """
 
-    min_max = [{key: value for key, value in dict.items() if key != '_id'} for dict in min_max_result]
+    min_max_result = [{key[:3] if (key[:3] == 'max' or key[:3] == "min") and value is not None else key:value for key, value in dict.items()} for dict in min_max_result]
 
+    min_max = [{key: value for key, value in dict.items() if key != '_id' and value is not None} for dict in min_max_result]
+    
     quantile_result = []
     for ind in min_max_result:
         bins = 5
@@ -122,11 +160,35 @@ def ranges_bins():
                             {"indicator_period": {"$in": [ObjectId(ind['_id'])]}}, 
                             {"cellid": {"$in": all_distinct_cellids}},
                             {'value_c': { '$exists': False}}
-                        ],
-                        "$or": [
-                            {f"{month}": {"$gte": rounded_bins_boundaries[idx], "$lt":rounded_bins_boundaries[idx+1]}} for month in month_fields
-                        ] + [{"value": {"$gte": rounded_bins_boundaries[idx], "$lt":rounded_bins_boundaries[idx+1]}}]
-                    } 
+                        ]
+                    }
+                }, {
+                    "$addFields": {
+                        "average": {"$objectToArray": "$$ROOT"}
+                    }
+                }, {
+                    "$addFields":{
+                        "average": {
+                            "$filter": {
+                                "input": "$average",
+                                "as": "tuple",
+                                "cond": {
+                                    "$eq": [{"$substrBytes": ["$$tuple.k", 0, 5]}, "month"]
+                                },
+                            },
+                        },
+                    }
+                }, {
+                    "$addFields": {
+                        "average": {
+                            "$avg": "$average.v"
+                        }
+                    },
+                }, {
+                    "$match": {
+                        "$or": [{"average": {"$gte": rounded_bins_boundaries[idx], "$lt":rounded_bins_boundaries[idx+1]}}]
+                             + [{"value": {"$gte": rounded_bins_boundaries[idx], "$lt":rounded_bins_boundaries[idx+1]}}]
+                    }
                 }, {
                     "$count": "cellid"                    
                 }]
@@ -139,11 +201,35 @@ def ranges_bins():
                             {"indicator_period": {"$in": [ObjectId(ind['_id'])]}}, 
                             {"cellid": {"$in": all_distinct_cellids}},
                             {'value_c': { '$exists': False}}
-                        ],
-                        "$or": [
-                            {f"{month}": {"$gte": rounded_bins_boundaries[idx], "$lte":rounded_bins_boundaries[idx+1]}} for month in month_fields
-                        ] + [{"value": {"$gte": rounded_bins_boundaries[idx], "$lte":rounded_bins_boundaries[idx+1]}}]
+                        ]
                     } 
+                },  {
+                    "$addFields": {
+                        "average": {"$objectToArray": "$$ROOT"}
+                    }
+                }, {
+                    "$addFields":{
+                        "average": {
+                            "$filter": {
+                                "input": "$average",
+                                "as": "tuple",
+                                "cond": {
+                                    "$eq": [{"$substrBytes": ["$$tuple.k", 0, 5]}, "month"]
+                                },
+                            },
+                        },
+                    }
+                }, {
+                    "$addFields": {
+                        "average": {
+                            "$avg": "$average.v"
+                        }
+                    },
+                }, {
+                    "$match": {
+                        "$or": [{"average": {"$gte": rounded_bins_boundaries[idx], "$lte":rounded_bins_boundaries[idx+1]}}]
+                             + [{"value": {"$gte": rounded_bins_boundaries[idx], "$lte":rounded_bins_boundaries[idx+1]}}]
+                    }
                 }, {
                     "$count": "cellid"                    
                 }]
@@ -234,7 +320,7 @@ def ranges_bins():
     
     return jsonify(content)
 
-# define a fuction for key
+# define a function for key
 def key_func(k):
     return k['category']
 
