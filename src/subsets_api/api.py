@@ -19,7 +19,7 @@ import pandas as pd
 from itertools import groupby
 import time
 from multivariate_analysis.core_collection import stratcc
-
+import math
 
 app = Flask(__name__)
 
@@ -143,11 +143,13 @@ def ranges_bins():
     
     quantile_result = []
     for ind in min_max_result:
-        bins = 5
+        # Apply Sturges Rule to define the optimal number of bins
+        bins = math.ceil(math.log2(len(all_distinct_cellids))+1)
+        
         if ind['max'] == ind['min']:
-            bins_boundaries = [ind['min'], ind['max']]
+            bins_boundaries = [math.floor(ind['min']), math.ceil(ind['max'])]
         else:
-            bins_boundaries = np.linspace(ind['min'], ind['max'], bins+1)
+            bins_boundaries = np.linspace(math.floor(ind['min']), math.ceil(ind['max']), bins+1)
             bins_boundaries = list(bins_boundaries)
             rounded_bins_boundaries = [round(elt, 3) for elt in bins_boundaries]
         
