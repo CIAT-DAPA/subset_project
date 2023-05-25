@@ -27,10 +27,12 @@ app = Flask(__name__)
 @cross_origin()
 def ranges_bins():
     # get the input parameters
-    data = request.get_json()
-    month_fields = ['month1','month2', 'month3', 'month4', 'month5', 'month6', 'month7', 'month8', 'month9',
-                'month10', 'month11', 'month12']
-    
+    data = request.get_json()    
+    months_filter_range = data["months"]
+    low = months_filter_range[0]
+    up = months_filter_range[1]
+    month_fields = restrict_months_list(low, up)
+
     ind_periods_ids = data['ind_periods']
     ind_periods_ids = [ObjectId(id) for id in ind_periods_ids]
 
@@ -47,6 +49,12 @@ def ranges_bins():
                         {'value_c': { '$exists': False}}
                     ]
                 } 
+            }, {
+                "$project": {
+                    "cellid": 1,
+                    "indicator_period": 1,
+                    **{f"month{month}": 1 for month in month_fields}
+                }
             }, {
                 "$addFields": {
                     "months_data": {"$objectToArray": "$$ROOT"}
@@ -165,6 +173,12 @@ def ranges_bins():
                         ]
                     }
                 }, {
+                    "$project": {
+                        "cellid": 1,
+                        "indicator_period": 1,
+                        **{f"month{month}": 1 for month in month_fields}
+                }
+                }, {
                     "$addFields": {
                         "average": {"$objectToArray": "$$ROOT"}
                     }
@@ -205,7 +219,13 @@ def ranges_bins():
                             {'value_c': { '$exists': False}}
                         ]
                     } 
-                },  {
+                }, {
+                    "$project": {
+                        "cellid": 1,
+                        "indicator_period": 1,
+                        **{f"month{month}": 1 for month in month_fields}
+                    }
+                }, {
                     "$addFields": {
                         "average": {"$objectToArray": "$$ROOT"}
                     }
@@ -413,6 +433,12 @@ def filterData(crops, cell_ids, indicators_params):
                     ]
                 } 
             }, {
+                "$project": {
+                    "cellid":1,
+                    "indicator_period": 1,
+                    **{f"month{month}": 1 for month in months_filter}
+                }
+            }, {
                 "$addFields": {
                     "months_data": {"$objectToArray": "$$ROOT"}
                 }
@@ -550,6 +576,12 @@ def filterData(crops, cell_ids, indicators_params):
                         {"cellid": {"$in": cell_id_crop}}
                     ]
                 } 
+            }, {
+                "$project": {
+                    "cellid":1,
+                    "indicator_period": 1,
+                    **{f"month{month}": 1 for month in months_filter}
+                }
             }, {
                 "$addFields": {
                     "months_data": {"$objectToArray": "$$ROOT"}
