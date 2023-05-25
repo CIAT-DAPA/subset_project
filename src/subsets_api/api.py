@@ -404,15 +404,123 @@ def filterData(crops, cell_ids, indicators_params):
 
         if indicator['type'] == 'generic':
             print(indicator['name'])
-            # Clauses to get the indicators data subset
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_ids})]            
-            gte_months_clause = map(lambda kv: Q(**{'month{}__gte'.format(kv): range_values[0]}), months_filter)
-            lte_months_clause = map(lambda kv: Q(**{'month{}__lte'.format(kv): range_values[1]}), months_filter)
+            filter_by_avg_pipeline = [
+            { 
+                "$match": {
+                    "$and": [
+                        {"indicator_period": ObjectId(periods_ids[0])}, 
+                        {"cellid": {"$in": cell_ids}}
+                    ]
+                } 
+            }, {
+                "$addFields": {
+                    "months_data": {"$objectToArray": "$$ROOT"}
+                }
+            }, {
+                "$addFields":{
+                    "months_data": {
+                        "$filter": {
+                            "input": "$months_data",
+                            "as": "tuple",
+                            "cond": {
+                                "$eq": [{"$substrBytes": ["$$tuple.k", 0, 5]},"month"]
+                            },
+                        },
+                    },
+                }
+            }, {
+                "$addFields": {
+                    "months_data": {
+                        "$concatArrays":["$months_data", [{"k":"average","v":{"$avg": "$months_data.v"}}]]
+                    },
+                }
+            }, {
+                "$addFields": {
+                    "months_data": {"$arrayToObject":"$months_data"}
+                }
+            }, {
+                "$match": {
+                    "$and":[
+                        {"months_data.average":{"$gte":range_values[0]}},
+                        {"months_data.average":{"$lte":range_values[1]}}
+                    ]
+                }
+            }, {
+                "$lookup":{
+                    "from": "indicators_indicatorperiod",
+                    "localField": "indicator_period",
+                    "foreignField": "_id",
+                    "as": "indicator_period",
+                }
+            }, {
+                "$lookup":{
+                    "from": "indicators_indicator",
+                    "localField": "indicator_period.indicator",
+                    "foreignField": "_id",
+                    "as": "indicator_name",
+                }
+            }, {
+                "$lookup":{
+                    "from": "crop",
+                    "localField": "indicator_name.crop",
+                    "foreignField": "_id",
+                    "as": "crop_name",
+                }
+            }, {
+                "$project": {
+                    "crop": {"$let": {
+                                "vars": {
+                                    "firstMember": {
+                                        "$arrayElemAt": [
+                                            "$crop_name",
+                                            0
+                                        ]
+                                    }
+                                },
+                                    "in": "$$firstMember.name"
+                            }},
+                    "indicator": {"$let": {
+                                    "vars": {
+                                        "firstMember": {
+                                            "$arrayElemAt": [
+                                                "$indicator_name",
+                                                0
+                                            ]
+                                        }
+                                    },
+                                        "in": "$$firstMember.name"
+                                }},
+                    "pref_indicator":{"$let": {
+                                        "vars": {
+                                            "firstMember": {
+                                                "$arrayElemAt": [
+                                                    "$indicator_name",
+                                                    0
+                                                ]
+                                            }
+                                        },
+                                        "in": "$$firstMember.pref"
+                                    }},
+                    "indicator_period":{"$let": {
+                                            "vars": {
+                                                "firstMember": {
+                                                    "$arrayElemAt": [
+                                                        "$indicator_period",
+                                                        0
+                                                    ]
+                                                }
+                                            },
+                                            "in": "$$firstMember.period"
+                                        }},
+                    "cellid":1,
+                    "average":"$months_data.average",
+                    **{f"month{month}": 1 for month in months_filter}
+                }
+            }            
+            ]
 
-            query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
-            #print(query_clause)
-            #get filtered indicator value objects
-            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
+            indicator_periods_values = IndicatorValue.objects.aggregate(*filter_by_avg_pipeline)
+
             if indicator_periods_values:
                 #loop for each crop present in the request params
                 for crop in crops:
@@ -420,12 +528,12 @@ def filterData(crops, cell_ids, indicators_params):
                     cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'].lower() == x['crop'].lower()]
                     subset.extend([{
                         **{"crop": crop['crop'].lower(),
-                        "pref_indicator": x.indicator_period.indicator.pref,
-                        "indicator": x.indicator_period.indicator.name,
-                        "cellid": x.cellid},
-                        **{f"month_{month}": getattr(x, f"month{month}") for month in months_filter},
-                        **{"period": x.indicator_period.period}}
-                        for x in indicator_periods_values if x.cellid in cell_id_crop])
+                        "pref_indicator": x['pref_indicator'],
+                        "indicator": x['indicator'],
+                        "cellid": x['cellid']},
+                        **{f"month_{month}": x[f"month{month}"] for month in months_filter},
+                        **{"period": x['indicator_period']}}
+                        for x in indicator_periods_values if x['cellid'] in cell_id_crop])
             else:
                 raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
         
@@ -433,24 +541,132 @@ def filterData(crops, cell_ids, indicators_params):
             print(indicator['name'])
             crp = indicator['crop'].lower()
             cell_id_crop = [cell for x in crops for cell in x['cellids'] if crp == x['crop'].lower()]
-
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cell_id_crop})]
-            gte_months_clause = map(lambda kv: Q(**{'month{}__gte'.format(kv): range_values[0]}), months_filter)
-            lte_months_clause = map(lambda kv: Q(**{'month{}__lte'.format(kv): range_values[1]}), months_filter)
-            query_clause = indicator_periods_clauses + list(gte_months_clause) + list(lte_months_clause)
-
-            #print(query_clause)
-            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
             
+            filter_by_avg_pipeline = [
+            { 
+                "$match": {
+                    "$and": [
+                        {"indicator_period": ObjectId(periods_ids[0])}, 
+                        {"cellid": {"$in": cell_id_crop}}
+                    ]
+                } 
+            }, {
+                "$addFields": {
+                    "months_data": {"$objectToArray": "$$ROOT"}
+                }
+            }, {
+                "$addFields":{
+                    "months_data": {
+                        "$filter": {
+                            "input": "$months_data",
+                            "as": "tuple",
+                            "cond": {
+                                "$eq": [{"$substrBytes": ["$$tuple.k", 0, 5]},"month"]
+                            },
+                        },
+                    },
+                }
+            }, {
+                "$addFields": {
+                    "months_data": {
+                        "$concatArrays":["$months_data", [{"k":"average","v":{"$avg": "$months_data.v"}}]]
+                    },
+                }
+            }, {
+                "$addFields": {
+                    "months_data": {"$arrayToObject":"$months_data"}
+                }
+            }, {
+                "$match": {
+                    "$and":[
+                        {"months_data.average":{"$gte":range_values[0]}},
+                        {"months_data.average":{"$lte":range_values[1]}}
+                    ]
+                }
+            }, {
+                "$lookup":{
+                    "from": "indicators_indicatorperiod",
+                    "localField": "indicator_period",
+                    "foreignField": "_id",
+                    "as": "indicator_period",
+                }
+            }, {
+                "$lookup":{
+                    "from": "indicators_indicator",
+                    "localField": "indicator_period.indicator",
+                    "foreignField": "_id",
+                    "as": "indicator_name",
+                }
+            }, {
+                "$lookup":{
+                    "from": "crop",
+                    "localField": "indicator_name.crop",
+                    "foreignField": "_id",
+                    "as": "crop_name",
+                }
+            }, {
+                "$project": {
+                    "crop": {"$let": {
+                                "vars": {
+                                    "firstMember": {
+                                        "$arrayElemAt": [
+                                            "$crop_name",
+                                            0
+                                        ]
+                                    }
+                                },
+                                    "in": "$$firstMember.name"
+                            }},
+                    "indicator": {"$let": {
+                                    "vars": {
+                                        "firstMember": {
+                                            "$arrayElemAt": [
+                                                "$indicator_name",
+                                                0
+                                            ]
+                                        }
+                                    },
+                                        "in": "$$firstMember.name"
+                                }},
+                    "pref_indicator":{"$let": {
+                                        "vars": {
+                                            "firstMember": {
+                                                "$arrayElemAt": [
+                                                    "$indicator_name",
+                                                    0
+                                                ]
+                                            }
+                                        },
+                                        "in": "$$firstMember.pref"
+                                    }},
+                    "indicator_period":{"$let": {
+                                            "vars": {
+                                                "firstMember": {
+                                                    "$arrayElemAt": [
+                                                        "$indicator_period",
+                                                        0
+                                                    ]
+                                                }
+                                            },
+                                            "in": "$$firstMember.period"
+                                        }},
+                    "cellid":1,
+                    "average":"$months_data.average",
+                    **{f"month{month}": 1 for month in months_filter}
+                }
+            }            
+            ]
+
+            indicator_periods_values = IndicatorValue.objects.aggregate(*filter_by_avg_pipeline)
             if indicator_periods_values:
                 subset.extend([{
                     **{"crop": crp,
-                    "pref_indicator": x.indicator_period.indicator.pref,
-                    "indicator": x.indicator_period.indicator.name,
-                    "cellid": x.cellid},
-                    **{f"month_{month}": getattr(x, f"month{month}") for month in months_filter},
-                    **{"period": x.indicator_period.period}}
-                    for x in indicator_periods_values if x.cellid in cell_id_crop])
+                    "pref_indicator": x['pref_indicator'],
+                    "indicator": x['indicator'],
+                    "cellid": x['cellid']},
+                    **{f"month_{month}": x[f"month{month}"] for month in months_filter},
+                    **{"period": x['indicator_period']}}
+                    for x in indicator_periods_values if x['cellid'] in cell_id_crop])
             else:
                 raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
         
@@ -522,10 +738,9 @@ def subset():
         result = filterData(crops = cellid_ls, cell_ids = cellids, indicators_params = indicators_params)
         #end_time_subsets = time.time()
         #print('filtering time: ',end_time_subsets-start_time_subsets)
-  
+
         if result:
             univariate_data = pd.DataFrame([s for s in result])
-
             univariate_data_crop = univariate_data.groupby(['crop'])
 
             subset_dfs = []
@@ -573,7 +788,7 @@ def subset():
                     df_groupby = group[1][[month]].quantile([0.25,0.5,0.75])
                     # Whisker low
                     whisker_low = group[1][[month]].min()
-                    # Whisker low
+                    # Whisker high
                     whisker_high = group[1][[month]].max()
                     # convert quantile index to quantile column
                     df_groupby.reset_index(inplace=True)
