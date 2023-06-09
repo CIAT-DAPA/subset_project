@@ -46,13 +46,73 @@ def ranges_bins():
                     "$and": [
                         {"indicator_period": {"$in": ind_periods_ids}}, 
                         {"cellid": {"$in": all_distinct_cellids}},
-                        {'value_c': { '$exists': False}}
+                        {"value_c": { '$exists': False}}
                     ]
                 } 
             }, {
+                "$lookup":{
+                    "from": "indicators_indicatorperiod",
+                    "localField": "indicator_period",
+                    "foreignField": "_id",
+                    "as": "indicator_period",
+                }
+            }, {
+                "$lookup":{
+                    "from": "indicators_indicator",
+                    "localField": "indicator_period.indicator",
+                    "foreignField": "_id",
+                    "as": "indicator_name",
+                }
+            }, {
+                "$lookup":{
+                    "from": "crop",
+                    "localField": "indicator_name.crop",
+                    "foreignField": "_id",
+                    "as": "crop_name",
+                } 
+            }, {
                 "$project": {
+                    "crop": {
+                        "$let": {
+                            "vars": {
+                                "firstMember": {
+                                    "$arrayElemAt": ["$crop_name", 0],
+                                },
+                            },
+                            "in": "$$firstMember.name",
+                        },
+                    },
+                    "indicator": {
+                        "$let": {
+                            "vars": {
+                                "firstMember": {
+                                    "$arrayElemAt": ["$indicator_name", 0],
+                                },
+                            },
+                            "in": "$$firstMember.name",
+                        },
+                    },
+                    "pref_indicator": {
+                        "$let": {
+                        "vars": {
+                            "firstMember": {
+                                "$arrayElemAt": ["$indicator_name", 0],
+                            },
+                        },
+                        "in": "$$firstMember.pref",
+                        },
+                    },
                     "cellid": 1,
-                    "indicator_period": 1,
+                    "indicator_period": {
+                        "$let": {
+                            "vars": {
+                                "firstMember": {
+                                    "$arrayElemAt": ["$indicator_period", 0],
+                                },
+                            },
+                            "in": "$$firstMember._id",
+                        },
+                    },
                     **{f"month{month}": 1 for month in month_fields}
                 }
             }, {
@@ -74,7 +134,35 @@ def ranges_bins():
             }, {
                 "$addFields": {
                     "months_data": {
-                        "$concatArrays":["$months_data", [{"k":"average","v":{"$avg": "$months_data.v"}}]]
+                        "$cond": {
+                            "if": {
+                                "$ne": ["$pref_indicator", "t_rain"],
+                            },
+                            "then": {
+                                "$concatArrays": [
+                                    "$months_data", [
+                                        {
+                                            "k": "average",
+                                            "v": {
+                                                "$avg": "$months_data.v",
+                                            },
+                                        },
+                                    ],
+                                ],
+                            },
+                            "else": {
+                                "$concatArrays": [
+                                    "$months_data", [
+                                        {
+                                            "k": "total",
+                                            "v": {
+                                                "$sum": "$months_data.v",
+                                            },
+                                        },
+                                    ],
+                                ],
+                            },
+                        },
                     },
                 }
             }, {
@@ -83,7 +171,11 @@ def ranges_bins():
                 }
             }, {
                 "$group": {
-                    "_id": "$indicator_period",
+                    "_id": {
+                        "indicator_period":"$indicator_period",
+                        "crop": "$crop",
+                        "indicator":"$indicator"
+                    },
                     "min_avg": {
                         "$min": "$months_data.average",
                     },
@@ -95,51 +187,30 @@ def ranges_bins():
                     },
                     "max_value": {
                         "$max": "$value"
+                    },
+                    "min_total": {
+                        "$min": "$months_data.total"
+                    },
+                    "max_total": {
+                        "$max": "$months_data.total"
                     }
                 }
             }, {
-                "$lookup": {
-                    "from": "indicators_indicatorperiod", 
-                    "localField": "_id", 
-                    "foreignField": "_id", 
-                    "as": "indicator_period"
-                }
-            }, {
-                "$lookup": {
-                    "from": "indicators_indicator", 
-                    "localField": "indicator_period.indicator", 
-                    "foreignField": "_id", 
-                    "as": "indicator_name"
-                }
-            }, 
-            {
-                "$lookup": {
-                    "from": "crop", 
-                    "localField": "indicator_name.crop", 
-                    "foreignField": "_id", 
-                    "as": "crop_name"
-                }
-            }, 
-            {
-                "$unwind": {"path": "$crop_name",
-                        "includeArrayIndex": 'crop_index'}
-            },
-            {
-                "$unwind": {"path": "$indicator_name",
-                    "includeArrayIndex": 'ind_index'
-                }
-            }, {
                 "$project": {
-                    "crop": "$crop_name.name",
-                    "indicator": "$indicator_name.name",
+                    "_id":"$_id.indicator_period",
+                    "crop": "$_id.crop",
+                    "indicator": "$_id.indicator",
                     "min_avg": "$min_avg",
                     "max_avg": "$max_avg",
                     "min_value": "$min_value",
-                    "max_value": "$max_value"
+                    "max_value": "$max_value",
+                    "min_total": "$min_total",
+                    "max_total": "$max_total"
                 }
-            },
+            }
     ]
 
+    print(min_max_pipeline)
     min_max_result = list(IndicatorValue.objects.aggregate(*min_max_pipeline))
     
     """ t2=time.time()
@@ -173,20 +244,44 @@ def ranges_bins():
                         ]
                     }
                 }, {
+                    "$lookup":{
+                        "from": "indicators_indicatorperiod",
+                        "localField": "indicator_period",
+                        "foreignField": "_id",
+                        "as": "indicator",
+                }
+                }, {
+                    "$lookup":{
+                        "from": "indicators_indicator",
+                        "localField": "indicator.indicator",
+                        "foreignField": "_id",
+                        "as": "indicator",
+                    }
+                }, {
                     "$project": {
+                        "pref_indicator": {
+                            "$let": {
+                                "vars": {
+                                    "firstMember": {
+                                        "$arrayElemAt": ["$indicator", 0],
+                                    },
+                                },
+                                "in": "$$firstMember.pref",
+                            }
+                        },
                         "cellid": 1,
                         "indicator_period": 1,
                         **{f"month{month}": 1 for month in month_fields}
                 }
                 }, {
                     "$addFields": {
-                        "average": {"$objectToArray": "$$ROOT"}
+                        "months_data": {"$objectToArray": "$$ROOT"}
                     }
                 }, {
                     "$addFields":{
-                        "average": {
+                        "months_data": {
                             "$filter": {
-                                "input": "$average",
+                                "input": "$months_data",
                                 "as": "tuple",
                                 "cond": {
                                     "$eq": [{"$substrBytes": ["$$tuple.k", 0, 5]}, "month"]
@@ -196,13 +291,23 @@ def ranges_bins():
                     }
                 }, {
                     "$addFields": {
-                        "average": {
-                            "$avg": "$average.v"
+                        "average_or_total": {
+                            "$cond": {
+                                "if": {
+                                    "$ne": ["$pref_indicator", "t_rain"],
+                                },
+                                "then": {
+                                    "$avg": "$months_data.v",
+                                },
+                                "else": {
+                                    "$sum": "$months_data.v",
+                                }
+                            }
                         }
-                    },
+                    }
                 }, {
                     "$match": {
-                        "$or": [{"average": {"$gte": rounded_bins_boundaries[idx], "$lt":rounded_bins_boundaries[idx+1]}}]
+                        "$or": [{"average_or_total": {"$gte": rounded_bins_boundaries[idx], "$lt":rounded_bins_boundaries[idx+1]}}]
                              + [{"value": {"$gte": rounded_bins_boundaries[idx], "$lt":rounded_bins_boundaries[idx+1]}}]
                     }
                 }, {
@@ -218,22 +323,46 @@ def ranges_bins():
                             {"cellid": {"$in": all_distinct_cellids}},
                             {'value_c': { '$exists': False}}
                         ]
-                    } 
+                    }
+                }, {
+                    "$lookup":{
+                        "from": "indicators_indicatorperiod",
+                        "localField": "indicator_period",
+                        "foreignField": "_id",
+                        "as": "indicator",
+                }
+                }, {
+                    "$lookup":{
+                        "from": "indicators_indicator",
+                        "localField": "indicator.indicator",
+                        "foreignField": "_id",
+                        "as": "indicator",
+                    }
                 }, {
                     "$project": {
+                        "pref_indicator": {
+                            "$let": {
+                                "vars": {
+                                    "firstMember": {
+                                        "$arrayElemAt": ["$indicator", 0],
+                                    },
+                                },
+                                "in": "$$firstMember.pref",
+                            }
+                        },
                         "cellid": 1,
                         "indicator_period": 1,
                         **{f"month{month}": 1 for month in month_fields}
-                    }
+                }
                 }, {
                     "$addFields": {
-                        "average": {"$objectToArray": "$$ROOT"}
+                        "months_data": {"$objectToArray": "$$ROOT"}
                     }
                 }, {
                     "$addFields":{
-                        "average": {
+                        "months_data": {
                             "$filter": {
-                                "input": "$average",
+                                "input": "$months_data",
                                 "as": "tuple",
                                 "cond": {
                                     "$eq": [{"$substrBytes": ["$$tuple.k", 0, 5]}, "month"]
@@ -243,13 +372,23 @@ def ranges_bins():
                     }
                 }, {
                     "$addFields": {
-                        "average": {
-                            "$avg": "$average.v"
+                        "average_or_total": {
+                            "$cond": {
+                                "if": {
+                                    "$ne": ["$pref_indicator", "t_rain"],
+                                },
+                                "then": {
+                                    "$avg": "$months_data.v",
+                                },
+                                "else": {
+                                    "$sum": "$months_data.v",
+                                }
+                            }
                         }
-                    },
+                    }
                 }, {
                     "$match": {
-                        "$or": [{"average": {"$gte": rounded_bins_boundaries[idx], "$lte":rounded_bins_boundaries[idx+1]}}]
+                        "$or": [{"average_or_total": {"$gte": rounded_bins_boundaries[idx], "$lte":rounded_bins_boundaries[idx+1]}}]
                              + [{"value": {"$gte": rounded_bins_boundaries[idx], "$lte":rounded_bins_boundaries[idx+1]}}]
                     }
                 }, {
@@ -424,6 +563,9 @@ def filterData(crops, cell_ids, indicators_params):
 
         if indicator['type'] == 'generic':
             print(indicator['name'])
+
+            oper = "$sum" if indicator['name'] == "Total precipitation" else "$avg"
+            
             filter_by_avg_pipeline = [
             { 
                 "$match": {
@@ -457,7 +599,7 @@ def filterData(crops, cell_ids, indicators_params):
             }, {
                 "$addFields": {
                     "months_data": {
-                        "$concatArrays":["$months_data", [{"k":"average","v":{"$avg": "$months_data.v"}}]]
+                        "$concatArrays":["$months_data", [{"k":"average_or_total","v":{oper: "$months_data.v"}}]]
                     },
                 }
             }, {
@@ -467,8 +609,8 @@ def filterData(crops, cell_ids, indicators_params):
             }, {
                 "$match": {
                     "$and":[
-                        {"months_data.average":{"$gte":range_values[0]}},
-                        {"months_data.average":{"$lte":range_values[1]}}
+                        {"months_data.average_or_total":{"$gte":range_values[0]}},
+                        {"months_data.average_or_total":{"$lte":range_values[1]}}
                     ]
                 }
             }, {
@@ -539,7 +681,7 @@ def filterData(crops, cell_ids, indicators_params):
                                             "in": "$$firstMember.period"
                                         }},
                     "cellid":1,
-                    "average":"$months_data.average",
+                    "average_or_total":"$months_data.average_or_total",
                     **{f"month{month}": 1 for month in months_filter}
                 }
             }            
@@ -1043,7 +1185,7 @@ def generate_clusters():
                             obj_max['crop'] = group[0][2]
                             lst_calculates.append(obj_max)
                             # Get mean
-                            mean = group[1][[indicator +  '_' + x for x in lst_months_val]].mean()
+                            mean = group[1][[indicator + '_' + x for x in lst_months_val]].mean()
                             obj_mean = {x: mean[i] for i,x in enumerate(lst_months_val)}
                             obj_mean['operator'] = 'Mean'
                             obj_mean[group[0][0]] = int(group[0][1])
@@ -1058,10 +1200,18 @@ def generate_clusters():
                             obj_sd['indicator'] = indicator
                             obj_sd['crop'] = group[0][2]
                             lst_calculates.append(obj_sd)
+                            
+                            #calculate total if indicator='t_rain'
+                            if indicator == "t_rain":
+                                total = group[1][[indicator +  '_' + x for x in lst_months_val]].sum(axis=1)
+                                #group[1][[indicator +  '_' + x for x in lst_months_val]].to_csv("t_rain_"+str(group[0][1])+".csv")
 
-                            obj_summary = {"mean":mean.mean(), "min":mini.min(), 
-                                        "max":maxi.max(), group[0][0]:int(group[0][1]), "crop":group[0][2], 
-                                        "indicator": indicator}
+                            obj_summary = {"mean": total.mean() if indicator == "t_rain" else mean.mean(), 
+                                            "min": total.min() if indicator == "t_rain" else mini.min(), 
+                                            "max": total.max() if indicator == "t_rain" else maxi.max(), 
+                                            group[0][0]: int(group[0][1]),
+                                            "crop": group[0][2], 
+                                            "indicator": indicator}
                             
                             lst_summary.append(obj_summary)
                 
