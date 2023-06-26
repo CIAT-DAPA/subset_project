@@ -113,7 +113,8 @@ def ranges_bins():
                             "in": "$$firstMember._id",
                         },
                     },
-                    **{f"month{month}": 1 for month in month_fields}
+                    **{f"month{month}": 1 for month in month_fields},
+                    "value": 1
                 }
             }, {
                 "$addFields": {
@@ -210,7 +211,6 @@ def ranges_bins():
             }
     ]
 
-    print(min_max_pipeline)
     min_max_result = list(IndicatorValue.objects.aggregate(*min_max_pipeline))
     
     """ t2=time.time()
@@ -271,7 +271,8 @@ def ranges_bins():
                         },
                         "cellid": 1,
                         "indicator_period": 1,
-                        **{f"month{month}": 1 for month in month_fields}
+                        **{f"month{month}": 1 for month in month_fields},
+                        "value": 1
                 }
                 }, {
                     "$addFields": {
@@ -352,7 +353,8 @@ def ranges_bins():
                         },
                         "cellid": 1,
                         "indicator_period": 1,
-                        **{f"month{month}": 1 for month in month_fields}
+                        **{f"month{month}": 1 for month in month_fields},
+                        "value": 1
                 }
                 }, {
                     "$addFields": {
