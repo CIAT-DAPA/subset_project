@@ -690,20 +690,20 @@ def filterData(crops, cell_ids, indicators_params):
             ]
 
             indicator_periods_values = IndicatorValue.objects.aggregate(*filter_by_avg_pipeline)
-
-            if indicator_periods_values:
+            res_list = [x for x in indicator_periods_values]
+            if res_list:
                 #loop for each crop present in the request params
                 for crop in crops:
                     # Dict to multivariate analysis
                     cell_id_crop = [cell for x in crops for cell in x['cellids'] if crop['crop'].lower() == x['crop'].lower()]
                     subset.extend([{
-                        **{"crop": crop['crop'].lower(),
+                        "crop": crop['crop'].lower(),
                         "pref_indicator": x['pref_indicator'],
                         "indicator": x['indicator'],
-                        "cellid": x['cellid']},
-                        **{f"month_{month}": x[f"month{month}"] for month in months_filter},
-                        **{"period": x['indicator_period']}}
-                        for x in indicator_periods_values if x['cellid'] in cell_id_crop])
+                        "cellid": x['cellid'],
+                        **{f"month_{month}": x[f"month{month}"] for month in months_filter if f"month{month}" in x.keys()},
+                        "period": x['indicator_period']}
+                        for x in res_list if x['cellid'] in cell_id_crop])
             else:
                 raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
         
@@ -834,15 +834,16 @@ def filterData(crops, cell_ids, indicators_params):
             ]
 
             indicator_periods_values = IndicatorValue.objects.aggregate(*filter_by_avg_pipeline)
-            if indicator_periods_values:
+            res_list = [x for x in indicator_periods_values]
+            if res_list:
                 subset.extend([{
-                    **{"crop": crp,
+                    "crop": crp,
                     "pref_indicator": x['pref_indicator'],
                     "indicator": x['indicator'],
-                    "cellid": x['cellid']},
-                    **{f"month_{month}": x[f"month{month}"] for month in months_filter},
-                    **{"period": x['indicator_period']}}
-                    for x in indicator_periods_values if x['cellid'] in cell_id_crop])
+                    "cellid": x['cellid'],
+                    **{f"month_{month}": x[f"month{month}"] for month in months_filter if f"month{month}" in x.keys()},
+                    "period": x['indicator_period']}
+                    for x in res_list if x['cellid'] in cell_id_crop])
             else:
                 raise ValueError('No accessions matching the filters applied to the indicator: '+ indicator['name'])
         
