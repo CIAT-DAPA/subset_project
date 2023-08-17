@@ -16,10 +16,13 @@ import operator
 import json
 from multivariate_analysis.clustering_analysis import clustering_analysis
 import pandas as pd
-from itertools import groupby
+import itertools
 import time
 from multivariate_analysis.core_collection import stratcc
 import math
+
+from dtaidistance import dtw
+from dtaidistance import dtw_ndim
 
 app = Flask(__name__)
 
@@ -1381,6 +1384,79 @@ def get_core_collection():
     }
 
     return content
+
+#For analogues tool
+def dtw_d_impl(s1, s2):
+    dists = [dtw_ndim.distance(s1, arr) for arr in s2]
+    return dists
+
+def dtw_per_indicator(ndim, s1, s2):
+    dtw_ind = []
+    for dim in range(ndim):
+        dtw_ind = dtw_ind + [dtw.distance_fast(s1[:,dim], s2[:,dim])]
+    return dtw_ind
+
+def dtw_per_ind_impl(ndim, s1, s2):
+    dists = [dtw_per_indicator(ndim, s1, arr) for arr in s2]
+    return dists
+
+def get_indicators_data(cellids, inds):
+    indicators_data = []
+    months = [1,2,3,4,5,6,7,8,9,10,11,12]
+    query_clause = [Q(**{'indicator_period__in': inds})] + [Q(**{'cellid__in': cellids})]    
+    indicator_values = IndicatorValue.objects(reduce(operator.and_, query_clause)).select_related()
+    indicators_data.extend([{
+                "pref_indicator": x.indicator_period.indicator.pref,
+                "cellid": x.cellid,
+                **{f"month{month}": getattr(x, f"month{month}") for month in months}}
+                for x in indicator_values])
+    indicators_df = pd.DataFrame(indicators_data)
+
+    return indicators_df
+
+@app.route('/api/v1/analogues-multivariate', methods=['GET', 'POST'])
+@cross_origin()
+def analogues_multivariate():
+    data = request.get_json()
+
+    pixel_ref = [data['cellid_ref']]
+    indicator = data['indicator']
+    cellids = data['cellids']
+    cellids = list(set(cellids))
+
+    indicators_data = get_indicators_data(cellids, indicator)
+    ind_data_reshaped = (indicators_data.set_index(['pref_indicator','cellid'])
+                         .melt(var_name='month', ignore_index=False)
+                         .reset_index())  
+    ind_data_reshaped.month = pd.Categorical(ind_data_reshaped.month,
+                                            categories=ind_data_reshaped.month.unique(),
+                                            ordered=True)    
+    
+    ind_data_pivoted = ind_data_reshaped.pivot(index=['cellid','month'], columns='pref_indicator', values='value')
+    ind_data_pivoted.dropna(inplace=True)
+    ind_arrays = np.array([ind_data_pivoted.xs(i).to_numpy() for i in ind_data_pivoted.index.unique("cellid")],dtype=object)
+    
+    pixel_ref_data = get_indicators_data(pixel_ref,indicator)
+    pixel_ref_data.index = list(pixel_ref_data['cellid'])
+    pixel_ref_data.sort_values('pref_indicator', inplace=True)
+    pixel_ref_ind_data = pixel_ref_data.iloc[:, 2:len(pixel_ref_data.columns)]
+    
+    pixel_ref_transposed = pixel_ref_ind_data.T.to_numpy()
+    d_dists = dtw_d_impl(pixel_ref_transposed, ind_arrays)
+
+    cellid_d_dist = pd.DataFrame({'cellid': ind_data_pivoted.index.unique("cellid"),
+                              'dist':d_dists})
+    cellid_d_dist = cellid_d_dist.sort_values(by="dist", ascending=True)
+    cellid_d_dist_json = cellid_d_dist.to_json(orient="records")
+    cellid_d_dist_resp = json.loads(cellid_d_dist_json)
+
+    dist_per_ind = dtw_per_ind_impl(len(ind_data_pivoted.columns), pixel_ref_transposed, ind_arrays)
+    dist_per_ind_resp = [{"cellid":cell, "dist": dict(zip(ind_data_pivoted.columns, v))} 
+           for cell, v in zip(list(ind_data_pivoted.index.unique("cellid")), dist_per_ind)]
+    
+    return {'dtw_dists':cellid_d_dist_resp,
+            'dist_per_indicator': dist_per_ind_resp}
+
 
 if __name__ == "__main__":
 
