@@ -1425,37 +1425,45 @@ def analogues_multivariate():
     cellids = list(set(cellids))
 
     indicators_data = get_indicators_data(cellids, indicator)
+    indicators_data.dropna(inplace=True)
+
+    #reshape and pivot data: months from colnames to row values and indicators from row values to colnames
     ind_data_reshaped = (indicators_data.set_index(['pref_indicator','cellid'])
                          .melt(var_name='month', ignore_index=False)
-                         .reset_index())  
+                         .reset_index())
     ind_data_reshaped.month = pd.Categorical(ind_data_reshaped.month,
                                             categories=ind_data_reshaped.month.unique(),
                                             ordered=True)    
-    
     ind_data_pivoted = ind_data_reshaped.pivot(index=['cellid','month'], columns='pref_indicator', values='value')
     ind_data_pivoted.dropna(inplace=True)
-    ind_arrays = np.array([ind_data_pivoted.xs(i).to_numpy() for i in ind_data_pivoted.index.unique("cellid")],dtype=object)
+    ind_arrays = np.array([ind_data_pivoted.xs(i).to_numpy() for i in ind_data_pivoted.index.unique("cellid")],dtype=np.float64)
     
     pixel_ref_data = get_indicators_data(pixel_ref,indicator)
     pixel_ref_data.index = list(pixel_ref_data['cellid'])
     pixel_ref_data.sort_values('pref_indicator', inplace=True)
-    pixel_ref_ind_data = pixel_ref_data.iloc[:, 2:len(pixel_ref_data.columns)]
-    
+    pixel_ref_ind_data = pixel_ref_data.iloc[:, 2:len(pixel_ref_data.columns)]    
     pixel_ref_transposed = pixel_ref_ind_data.T.to_numpy()
-    d_dists = dtw_d_impl(pixel_ref_transposed, ind_arrays)
 
-    cellid_d_dist = pd.DataFrame({'cellid': ind_data_pivoted.index.unique("cellid"),
-                              'dist':d_dists})
-    cellid_d_dist = cellid_d_dist.sort_values(by="dist", ascending=True)
-    cellid_d_dist_json = cellid_d_dist.to_json(orient="records")
-    cellid_d_dist_resp = json.loads(cellid_d_dist_json)
-
-    dist_per_ind = dtw_per_ind_impl(len(ind_data_pivoted.columns), pixel_ref_transposed, ind_arrays)
-    dist_per_ind_resp = [{"cellid":cell, "dist": dict(zip(ind_data_pivoted.columns, v))} 
+    if len(ind_data_pivoted.columns)==1:
+        dist_per_ind = dtw_per_ind_impl(len(ind_data_pivoted.columns), pixel_ref_transposed, ind_arrays)
+        dist_per_ind_resp = [{"cellid":cell, "dist": dict(zip(ind_data_pivoted.columns, v))} 
            for cell, v in zip(list(ind_data_pivoted.index.unique("cellid")), dist_per_ind)]
     
-    return {'dtw_dists':cellid_d_dist_resp,
-            'dist_per_indicator': dist_per_ind_resp}
+        return {'dtw_dist': dist_per_ind_resp}
+    
+    else:
+        d_dists = dtw_d_impl(pixel_ref_transposed, ind_arrays)
+        cellid_d_dist = pd.DataFrame({'cellid': ind_data_pivoted.index.unique("cellid"),
+                              'dist':d_dists})
+        cellid_d_dist = cellid_d_dist.sort_values(by="dist", ascending=True)
+        cellid_d_dist_json = cellid_d_dist.to_json(orient="records")
+        cellid_d_dist_resp = json.loads(cellid_d_dist_json)
+        dist_per_ind = dtw_per_ind_impl(len(ind_data_pivoted.columns), pixel_ref_transposed, ind_arrays)
+        dist_per_ind_resp = [{"cellid":cell, "dist": dict(zip(ind_data_pivoted.columns, v))} 
+           for cell, v in zip(list(ind_data_pivoted.index.unique("cellid")), dist_per_ind)]
+    
+        return {'dtw_dist':cellid_d_dist_resp,
+                'dist_per_indicator': dist_per_ind_resp}
 
 
 if __name__ == "__main__":
