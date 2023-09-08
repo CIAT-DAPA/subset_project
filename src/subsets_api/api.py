@@ -511,7 +511,7 @@ def indicator_list():
     print("Result " + str(rows) + " time: " + str((end-start)*1000.0))
     result = sorted(result, key=key_func)
     indicators_list = []
-    for key, value in groupby(result, key_func):
+    for key, value in itertools.groupby(result, key_func):
         ls = {"category": key, "checked": False,"indicators": list(value)}
         indicators_list.append(ls)
 
