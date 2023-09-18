@@ -524,7 +524,7 @@ def indicator_list():
 @cross_origin()
 def indicator_period_list():
     indicator_period = IndicatorPeriod.objects().select_related()
-    result = [{"id": x.id, "indicator": x.indicator._id, "period": x.period}
+    result = [{"id": x.id, "indicator": x.indicator._id, "period": x.period, "ssp": x.ssp}
               for x in indicator_period]
 
     return json.dumps(result, default=str)

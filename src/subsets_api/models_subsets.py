@@ -33,6 +33,7 @@ class IndicatorPeriod(Document):
     #_id = StringField(required=True)
     period = StringField(required=True)
     indicator = ReferenceField(Indicator)
+    ssp = StringField(required=True)
 
     meta = {'collection': 'indicators_indicatorperiod'}
 
