@@ -1446,25 +1446,21 @@ def analogues_multivariate():
 
     if len(ind_data_pivoted.columns)==1:
         dist_per_ind = dtw_per_ind_impl(len(ind_data_pivoted.columns), pixel_ref_transposed, ind_arrays)
-        dist_per_ind_resp = [{"cellid":cell, "dist": dict(zip(ind_data_pivoted.columns, v))} 
-           for cell, v in zip(list(ind_data_pivoted.index.unique("cellid")), dist_per_ind)]
+        dist_per_ind_resp = [{"cellid":cell, "dist": d[0]}
+           for cell, d in zip(list(ind_data_pivoted.index.unique("cellid")), dist_per_ind)]
     
-        return {'dtw_dist': dist_per_ind_resp}
+        response = dist_per_ind_resp
     
     else:
-        d_dists = dtw_d_impl(pixel_ref_transposed, ind_arrays)
-        cellid_d_dist = pd.DataFrame({'cellid': ind_data_pivoted.index.unique("cellid"),
-                              'dist':d_dists})
-        cellid_d_dist = cellid_d_dist.sort_values(by="dist", ascending=True)
-        cellid_d_dist_json = cellid_d_dist.to_json(orient="records")
-        cellid_d_dist_resp = json.loads(cellid_d_dist_json)
+        d_dists = dtw_d_impl(pixel_ref_transposed, ind_arrays)        
         dist_per_ind = dtw_per_ind_impl(len(ind_data_pivoted.columns), pixel_ref_transposed, ind_arrays)
-        dist_per_ind_resp = [{"cellid":cell, "dist": dict(zip(ind_data_pivoted.columns, v))} 
-           for cell, v in zip(list(ind_data_pivoted.index.unique("cellid")), dist_per_ind)]
-    
-        return {'dtw_dist':cellid_d_dist_resp,
-                'dist_per_indicator': dist_per_ind_resp}
 
+        dist_resp = [{"cellid":cell, "dist": d, "dist_per_ind": dict(zip(ind_data_pivoted.columns, v))} 
+           for cell, d, v in zip(list(ind_data_pivoted.index.unique("cellid")), d_dists, dist_per_ind)]
+
+        response = dist_resp
+        
+    return {'dtw_dist': response}
 
 if __name__ == "__main__":
 
