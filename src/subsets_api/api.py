@@ -1420,11 +1420,12 @@ def analogues_multivariate():
     data = request.get_json()
 
     pixel_ref = [data['cellid_ref']]
-    indicator = data['indicator']
+    indicator_cellid_ref = data['indicator_cellid_ref']
+    indicator_cellids = data['indicator_cellids']
     cellids = data['cellids']
     cellids = list(set(cellids))
 
-    indicators_data = get_indicators_data(cellids, indicator)
+    indicators_data = get_indicators_data(cellids, indicator_cellids)
     indicators_data.dropna(inplace=True)
 
     #reshape and pivot data: months from colnames to row values and indicators from row values to colnames
@@ -1438,7 +1439,7 @@ def analogues_multivariate():
     ind_data_pivoted.dropna(inplace=True)
     ind_arrays = np.array([ind_data_pivoted.xs(i).to_numpy() for i in ind_data_pivoted.index.unique("cellid")],dtype=np.float64)
     
-    pixel_ref_data = get_indicators_data(pixel_ref,indicator)
+    pixel_ref_data = get_indicators_data(pixel_ref, indicator_cellid_ref)
     pixel_ref_data.index = list(pixel_ref_data['cellid'])
     pixel_ref_data.sort_values('pref_indicator', inplace=True)
     pixel_ref_ind_data = pixel_ref_data.iloc[:, 2:len(pixel_ref_data.columns)]    
