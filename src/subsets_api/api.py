@@ -1463,6 +1463,31 @@ def analogues_multivariate():
         
     return {'dtw_dist': response}
 
+
+@app.route('/api/v1/indicators-data', methods=['GET', 'POST'])
+@cross_origin()
+def return_indicators_data():
+    data = request.get_json()
+
+    cellids = data['cellid'] if isinstance(data['cellid'],list) else [data['cellid']]
+    indicator_periods = data['indicators']
+
+    indicators_data = get_indicators_data(cellids, indicator_periods)            
+
+    ind_months = list(set(indicators_data.columns) - set(['cellid']))
+    indicators_data = (indicators_data.groupby(['cellid'])[ind_months]
+                        .apply(lambda x: x.to_dict('r'))
+                        .reset_index(name='data')
+                        .to_json(orient='records'))
+    
+    indicators_data = json.loads(indicators_data)
+
+    return {
+        "response": indicators_data
+    }
+
+
+
 if __name__ == "__main__":
 
     #connect('indicatordb', host='localhost', port=27017)
