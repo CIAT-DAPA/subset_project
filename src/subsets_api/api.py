@@ -1553,6 +1553,17 @@ def analogues_multivariate():
 @app.route('/api/v1/indicators-data', methods=['GET', 'POST'])
 @cross_origin()
 def return_indicators_data():
+    #hook to remove None values from the dict
+    def remove_none_hook(obj):
+        return_obj = {}
+        for k, v in obj:            
+            if isinstance(v, list):
+                v = [{k2:v2 for k2,v2 in x.items() if v2 is not None} for x in v]            
+
+            return_obj[k] = v
+
+        return return_obj
+    
     data = request.get_json()
 
     cellids = data['cellid'] if isinstance(data['cellid'],list) else [data['cellid']]
@@ -1560,13 +1571,13 @@ def return_indicators_data():
 
     indicators_data = get_indicators_data(cellids, indicator_periods)            
 
-    ind_months = list(set(indicators_data.columns) - set(['cellid']))
-    indicators_data = (indicators_data.groupby(['cellid'])[ind_months]
+    ind_colnames = list(set(indicators_data.columns) - set(['cellid']))
+    indicators_data = (indicators_data.groupby(['cellid'])[ind_colnames]
                         .apply(lambda x: x.to_dict('r'))
                         .reset_index(name='data')
                         .to_json(orient='records'))
-    
-    indicators_data = json.loads(indicators_data)
+
+    indicators_data = json.loads(indicators_data, object_pairs_hook=remove_none_hook)
 
     return {
         "response": indicators_data
