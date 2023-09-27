@@ -23,6 +23,8 @@ import math
 
 from dtaidistance import dtw
 from dtaidistance import dtw_ndim
+from multivariate_analysis.gower import gower_distances
+from sklearn.preprocessing import MinMaxScaler
 
 app = Flask(__name__)
 
@@ -1408,7 +1410,9 @@ def get_indicators_data(cellids, inds):
     indicators_data.extend([{
                 "pref_indicator": x.indicator_period.indicator.pref,
                 "cellid": x.cellid,
-                **{f"month{month}": getattr(x, f"month{month}") for month in months}}
+                **{f"month{month}": getattr(x, f"month{month}") for month in months},
+                "value":x.value,
+                "category":x.value_c}
                 for x in indicator_values])
     indicators_df = pd.DataFrame(indicators_data)
 
@@ -1425,43 +1429,125 @@ def analogues_multivariate():
     cellids = data['cellids']
     cellids = list(set(cellids))
 
-    indicators_data = get_indicators_data(cellids, indicator_cellids)
-    indicators_data.dropna(inplace=True)
-
-    #reshape and pivot data: months from colnames to row values and indicators from row values to colnames
-    ind_data_reshaped = (indicators_data.set_index(['pref_indicator','cellid'])
-                         .melt(var_name='month', ignore_index=False)
-                         .reset_index())
-    ind_data_reshaped.month = pd.Categorical(ind_data_reshaped.month,
-                                            categories=ind_data_reshaped.month.unique(),
-                                            ordered=True)    
-    ind_data_pivoted = ind_data_reshaped.pivot(index=['cellid','month'], columns='pref_indicator', values='value')
-    ind_data_pivoted.dropna(inplace=True)
-    ind_arrays = np.array([ind_data_pivoted.xs(i).to_numpy() for i in ind_data_pivoted.index.unique("cellid")],dtype=np.float64)
-    
+    #getting indicators data for reference point and other points
     pixel_ref_data = get_indicators_data(pixel_ref, indicator_cellid_ref)
-    pixel_ref_data.index = list(pixel_ref_data['cellid'])
-    pixel_ref_data.sort_values('pref_indicator', inplace=True)
-    pixel_ref_ind_data = pixel_ref_data.iloc[:, 2:len(pixel_ref_data.columns)]    
-    pixel_ref_transposed = pixel_ref_ind_data.T.to_numpy()
+    points_ind_data = get_indicators_data(cellids, indicator_cellids)
 
-    if len(ind_data_pivoted.columns)==1:
-        dist_per_ind = dtw_per_ind_impl(len(ind_data_pivoted.columns), pixel_ref_transposed, ind_arrays)
-        dist_per_ind_resp = [{"cellid":cell, "dist": d[0]}
-           for cell, d in zip(list(ind_data_pivoted.index.unique("cellid")), dist_per_ind)]
+    #splitting indicators data into:
+    #time series data
+    pixel_ref_ts_colnames = [col for col in pixel_ref_data.columns if 'month' in col]
+    pixel_ref_ts_data = pixel_ref_data[['pref_indicator','cellid']+pixel_ref_ts_colnames]
+    time_series_colnames = [col for col in points_ind_data.columns if 'month' in col]
+    time_series_data = points_ind_data[['pref_indicator','cellid']+time_series_colnames]
+
+    #value-based data
+    pixel_ref_numeric_colnames = [col for col in pixel_ref_data.columns if 'value' in col]
+    ref_value_slice = pixel_ref_data[['cellid','pref_indicator']+pixel_ref_numeric_colnames].copy()
+    numeric_colnames = [col for col in points_ind_data.columns if 'value' in col]
+    value_slice = points_ind_data[['cellid','pref_indicator']+numeric_colnames].copy()
+    ref_value_slice, value_slice = (s.dropna() for s in (ref_value_slice,value_slice))
+
+    #and categorical data
+    pixel_ref_cat_features = [col for col in pixel_ref_data.columns if 'category' in col]
+    ref_category_slice = pixel_ref_data[['cellid','pref_indicator']+pixel_ref_cat_features].copy()
+    cat_features = [col for col in points_ind_data.columns if 'category' in col]
+    category_slice = points_ind_data[['cellid','pref_indicator']+cat_features].copy()
+    ref_category_slice, category_slice = (s.dropna() for s in (ref_category_slice,category_slice))
     
-        response = dist_per_ind_resp
-    
-    else:
-        d_dists = dtw_d_impl(pixel_ref_transposed, ind_arrays)        
-        dist_per_ind = dtw_per_ind_impl(len(ind_data_pivoted.columns), pixel_ref_transposed, ind_arrays)
+    #calculating gower distance for value-based and categorical data
+    gower_dist = None
+    if (not ref_value_slice.empty and not value_slice.empty) or (not ref_category_slice.empty and not category_slice.empty):
+        #pivot value-based and categorical data
+        ref_merged_slices = merged_slices = pd.DataFrame([])
+        for s1, s2 in zip([ref_value_slice, ref_category_slice], [value_slice, category_slice]):
+                s1, s2 = (s.pivot(index = 'cellid', columns = ['pref_indicator']) for s in (s1,s2))
+                s1, s2 = (s.swaplevel(0, 1, axis = 1) for s in (s1,s2))
+                s1.columns, s2.columns = (s.columns.map('_'.join) for s in (s1,s2))
+                s1, s2 = (s.reset_index() for s in (s1,s2))
 
-        dist_resp = [{"cellid":cell, "dist": d, "dist_per_ind": dict(zip(ind_data_pivoted.columns, v))} 
-           for cell, d, v in zip(list(ind_data_pivoted.index.unique("cellid")), d_dists, dist_per_ind)]
-
-        response = dist_resp
+                ref_merged_slices = s1 if ref_merged_slices.empty else ref_merged_slices
+                merged_slices = s2 if merged_slices.empty else merged_slices      
         
-    return {'dtw_dist': response}
+        ref_merged_slices.dropna(inplace=True)
+        ref_merged_slices.reset_index(drop=True, inplace=True)
+        
+        merged_slices.dropna(inplace=True)
+        merged_slices.reset_index(drop=True, inplace=True)
+        
+        pixel_ref_num_colnames = [col for col in ref_merged_slices.columns if 'value' in col]        
+        pixel_ref_num_data = ref_merged_slices[pixel_ref_num_colnames]
+        points_num_colnames = [col for col in merged_slices.columns if 'value' in col]
+        points_num_data = merged_slices[points_num_colnames]
+
+        #min-max scale numeric indicators data
+        if (not pixel_ref_num_data.empty or not points_num_data.empty):            
+            scale_data = pd.concat([pixel_ref_num_data, points_num_data])
+            trs = MinMaxScaler().fit(scale_data)
+            pixel_ref_num_data = pd.DataFrame(trs.transform(pixel_ref_num_data), columns = pixel_ref_num_data.columns)
+            points_num_data = pd.DataFrame(trs.transform(points_num_data), columns = points_num_data.columns)
+
+        pixel_ref_cat_features = [col for col in ref_merged_slices.columns if 'category' in col]
+        pixel_ref_stationary_data = pd.concat([pixel_ref_num_data, ref_merged_slices[pixel_ref_cat_features]], axis=1)
+
+        cat_features = [col for col in merged_slices.columns if 'category' in col]
+        stationary_data = pd.concat([points_num_data, merged_slices[cat_features]], axis=1)
+        
+        gower_dist = gower_distances(pixel_ref_stationary_data, stationary_data, 
+                                    categorical_features=cat_features, scale=False)
+
+        gower_dist = [{"cellid":cell, "soil_dist": d} 
+            for cell, d in zip(list(merged_slices["cellid"]), gower_dist[0])]
+    
+    #calculating DTW distance for the climatic time series data
+    dtw_dist = None
+    pixel_ref_ts_data.dropna(inplace=True)
+    time_series_data.dropna(inplace=True)
+
+    if not pixel_ref_ts_data.empty and not time_series_data.empty:
+        #reshape and pivot data: months from colnames to row values and indicators from row values to colnames
+        ind_data_reshaped = (time_series_data.set_index(['pref_indicator','cellid'])
+                            .melt(var_name='month', ignore_index=False)
+                            .reset_index())
+        ind_data_reshaped.month = pd.Categorical(ind_data_reshaped.month,
+                                                categories=ind_data_reshaped.month.unique(),
+                                                ordered=True)
+        ind_data_pivoted = ind_data_reshaped.pivot(index=['cellid','month'], columns='pref_indicator', values='value')
+        ind_data_pivoted.dropna(inplace=True)
+        ind_arrays = np.array([ind_data_pivoted.xs(i).to_numpy() for i in ind_data_pivoted.index.unique("cellid")],dtype=np.float64)
+
+        
+        pixel_ref_ts_data.index = list(pixel_ref_ts_data['cellid'])
+        pixel_ref_ts_data.sort_values('pref_indicator', inplace=True)
+        
+        pixel_ref_ts_ind_data = pixel_ref_ts_data.iloc[:, 2:len(pixel_ref_ts_data.columns)]
+        pixel_ref_transposed = pixel_ref_ts_ind_data.T.to_numpy()
+        
+        #case of univariate time series data (i.e. one climate indicator)
+        if len(ind_data_pivoted.columns)==1:
+            dist_per_ind = dtw_per_ind_impl(len(ind_data_pivoted.columns), pixel_ref_transposed, ind_arrays)
+            
+            #format the response to be outputted
+            dist_per_ind_resp = [{"cellid":cell, "dist": d[0]}
+                                    for cell, d in zip(list(ind_data_pivoted.index.unique("cellid")), dist_per_ind)]
+            dtw_dist = dist_per_ind_resp
+        
+        #case of multivariate time series data (i.e. more than one climate indicator)
+        else:
+            #overall distance considering all indicators as dependent
+            d_dists = dtw_d_impl(pixel_ref_transposed, ind_arrays)
+
+            #distance per each indicator
+            dist_per_ind = dtw_per_ind_impl(len(ind_data_pivoted.columns), pixel_ref_transposed, ind_arrays)
+
+            #format the response to be outputted
+            dist_resp = [{"cellid":cell, "dist": d, "dist_per_ind": dict(zip(ind_data_pivoted.columns, v))} 
+                            for cell, d, v in zip(list(ind_data_pivoted.index.unique("cellid")), d_dists, dist_per_ind)]
+            dtw_dist = dist_resp
+        
+    return {
+        "climate_dist": dtw_dist,
+        "soil_dist": gower_dist
+        }
 
 
 @app.route('/api/v1/indicators-data', methods=['GET', 'POST'])
