@@ -1316,71 +1316,80 @@ def get_core_collection():
         up = months_range[1]
         months_filter = restrict_months_list(low, up)
     
-    #get indicators data
-    indicators_data = []
-    for indicator in indicators_params:
-        
-        periods_ids = indicator["indicator"]
-        if indicator['type'] == 'generic' or indicator['type'] == 'specific':
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
-            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
-                   
-            indicators_data.extend([{
-                **{"pref_indicator": x.indicator_period.indicator.pref,
-                "cellid": x.cellid},
-                **{f"month{month}": getattr(x, f"month{month}") for month in months_filter}}
-                for x in indicator_periods_values])
+    try:
+        #get indicators data
+        indicators_data = []
+        for indicator in indicators_params:
             
-        elif indicator['type'] == 'extracted':
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
-            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
-            
-            indicators_data.extend([{
+            periods_ids = indicator["indicator"]
+            if indicator['type'] == 'generic' or indicator['type'] == 'specific':
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
+                indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+                    
+                indicators_data.extend([{
+                    **{"pref_indicator": x.indicator_period.indicator.pref,
+                    "cellid": x.cellid},
+                    **{f"month{month}": getattr(x, f"month{month}") for month in months_filter}}
+                    for x in indicator_periods_values])
+                
+            elif indicator['type'] == 'extracted':
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
+                indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+                
+                indicators_data.extend([{
+                        "pref_indicator": x.indicator_period.indicator.pref,
+                        "cellid": x.cellid,
+                        "value": x.value}
+                        for x in indicator_periods_values])
+                
+            elif indicator['type'] == 'categorical':
+                indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
+                indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
+                
+                indicators_data.extend([{
                     "pref_indicator": x.indicator_period.indicator.pref,
                     "cellid": x.cellid,
-                    "value": x.value}
+                    "category": x.value_c}
                     for x in indicator_periods_values])
-            
-        elif indicator['type'] == 'categorical':
-            indicator_periods_clauses = [Q(**{'indicator_period__in': periods_ids})] + [Q(**{'cellid__in': cellids})]
-            indicator_periods_values = IndicatorValue.objects(reduce(operator.and_, indicator_periods_clauses)).select_related()
-            
-            indicators_data.extend([{
-                "pref_indicator": x.indicator_period.indicator.pref,
-                "cellid": x.cellid,
-                "category": x.value_c}
-                for x in indicator_periods_values])
 
-    indicators_df = pd.DataFrame(indicators_data, dtype='object')
+        indicators_df = pd.DataFrame(indicators_data, dtype='object')
 
-    months_colnames = [col for col in indicators_df.columns if 'month' in col]
-    value_colname = [col for col in indicators_df.columns if 'value' in col]
-    category_colname = [col for col in indicators_df.columns if 'category' in col]
+        months_colnames = [col for col in indicators_df.columns if 'month' in col]
+        value_colname = [col for col in indicators_df.columns if 'value' in col]
+        category_colname = [col for col in indicators_df.columns if 'category' in col]
 
-    months_slice = indicators_df[['cellid','pref_indicator']+months_colnames]
-    value_slice = indicators_df[['cellid','pref_indicator']+value_colname]
-    category_slice = indicators_df[['cellid','pref_indicator']+category_colname]
+        months_slice = indicators_df[['cellid','pref_indicator']+months_colnames]
+        value_slice = indicators_df[['cellid','pref_indicator']+value_colname]
+        category_slice = indicators_df[['cellid','pref_indicator']+category_colname]
 
-    merged_slices = pd.DataFrame([])
+        merged_slices = pd.DataFrame([])
 
-    for s in [months_slice, value_slice, category_slice]:
-        s = s.dropna()
-        s = s.pivot(index = 'cellid', columns = ['pref_indicator'])
-        s = s.swaplevel(0, 1, axis = 1)
-        s.columns = s.columns.map('_'.join)
-        s = s.reset_index()
+        for s in [months_slice, value_slice, category_slice]:
+            s = s.dropna()
+            s = s.pivot(index = 'cellid', columns = ['pref_indicator'])
+            s = s.swaplevel(0, 1, axis = 1)
+            s.columns = s.columns.map('_'.join)
+            s = s.reset_index()
 
-        merged_slices = s if merged_slices.empty else s.merge(merged_slices, on='cellid')
+            merged_slices = s if merged_slices.empty else s.merge(merged_slices, on='cellid')
 
-    merged_slices.reset_index(drop=True, inplace=True)
-    ind_data = merged_slices
+        merged_slices.reset_index(drop=True, inplace=True)
+        ind_data = merged_slices
+        
+        ind_data = ind_data.dropna(axis=0)
+        ind_data.reset_index(drop=True, inplace=True)
+
+        if len(ind_data.index) < amount:
+            raise ValueError('The number of unique coordinates included in the selected subset ' + 
+                             'and with no missing indicators data is lower than the number of the desired core accessions!')
+        
+        
+        core_collection = stratcc(x=ind_data, nb_entries=amount)
+        cc_cellids = core_collection['cellid']
     
-    ind_data = ind_data.dropna(axis=0)
-    ind_data.reset_index(drop=True, inplace=True)
+    except ValueError as ve:
+        return('Core collection cannot be applied! '+str(ve), 422)
     
-    core_collection = stratcc(x=ind_data, nb_entries=amount)
-    cc_cellids = core_collection['cellid']
-
     content = {
         'cellids': list(cc_cellids)
     }
@@ -1480,7 +1489,7 @@ def analogues_multivariate():
         points_num_data = merged_slices[points_num_colnames]
 
         #min-max scale numeric indicators data
-        if (not pixel_ref_num_data.empty or not points_num_data.empty):            
+        if (not pixel_ref_num_data.empty and not points_num_data.empty):            
             scale_data = pd.concat([pixel_ref_num_data, points_num_data])
             trs = MinMaxScaler().fit(scale_data)
             pixel_ref_num_data = pd.DataFrame(trs.transform(pixel_ref_num_data), columns = pixel_ref_num_data.columns)
