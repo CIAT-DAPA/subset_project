@@ -982,22 +982,22 @@ def subset():
                     'period':group[0][1], 'crop':group[0][2], 'whisker_low': whisker_low[0], 'whisker_high': whisker_high[0]}
                     lst_box_data.append(obj)
 
-            df_quantiles = pd.DataFrame([s for s in lst_box_data])
-            
-            lst_field_quantiles = ['Q1', 'Q2', 'Q3', 'month', 'whisker_low', 'whisker_high']
-            df_quantiles_grouped = (df_quantiles.groupby(['indicator','period', 'crop'])[lst_field_quantiles]
-            .apply(lambda x: x.to_dict('r'))
-            .reset_index(name='data')
-            .to_json(orient='records'))
+            if lst_box_data:
+                df_quantiles = pd.DataFrame([s for s in lst_box_data])
+                lst_field_quantiles = ['Q1', 'Q2', 'Q3', 'month', 'whisker_low', 'whisker_high']
+                df_quantiles_grouped = (df_quantiles.groupby(['indicator','period', 'crop'])[lst_field_quantiles]
+                .apply(lambda x: x.to_dict('r'))
+                .reset_index(name='data')
+                .to_json(orient='records'))
 
-            quantile_data = json.loads(df_quantiles_grouped)
+                quantile_data = json.loads(df_quantiles_grouped)
 
     except ValueError as ve:
         return('Bad request! '+str(ve), 400)
 
     content = {
         'filtered_cellids': json.loads(filtered_cellids),
-        'quantile': quantile_data,
+        'quantile': quantile_data if lst_box_data else [],
         'proportion': proportion_data
         }
 
