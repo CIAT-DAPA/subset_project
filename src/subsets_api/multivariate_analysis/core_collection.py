@@ -65,22 +65,22 @@ def stratcc(x, nb_entries, clustering=True):
                         x[col] = x[col].astype('object')
                     
                     for col in numeric_colnames:
-                        numeric_data[col] = numeric_data[col].astype('float')
+                        numeric_data[col] = numeric_data[col].astype('float64')
 
                     ind_data = pd.concat([numeric_data, x[cat_features]], axis=1)
                     famd = prince.FAMD(n_components=5,n_iter=3,copy=True,check_input=True,engine='auto',
-                                    random_state=42)
+                                    random_state=42)                                        
                     famd = famd.fit(ind_data)
                     reduced_data = famd.transform(ind_data)
 
-                model = AgglomerativeClustering(n_clusters = nb_entries, affinity = 'euclidean',
+            model = AgglomerativeClustering(n_clusters = nb_entries, affinity = 'euclidean',
                                             linkage = 'ward')
-                model.fit(reduced_data)
-                labels = model.labels_
+            model.fit(reduced_data)
+            labels = model.labels_
 
-                result_frames = [_clustered_sampling(x, labels, id) for id in range(0,nb_entries)]
-                result_grpid = pd.concat(result_frames)
-                frames.append(result_grpid)
+            result_frames = [_clustered_sampling(x, labels, id) for id in range(0,nb_entries)]
+            result_grpid = pd.concat(result_frames)
+            frames.append(result_grpid)
 
     else:
         newData = x.sample(nb_entries, random_state=1)
